@@ -2,13 +2,13 @@
 
 ## Project Overview
 
-This project provides a Docker container that regularly fetches client IP assignments from the Meraki API and pushes them as custom DNS records to a Pi-hole instance. This allows for local DNS resolution of Meraki clients using their configured hostnames, even if they have dynamic IPs (though it's most useful for clients with static IPs or DHCP reservations).
+This project provides a Docker container that regularly fetches client information from the Meraki API for devices with **Fixed IP Assignments (DHCP Reservations)** and pushes them as custom DNS records to a Pi-hole instance. This allows for reliable local DNS resolution of these specific Meraki clients using their configured hostnames.
 
 ## Features
 
-*   Fetches client IP information from specified Meraki networks (or all networks in an organization).
-*   Uses client description or DHCP hostname from Meraki as the basis for the DNS record.
-*   Adds/updates custom DNS records in Pi-hole.
+*   Fetches client IP information specifically for devices with **Fixed IP Assignments** from specified Meraki networks (or all networks in an organization).
+*   Uses the client's description or DHCP hostname from Meraki as the basis for the DNS record.
+*   Adds/updates custom DNS records in Pi-hole for these fixed IP clients.
 *   Removes stale DNS records from Pi-hole if they are no longer found in Meraki (scoped by a configurable hostname suffix).
 *   Runs on a configurable schedule using cron, managed within the Docker container.
 *   Configuration via a `config.ini` file for Meraki specifics and script behavior.
@@ -43,19 +43,19 @@ This project provides a Docker container that regularly fetches client IP assign
 4.  The script connects to the Meraki API:
     *   It fetches a list of networks for the given organization ID.
     *   If specific `network_ids` are configured, it filters for these. Otherwise, it processes all accessible networks.
-    *   For each relevant network, it fetches the list of clients seen recently.
+    *   For each relevant network, it fetches the list of clients seen recently. **Crucially, it then filters these clients to include only those that have a "Fixed IP Assignment" (DHCP reservation) configured in Meraki, and where the client's current IP matches this fixed assignment.**
 5.  The script connects to the Pi-hole API:
     *   It retrieves the current list of custom DNS records to understand the existing state.
-6.  The script processes each relevant Meraki client:
+6.  The script processes each relevant Meraki client (i.e., those with a valid and matching Fixed IP Assignment):
     *   It identifies a suitable hostname (preferring the client's 'description', then 'dhcpHostname').
     *   It constructs a fully qualified domain name (FQDN) using this hostname and the configured `hostname_suffix` (e.g., `my-device.lan`).
     *   It then checks this FQDN against the records in Pi-hole:
-        *   If the record exists with the correct IP address, no action is taken.
-        *   If the record exists but with a different IP address, the old record is removed, and the new one (with the current IP) is added.
-        *   If the record does not exist, it is added to Pi-hole.
-7.  After processing all Meraki clients, the script performs a cleanup of stale DNS records:
+        *   If the record exists with the correct (fixed) IP address, no action is taken.
+        *   If the record exists but with a different IP address, the old record is removed, and the new one (with the current fixed IP) is added.
+        *   If the record does not exist, it is added to Pi-hole, mapping the hostname to the client's fixed IP.
+7.  After processing all relevant Meraki clients, the script performs a cleanup of stale DNS records:
     *   It iterates through the custom DNS records previously fetched from Pi-hole.
-    *   If a record's domain matches the `hostname_suffix` (indicating it was likely managed by this script) but was not found in the current list of active Meraki clients, that record is deleted from Pi-hole.
+    *   If a record's domain matches the `hostname_suffix` (indicating it was likely managed by this script) but was not found in the current list of active Meraki clients **with Fixed IP Assignments**, that record is deleted from Pi-hole.
 8.  All actions, errors, and summaries are logged to standard output, which can be viewed via Docker logs.
 
 ## Installation

@@ -266,20 +266,35 @@ def get_all_relevant_meraki_clients(api_key, config):
                 client_name = client.get('description') or client.get('dhcpHostname')
                 client_ip = client.get('ip')
                 client_id = client.get('id') # Unique client ID from Meraki
+                fixed_ip_assignment = client.get('fixedIpAssignment')
 
                 if client_name and client_ip and client_id:
-                    # Ensure unique entries per client ID, preferring the most recent info if somehow duplicated
-                    # (though get_network_clients for a single network shouldn't duplicate client IDs)
-                    all_clients_map[client_id] = {
-                        "name": client_name,
-                        "ip": client_ip,
-                        "network_id": network_id,
-                        "network_name": network_name,
-                        "meraki_client_id": client_id
-                    }
-                    logging.debug(f"Found relevant client: {client_name} ({client_ip}) in network {network_name}")
+                    is_fixed_ip_client = False
+                    if fixed_ip_assignment and isinstance(fixed_ip_assignment, dict):
+                        assigned_ip = fixed_ip_assignment.get('ip')
+                        if assigned_ip and assigned_ip == client_ip:
+                            is_fixed_ip_client = True
+                            logging.debug(f"Client {client_name} (ID: {client_id}) has a matching fixed IP assignment: {assigned_ip}")
+                        elif assigned_ip:
+                            logging.debug(f"Client {client_name} (ID: {client_id}) has a fixed IP assignment ({assigned_ip}) that does NOT match its current IP ({client_ip}). Skipping.")
+                        else:
+                            logging.debug(f"Client {client_name} (ID: {client_id}) has a fixedIpAssignment object but no IP in it. Skipping.")
+                    else:
+                        logging.debug(f"Client {client_name} (ID: {client_id}) does not have a valid fixedIpAssignment. Skipping.")
+
+                    if is_fixed_ip_client:
+                        # Ensure unique entries per client ID
+                        all_clients_map[client_id] = {
+                            "name": client_name,
+                            "ip": client_ip, # This is the fixed IP
+                            "network_id": network_id,
+                            "network_name": network_name,
+                            "meraki_client_id": client_id
+                        }
+                        logging.info(f"Found relevant client with fixed IP: {client_name} ({client_ip}) in network {network_name}")
+                    # else: client was skipped, message logged above
                 else:
-                    logging.debug(f"Skipping client (ID: {client.get('id')}, MAC: {client.get('mac')}) due to missing name or IP in network {network_name}.")
+                    logging.debug(f"Skipping client (ID: {client.get('id')}, MAC: {client.get('mac')}) due to missing name, current IP, or client ID in network {network_name}.")
         else:
             logging.info(f"No clients found or error fetching clients for network {network_name} (ID: {network_id}).")
 
