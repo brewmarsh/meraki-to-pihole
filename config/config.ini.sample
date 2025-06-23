@@ -1,0 +1,28 @@
+[meraki]
+# Your Meraki Organization ID
+organization_id = YOUR_MERAKI_ORGANIZATION_ID
+# Comma-separated list of Meraki network IDs to sync.
+# Leave empty to attempt to sync all networks in the organization.
+# e.g., network_ids = L_123456789012345678,L_987654321098765432
+network_ids =
+
+[pihole]
+# URL to your Pi-hole admin API
+# e.g., http://pihole.local/admin/api.php or http://<PIHOLE_IP>/admin/api.php
+api_url = YOUR_PIHOLE_API_URL
+# Your Pi-hole API key (found in Pi-hole settings -> API -> Show API Token -> QR Code)
+# This is required if your Pi-hole is password protected.
+api_key = YOUR_PIHOLE_API_KEY
+
+[script]
+# Suffix to append to client hostnames when creating DNS records.
+# e.g., if client name is "my-laptop" and suffix is ".lan", DNS record will be "my-laptop.lan"
+# If a client has a name like "foo.bar.baz" and this is ".lan", it will become "foo.bar.baz.lan"
+# If you want to use the network name as part of the domain, you'll need to customize the script.
+# For example, client "my-pc" on network "Office" could become "my-pc.office.lan".
+# Default is ".local"
+hostname_suffix = .local
+# How often to run the sync script, in seconds. Default is 1 hour (3600 seconds)
+# This is used if not running via cron entrypoint (e.g. direct script execution)
+# For Docker, cron schedule is set via CRON_SCHEDULE env var.
+sync_interval_seconds = 3600
