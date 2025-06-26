@@ -1,80 +1,84 @@
 # Python script to sync Meraki client IPs to Pi-hole
 import os
 import sys
-import configparser
+# import configparser # No longer needed
 import requests
 import logging
 import time
-import argparse
+# import argparse # No longer needed, config path removed
 
 # Configure logging
-logging.basicConfig(stream=sys.stdout, level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+LOG_FILE_PATH = "/app/logs/sync.log"
+# Ensure the directory exists (though Dockerfile should create /app/logs)
+os.makedirs(os.path.dirname(LOG_FILE_PATH), exist_ok=True)
 
-MERAKI_API_KEY_ENV_VAR = "MERAKI_API_KEY"
-DEFAULT_CONFIG_PATH = "/config/config.ini"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE_PATH),
+        logging.StreamHandler(sys.stdout) # Keep logging to stdout as well for `docker logs`
+    ]
+)
 
-def load_meraki_api_key():
-    """Loads Meraki API key from environment variable."""
-    api_key = os.getenv(MERAKI_API_KEY_ENV_VAR)
-    if not api_key:
-        logging.error(f"{MERAKI_API_KEY_ENV_VAR} environment variable not set.")
-        sys.exit(1)
-    return api_key
+# Environment Variable Names
+ENV_MERAKI_API_KEY = "MERAKI_API_KEY"
+ENV_MERAKI_ORG_ID = "MERAKI_ORG_ID"
+ENV_MERAKI_NETWORK_IDS = "MERAKI_NETWORK_IDS" # Comma-separated string
+ENV_PIHOLE_API_URL = "PIHOLE_API_URL"
+ENV_PIHOLE_API_KEY = "PIHOLE_API_KEY"
+ENV_HOSTNAME_SUFFIX = "HOSTNAME_SUFFIX"
+# ENV_SYNC_INTERVAL_SECONDS = "SYNC_INTERVAL_SECONDS" # Not used by cron runner
 
-def load_configuration(config_path):
-    """Loads configuration from the INI file."""
-    if not os.path.exists(config_path):
-        logging.error(f"Configuration file not found at {config_path}")
-        sys.exit(1)
+def load_app_config_from_env():
+    """Loads all application configuration from environment variables."""
+    config = {}
+    missing_vars = []
 
-    config = configparser.ConfigParser()
-    config.read(config_path)
+    # Mandatory variables
+    config["meraki_api_key"] = os.getenv(ENV_MERAKI_API_KEY)
+    config["meraki_org_id"] = os.getenv(ENV_MERAKI_ORG_ID)
+    config["pihole_api_url"] = os.getenv(ENV_PIHOLE_API_URL)
+    config["hostname_suffix"] = os.getenv(ENV_HOSTNAME_SUFFIX)
 
-    try:
-        # Get Pi-hole details: Prioritize environment variables, then config file
-        pihole_api_url_env = os.getenv("PIHOLE_API_URL")
-        pihole_api_key_env = os.getenv("PIHOLE_API_KEY")
+    if not config["meraki_api_key"]: missing_vars.append(ENV_MERAKI_API_KEY)
+    if not config["meraki_org_id"]: missing_vars.append(ENV_MERAKI_ORG_ID)
+    if not config["pihole_api_url"]: missing_vars.append(ENV_PIHOLE_API_URL)
+    if not config["hostname_suffix"]: missing_vars.append(ENV_HOSTNAME_SUFFIX) # Making suffix mandatory
 
-        app_config = {
-            "meraki_org_id": config.get('meraki', 'organization_id'),
-            "meraki_network_ids": [nid.strip() for nid in config.get('meraki', 'network_ids', fallback='').split(',') if nid.strip()],
-
-            "pihole_api_url": pihole_api_url_env if pihole_api_url_env else config.get('pihole', 'api_url'),
-            "pihole_api_key": pihole_api_key_env if pihole_api_key_env else config.get('pihole', 'api_key', fallback=None),
-
-            "hostname_suffix": config.get('script', 'hostname_suffix', fallback='.local'),
-            "sync_interval_seconds": config.getint('script', 'sync_interval_seconds', fallback=3600)
-        }
-    except configparser.NoSectionError as e:
-        logging.error(f"Configuration error: Missing section in config file: {e}")
-        sys.exit(1)
-    except configparser.NoOptionError as e:
-        logging.error(f"Configuration error: Missing option in config file: {e}")
-        sys.exit(1)
-    except ValueError as e:
-        logging.error(f"Configuration error: Invalid value in config file: {e}")
+    if missing_vars:
+        logging.error(f"Missing mandatory environment variables: {', '.join(missing_vars)}")
         sys.exit(1)
 
-    if not app_config["meraki_org_id"] or app_config["meraki_org_id"] == "YOUR_MERAKI_ORGANIZATION_ID":
-        logging.error("Meraki Organization ID is not configured in the config file.")
-        sys.exit(1)
-    if not app_config["pihole_api_url"] or app_config["pihole_api_url"] == "YOUR_PIHOLE_API_URL":
-        logging.error("Pi-hole API URL is not configured in the config file.")
-        sys.exit(1)
-    # pihole_api_key can be optional if Pi-hole is not password protected
+    # Optional variables
+    config["pihole_api_key"] = os.getenv(ENV_PIHOLE_API_KEY) # Can be None if Pi-hole not passworded
 
-    return app_config
+    meraki_network_ids_str = os.getenv(ENV_MERAKI_NETWORK_IDS, '')
+    config["meraki_network_ids"] = [nid.strip() for nid in meraki_network_ids_str.split(',') if nid.strip()]
+
+    # Validate placeholder values (simple check)
+    if config["meraki_org_id"] == "YOUR_MERAKI_ORGANIZATION_ID":
+        logging.error(f"Placeholder value detected for {ENV_MERAKI_ORG_ID}. Please set a valid Organization ID.")
+        sys.exit(1)
+    if config["pihole_api_url"] == "YOUR_PIHOLE_API_URL" or config["pihole_api_url"] == "http://your_pihole_ip_or_hostname/admin/api.php":
+        logging.error(f"Placeholder value detected for {ENV_PIHOLE_API_URL}. Please set a valid Pi-hole API URL.")
+        sys.exit(1)
+    if config["hostname_suffix"] == ".local" or config["hostname_suffix"] == ".yourdomain.local": # Example placeholder from sample
+        logging.warning(f"Default/Example value detected for {ENV_HOSTNAME_SUFFIX} ('{config['hostname_suffix']}'). Ensure this is your desired suffix.")
+
+
+    logging.info("Successfully loaded configuration from environment variables.")
+    return config
 
 def main():
-    parser = argparse.ArgumentParser(description="Meraki to Pi-hole DNS Sync Script")
-    parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help=f"Path to the configuration file (default: {DEFAULT_CONFIG_PATH})")
-    args = parser.parse_args()
+    # parser = argparse.ArgumentParser(description="Meraki to Pi-hole DNS Sync Script") # No longer needed
+    # parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help=f"Path to the configuration file (default: {DEFAULT_CONFIG_PATH})") # No longer needed
+    # args = parser.parse_args() # No longer needed
 
-    logging.info(f"Starting Meraki Pi-hole Sync Script using config: {args.config}")
+    logging.info("Starting Meraki Pi-hole Sync Script") # Removed reference to config file path
 
-    meraki_api_key = load_meraki_api_key()
-    app_config = load_configuration(args.config)
+    app_config = load_app_config_from_env()
+    meraki_api_key = app_config["meraki_api_key"] # Already fetched in load_app_config_from_env
 
     logging.info(f"Configuration loaded: Meraki Org ID {app_config['meraki_org_id']}, "
                  f"Pi-hole URL {app_config['pihole_api_url']}, "

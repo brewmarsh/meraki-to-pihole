@@ -1,11 +1,9 @@
-version: '3.8'
-
 services:
   meraki-pihole-sync:
     build: .
-    container_name: meraki-pihole-sync
+    container_name: meraki-pihole-sync # Can be same as service name
+    image: local/meraki-pihole-sync:latest # Explicit local image name
     restart: unless-stopped
-    image: meraki-pihole-sync:latest
 
     environment:
       # MERAKI_API_KEY: "YOUR_MERAKI_API_KEY_HERE" # Option 1: Directly in compose (less secure)
@@ -17,15 +15,11 @@ services:
       # - TZ=America/New_York # Optional: Set timezone for cron jobs
 
     volumes:
-      # Mount your local config directory to /config in the container
-      # Create a config.ini in ./config on your host machine based on config/config.ini.sample
-      - ./config_prod:/config:ro # Mounts a 'config_prod' directory from host to '/config' read-only
-      # To store cron logs on the host (optional):
-      # - ./logs:/var/log:rw
+      # Mount a host directory to /app/logs in the container to persist logs.
+      # The user should create './meraki_sync_logs' on the host or change the path.
+      - ./meraki_sync_logs:/app/logs
 
-    # If you use an .env file, uncomment the line below
-    # env_file:
-    #   - .env
+    # env_file: .env # Docker Compose typically loads .env file by default if present in the same directory
 
     logging:
       driver: "json-file"
