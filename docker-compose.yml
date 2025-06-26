@@ -19,7 +19,8 @@ services:
       # The user should create './meraki_sync_logs' on the host or change the path.
       - ./meraki_sync_logs:/app/logs
 
-    # env_file: .env # Docker Compose typically loads .env file by default if present in the same directory
+    env_file:
+      - .env # Explicitly load .env file from the same directory
 
     logging:
       driver: "json-file"

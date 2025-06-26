@@ -137,9 +137,10 @@ This executes the script inside the running container, using its existing enviro
 ## Troubleshooting
 
 *   **Environment Variable Issues (e.g., "Missing mandatory environment variables"):**
-    *   Ensure your `.env` file is in the same directory as `docker-compose.yml`.
-    *   Verify all required variables (see table above) are present and correctly spelled in `.env`.
+    *   Ensure your `.env` file is in the same directory as `docker-compose.yml` and is named exactly `.env`.
+    *   Verify all required variables (see table above) are present and correctly spelled in your `.env` file with non-empty values where required (e.g., `HOSTNAME_SUFFIX` cannot be blank).
     *   If you updated `.env` after the container was started, you must rebuild and restart: `docker-compose down && docker-compose build && docker-compose up -d`.
+    *   The `docker-compose.yml` file explicitly includes `env_file: - .env`. If issues persist, ensure no other mechanism (like shell-exported variables of the same name with empty values) is overriding the `.env` file content.
 *   **Log File Issues:**
     *   If `./meraki_sync_logs` (or your custom host path) is not showing logs, check permissions on the host directory.
     *   Ensure the volume mount in `docker-compose.yml` is correct: `- ./meraki_sync_logs:/app/logs`.
