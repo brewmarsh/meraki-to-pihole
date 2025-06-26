@@ -24,8 +24,8 @@ COPY ./app /app
 COPY ./scripts/docker-entrypoint.sh /docker-entrypoint.sh
 RUN chmod +x /docker-entrypoint.sh
 
-# Create a directory for config and log files if needed by the script
-RUN mkdir -p /config /logs
+# Create a directory for log files if needed by the script (config dir no longer needed)
+RUN mkdir -p /app/logs
 
 # Default cron schedule (can be overridden by CRON_SCHEDULE env var)
 # Runs daily at 2:30 AM by default
