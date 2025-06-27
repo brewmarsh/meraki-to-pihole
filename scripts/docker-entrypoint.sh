@@ -70,7 +70,9 @@ else
   # Explicitly set PATH for the cron job environment. These are common paths.
   echo "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" > "${CRON_FILE_PATH}"
   # Removing 'root' user from the cron line. For /etc/cron.d files, this typically means the command runs as root.
-  echo "${CRON_SCHEDULE} ${CRON_JOB_SCRIPT_COMMAND} >> ${CRON_OUTPUT_LOG_FILE} 2>&1" >> "${CRON_FILE_PATH}"
+  # The command will now be the wrapper script.
+  CRON_WRAPPER_SCRIPT_PATH="/app/run_sync_for_cron.sh" # Path where the wrapper will be in the container
+  echo "${CRON_SCHEDULE} ${CRON_WRAPPER_SCRIPT_PATH}" >> "${CRON_FILE_PATH}" # Wrapper script handles its own logging to CRON_OUTPUT_LOG_FILE
   echo "" >> "${CRON_FILE_PATH}" # Ensure cron file ends with a newline
   chmod 0644 "${CRON_FILE_PATH}"
   # Apply the cron job. Some cron versions might not need crontab command if using /etc/cron.d/

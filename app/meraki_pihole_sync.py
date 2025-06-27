@@ -215,15 +215,52 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         network_name = network_detail.get("name", f"ID-{network_id}")
         logging.info(f"--- Processing network {network_idx + 1}/{len(networks_to_query_details)}: '{network_name}' (ID: {network_id}) ---")
 
+        mac_to_reserved_ip_map = {}
         try:
-            # SDK handles pagination if more than 1000 clients and total_pages is not -1 (or use perPage with total_pages)
-            # The `timespan` parameter in SDK is in seconds.
-            # The SDK's getNetworkClients already returns a list of client dicts.
+            # Attempt to get DHCP subnet configurations, which should include fixed IP assignments.
+            # This endpoint is typically for networks with an MX appliance.
+            # Using a more general approach: getNetworkApplianceDhcpSubnets
+            # This might return a list of subnets for the network.
+            # Each subnet object could have 'fixedIpAssignments' or 'reservedIpRanges'.
+            # The SDK documentation for getNetworkApplianceDhcpSubnets indicates it returns a list of subnet DHCP settings.
+            # Each item in this list can have a "fixedIpAssignments" key, which is a list of assignment objects.
+            # Each assignment object has "mac", "name", "ip".
+            logging.debug(f"Fetching DHCP subnet info for network {network_id} to find fixed IP assignments.")
+            # This call might fail if the network is not an Appliance network or has no DHCP settings.
+            # The SDK might return an empty list or raise an APIError (e.g., 404 if endpoint not applicable).
+            appliance_dhcp_subnets = []
+            try:
+                # Check if network is an appliance network first.
+                # This might be an over-optimization; let's try fetching directly and handle errors.
+                # network_info = dashboard.networks.getNetwork(network_id)
+                # if 'appliance' in network_info.get('productTypes', []):
+                appliance_dhcp_subnets = dashboard.appliance.getNetworkApplianceDhcpSubnets(network_id)
+                # else:
+                #    logging.info(f"Network {network_name} (ID: {network_id}) is not an Appliance network or does not have DHCP subnets configured via API. Skipping DHCP reservation check for it.")
+
+            except meraki.exceptions.APIError as e:
+                if e.status == 404 and "The requested URL was not found on the server." in str(e.message): # More specific check
+                    logging.info(f"No DHCP subnet/VLAN configuration found via API for network {network_name} (ID: {network_id}) (Endpoint not found - likely not an MX network or no DHCP configured). Will rely on client.fixedIp if available.")
+                else:
+                    logging.warning(f"Could not retrieve DHCP subnet/VLANs info for network {network_name} (ID: {network_id}) to check reservations: {e}. Will rely on client.fixedIp if available.")
+
+            if appliance_dhcp_subnets: # Could be a list of subnets/VLANs
+                for subnet_info in appliance_dhcp_subnets: # Iterate through each subnet/VLAN's DHCP settings
+                    if subnet_info and 'fixedIpAssignments' in subnet_info:
+                        for mac, assignment_details in subnet_info['fixedIpAssignments'].items(): # It's a dict keyed by MAC
+                            # assignment_details is like: {"ip": "192.168.1.10", "name": "mydevice"}
+                            if mac and assignment_details.get('ip'):
+                                mac_to_reserved_ip_map[mac.lower()] = assignment_details['ip']
+                                logging.debug(f"Found configured DHCP reservation in network {network_id}: MAC {mac.lower()} -> IP {assignment_details['ip']} (Name: {assignment_details.get('name', 'N/A')})")
+                logging.info(f"Found {len(mac_to_reserved_ip_map)} DHCP fixed IP reservations in network {network_name} (ID: {network_id}).")
+
+
+            # Fetch clients for the network
             clients_in_network = dashboard.networks.getNetworkClients(networkId=network_id, timespan=client_timespan, perPage=1000, total_pages='all')
 
             if clients_in_network:
-                logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}) (before filtering for fixed IPs).")
-                logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}' for fixed IPs...")
+                logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}).")
+                logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}'...")
                 for client in clients_in_network:
                     # SDK returns client objects as dictionaries.
                     # Attributes to check: 'description', 'dhcpHostname', 'ip', 'id', and 'fixedIp' (for reserved IP) or 'ip' for current.
@@ -237,38 +274,64 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
 
                     client_name_desc = client.get('description')
                     client_name_dhcp = client.get('dhcpHostname')
-                    client_name = client_name_desc or client_name_dhcp # Prioritize description if available
+                    client_name = client_name_desc or client_name_dhcp
 
                     current_ip = client.get('ip')
-                    client_id = client.get('id') # Meraki's own ID for the client
-                    configured_fixed_ip = client.get('fixedIp') # This is the key field from the SDK for fixed IP
+                    client_id = client.get('id')
+                    client_mac = client.get('mac')
+
+                    # Try to get configured fixed IP from DHCP reservations map first
+                    configured_fixed_ip = None
+                    if client_mac:
+                        configured_fixed_ip = mac_to_reserved_ip_map.get(client_mac.lower())
+                        if configured_fixed_ip:
+                            logging.debug(f"Client '{client_name}' (MAC: {client_mac.lower()}) found in DHCP reservations with IP {configured_fixed_ip}.")
+
+                    # Fallback or alternative: check client.get('fixedIp') if not found in DHCP reservations
+                    # This field might be populated for non-DHCP fixed IP assignments or by different Meraki device types.
+                    if not configured_fixed_ip and client.get('fixedIp'):
+                        configured_fixed_ip_from_client_obj = client.get('fixedIp')
+                        logging.debug(f"Client '{client_name}' (MAC: {client_mac.lower()}) not in DHCP reservations map, but client object has fixedIp: {configured_fixed_ip_from_client_obj}. Using this.")
+                        configured_fixed_ip = configured_fixed_ip_from_client_obj
+                        # No, if it's not in the authoritative reservation list, we should not use client.fixedIp as it was unreliable.
+                        # We only trust the DHCP reservation list now.
+                        # However, if the reservation list is empty (e.g. non-MX network), client.fixedIp is our only hope.
+                        # Let's refine: if mac_to_reserved_ip_map is populated, it's the source of truth.
+                        # If mac_to_reserved_ip_map is empty (e.g. API call failed or no reservations), then we can try client.get('fixedIp') as a fallback.
+                        if mac_to_reserved_ip_map: # If we have an authoritative list, ignore client.fixedIp
+                             configured_fixed_ip = None # Ensure we only use the map if it exists
+                        # If map is empty, then client.get('fixedIp') is the only info we might have.
+                        # This logic is getting complex. Let's simplify:
+                        # Priority 1: DHCP reservations.
+                        # Priority 2 (fallback if no DHCP reservations found for the *entire network*): client.get('fixedIp').
+
+                    if not configured_fixed_ip and not mac_to_reserved_ip_map: # If no DHCP reservations were found for the network at all
+                        configured_fixed_ip = client.get('fixedIp') # Fallback to the client's reported fixedIp
+                        if configured_fixed_ip:
+                             logging.debug(f"No DHCP reservations found for network {network_name}. Client '{client_name}' (MAC: {client_mac.lower()}) has fixedIp attribute: {configured_fixed_ip}. Using this as potential configured IP.")
+
 
                     if client_name and current_ip and client_id:
                         if configured_fixed_ip and configured_fixed_ip == current_ip:
-                            # This client has a fixed IP configured AND is currently using it.
                             all_clients_map[client_id] = {
-                                "name": client_name,
-                                "ip": current_ip, # This is the IP to sync
-                                "network_id": network_id,
-                                "network_name": network_name,
+                                "name": client_name, "ip": current_ip,
+                                "network_id": network_id, "network_name": network_name,
                                 "meraki_client_id": client_id
                             }
-                            logging.info(f"Relevant client: '{client_name}' (IP: {current_ip}, Meraki ID: {client_id}) in network '{network_name}' has matching fixed IP. Will be processed.")
-                        elif configured_fixed_ip: # Fixed IP is configured, but different from current IP
-                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' has a configured fixed IP ({configured_fixed_ip}) but current IP ({current_ip}) differs. Skipping.")
-                        else: # No fixed IP configured for this client
-                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' does not have a fixed IP assignment (fixedIp field is '{configured_fixed_ip}'). Skipping.")
+                            logging.info(f"Relevant client: '{client_name}' (IP: {current_ip}, Meraki ID: {client_id}) in network '{network_name}'. Configured Fixed IP ({configured_fixed_ip}) matches current IP. Will be processed.")
+                        elif configured_fixed_ip:
+                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' has configured Fixed IP ({configured_fixed_ip}) but current IP ({current_ip}) differs. Skipping.")
+                        else:
+                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' does not have a usable Fixed IP assignment (Configured: '{configured_fixed_ip}', MAC in map: {bool(client_mac and client_mac.lower() in mac_to_reserved_ip_map)}). Skipping.")
                     else:
-                        logging.debug(f"Skipping client (Meraki ID: {client.get('id')}, MAC: {client.get('mac')}) in network '{network_name}' due to missing name, current IP, or client ID prior to fixed IP check.")
+                        logging.debug(f"Skipping client (Meraki ID: {client.get('id')}, MAC: {client.get('mac')}) in network '{network_name}' due to missing name, current IP, or client ID.")
             else:
                 logging.info(f"No clients reported by SDK for network {network_name} (ID: {network_id}).")
 
         except meraki.exceptions.APIError as e:
-            logging.error(f"Meraki API error while fetching clients for network {network_name} (ID: {network_id}): {e}")
-            # Continue to the next network
+            logging.error(f"Meraki API error during processing of network {network_name} (ID: {network_id}): {e}")
         except Exception as e:
             logging.error(f"An unexpected error occurred while processing network {network_name} (ID: {network_id}): {e}", exc_info=True)
-
 
         logging.info(f"--- Finished processing network {network_idx + 1}/{len(networks_to_query_details)}: {network_name} (ID: {network_id}) ---")
 
