@@ -67,7 +67,9 @@ else
   # The Python script itself handles detailed logging, including timestamps.
   # The user 'root' is typically available and has permissions.
   # No complex subshells like (echo ...; command; echo ...) to reduce shell interpretation issues.
-  echo "${CRON_SCHEDULE} root ${CRON_JOB_SCRIPT_COMMAND} >> ${CRON_OUTPUT_LOG_FILE} 2>&1" > "${CRON_FILE_PATH}"
+  # Explicitly set PATH for the cron job environment. These are common paths.
+  echo "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" > "${CRON_FILE_PATH}"
+  echo "${CRON_SCHEDULE} root ${CRON_JOB_SCRIPT_COMMAND} >> ${CRON_OUTPUT_LOG_FILE} 2>&1" >> "${CRON_FILE_PATH}"
   echo "" >> "${CRON_FILE_PATH}" # Ensure cron file ends with a newline
   chmod 0644 "${CRON_FILE_PATH}"
   # Apply the cron job. Some cron versions might not need crontab command if using /etc/cron.d/
