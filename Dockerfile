@@ -45,4 +45,5 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Default command for the entrypoint (e.g. the script to run)
 # This will be passed to the entrypoint script
-CMD ["python", "meraki_pihole_sync.py", "--config", "/config/config.ini"]
+# Changed to python3 and removed obsolete --config argument
+CMD ["python3", "meraki_pihole_sync.py"]
