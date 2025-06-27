@@ -23,7 +23,8 @@ The script runs once on container startup and then on a configurable cron schedu
 ```
 .
 ├── app/
-│   └── meraki_pihole_sync.py  # Main Python script
+│   ├── meraki_pihole_sync.py  # Main Python script
+│   └── VERSION.txt            # Contains the current application version
 ├── scripts/
 │   └── docker-entrypoint.sh   # Docker entrypoint script for cron setup & initial run
 ├── .env.example               # Example environment file for docker-compose
@@ -90,7 +91,17 @@ This application is designed to be run using Docker and Docker Compose.
     docker-compose build
     docker-compose up -d
     ```
-    This builds the image and starts the container. The sync script will run once immediately, then follow the cron schedule.
+    This builds the image (passing default build arguments specified in `docker-compose.yml`) and starts the container. The sync script will run once immediately, then follow the cron schedule. The script will log its version and commit SHA (if provided during build) on startup.
+
+    To pass specific version information during the build (e.g., in a CI environment or scripted build):
+    ```bash
+    # Example: Read version from app/VERSION.txt and get current git commit
+    APP_VERSION=$(cat app/VERSION.txt)
+    COMMIT_SHA=$(git rev-parse --short HEAD)
+
+    docker-compose build --build-arg APP_VERSION=${APP_VERSION} --build-arg COMMIT_SHA=${COMMIT_SHA}
+    docker-compose up -d
+    ```
 
 ## Usage
 
@@ -137,9 +148,10 @@ This executes the script inside the running container, using its existing enviro
 ## Troubleshooting
 
 *   **Environment Variable Issues (e.g., "Missing mandatory environment variables"):**
-    *   Ensure your `.env` file is in the same directory as `docker-compose.yml`.
-    *   Verify all required variables (see table above) are present and correctly spelled in `.env`.
+    *   Ensure your `.env` file is in the same directory as `docker-compose.yml` and is named exactly `.env`.
+    *   Verify all required variables (see table above) are present and correctly spelled in your `.env` file with non-empty values where required (e.g., `HOSTNAME_SUFFIX` cannot be blank).
     *   If you updated `.env` after the container was started, you must rebuild and restart: `docker-compose down && docker-compose build && docker-compose up -d`.
+    *   The `docker-compose.yml` file explicitly includes `env_file: - .env`. If issues persist, ensure no other mechanism (like shell-exported variables of the same name with empty values) is overriding the `.env` file content.
 *   **Log File Issues:**
     *   If `./meraki_sync_logs` (or your custom host path) is not showing logs, check permissions on the host directory.
     *   Ensure the volume mount in `docker-compose.yml` is correct: `- ./meraki_sync_logs:/app/logs`.
@@ -156,6 +168,38 @@ This executes the script inside the running container, using its existing enviro
     *   Check `/app/logs/cron_output.log` for output from scheduled runs.
     *   Ensure `TZ` is set correctly if jobs run at unexpected UTC times.
     *   Exec into the container (`docker-compose exec meraki-pihole-sync bash`) and check `crontab -l`.
+
+## Versioning
+
+This project uses a manual versioning approach for simplicity, with infrastructure to support build-time version and commit tracking.
+
+*   **`app/VERSION.txt`**: This file, located in the `app` directory, should contain the current semantic version of the application (e.g., `0.1.0`). It should be updated manually when a new version is being prepared.
+*   **Build Arguments:** The `Dockerfile` accepts two build arguments:
+    *   `APP_VERSION`: The application version (intended to be sourced from `app/VERSION.txt`).
+    *   `COMMIT_SHA`: The short Git commit SHA.
+*   **Environment Variables:** These build arguments are baked into the Docker image as environment variables `APP_VERSION` and `COMMIT_SHA`.
+*   **Logging:** The Python script reads these environment variables on startup and includes them in its initial log message, e.g., "Starting Meraki Pi-hole Sync Script - Version: 0.1.0, Commit: abc1234".
+*   **`docker-compose.yml`:** The `docker-compose.yml` file includes an `args` section under `build` to demonstrate how these can be passed. For local development, it uses placeholder values.
+    ```yaml
+    # In docker-compose.yml
+    build:
+      context: .
+      args:
+        - APP_VERSION=0.1.0_manual # Should match app/VERSION.txt
+        - COMMIT_SHA=dev_build     # 'dev_build' or similar for local
+    ```
+*   **Building with Specific Version Info:**
+    When creating an official build (e.g., via a script or CI/CD pipeline), you should pass these arguments dynamically:
+    ```bash
+    APP_VERSION=$(cat app/VERSION.txt)
+    COMMIT_SHA=$(git rev-parse --short HEAD) # Gets the current short commit SHA
+    docker-compose build \
+      --build-arg APP_VERSION=${APP_VERSION} \
+      --build-arg COMMIT_SHA=${COMMIT_SHA}
+    # Followed by docker-compose up -d
+    ```
+
+This setup allows the running application and its logs to be clearly associated with a specific version and code commit, aiding in debugging and release management. Automation of `app/VERSION.txt` updates and build argument injection can be achieved with CI/CD pipelines.
 
 ## Contributing
 

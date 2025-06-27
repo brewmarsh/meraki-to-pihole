@@ -1,6 +1,13 @@
 services:
   meraki-pihole-sync:
-    build: .
+    build:
+      context: .
+      args:
+        # These arguments are passed to the Dockerfile during image build.
+        # For local development, you might set APP_VERSION from app/VERSION.txt manually or via a script.
+        # COMMIT_SHA can be set via `git rev-parse --short HEAD` in a build script.
+        - APP_VERSION=0.1.0_manual # Example: manually set or sync with app/VERSION.txt
+        - COMMIT_SHA=dev_build     # Example: for local dev builds
     container_name: meraki-pihole-sync # Can be same as service name
     image: local/meraki-pihole-sync:latest # Explicit local image name
     restart: unless-stopped
@@ -19,7 +26,8 @@ services:
       # The user should create './meraki_sync_logs' on the host or change the path.
       - ./meraki_sync_logs:/app/logs
 
-    # env_file: .env # Docker Compose typically loads .env file by default if present in the same directory
+    env_file:
+      - .env # Explicitly load .env file from the same directory
 
     logging:
       driver: "json-file"

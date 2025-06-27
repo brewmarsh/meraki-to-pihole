@@ -1,9 +1,15 @@
 # Dockerfile for Meraki Pi-hole Sync
 
+# Build-time arguments for versioning
+ARG APP_VERSION=unknown
+ARG COMMIT_SHA=unknown
+
 # Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
 # Set environment variables
+ENV APP_VERSION=${APP_VERSION}
+ENV COMMIT_SHA=${COMMIT_SHA}
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
