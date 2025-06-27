@@ -232,38 +232,43 @@ def get_all_relevant_meraki_clients(api_key, config):
         if organization_networks:
             networks_to_query = organization_networks
         else:
-            logging.warning(f"Could not fetch networks for organization {org_id}. Cannot proceed.")
-            return {} # Return empty dict
+            logging.warning(f"Could not fetch networks for organization {org_id} or no networks found. No clients will be fetched.")
+            return []
     else:
-        # If specific network IDs are given, we might want to fetch their names for logging/domain construction
-        # For now, just use the IDs.
-        # We create a list of dicts similar to what get_organization_networks would return for structure.
-        logging.info(f"Fetching data for specified network IDs: {specified_network_ids}")
-        # To get network names, we'd ideally call get_organization_networks and filter.
-        # Or, call getNetwork for each ID. For simplicity now, we'll assume IDs are enough.
-        # If we need network names later for DNS entry construction (e.g. client.networkname.local),
-        # we'll need to adjust this.
-        # The current config sample for hostname_suffix is just ".local", not network-dependent.
+        # Logic for specified_network_ids
+        logging.info(f"Specific network IDs provided: {specified_network_ids}. Validating against organization networks.")
         organization_networks = get_organization_networks(api_key, org_id)
         if not organization_networks:
-            logging.warning(f"Could not fetch networks for organization {org_id} to validate specified IDs.")
-            # Fallback: try to use specified IDs directly
-            networks_to_query = [{"id": nid, "name": "Unknown (specified by ID)"} for nid in specified_network_ids]
+            logging.warning(f"Could not fetch networks for organization {org_id} to validate specified IDs. Using specified IDs directly if any (names will be unknown).")
+            networks_to_query = [{"id": nid, "name": f"Unknown (specified ID: {nid})"} for nid in specified_network_ids]
         else:
             name_map = {net['id']: net['name'] for net in organization_networks}
+            valid_networks_to_query = []
             for nid in specified_network_ids:
                 if nid in name_map:
-                    networks_to_query.append({"id": nid, "name": name_map[nid]})
+                    valid_networks_to_query.append({"id": nid, "name": name_map[nid]})
                 else:
-                    logging.warning(f"Specified network ID {nid} not found in organization {org_id}. Skipping.")
+                    logging.warning(f"Specified network ID {nid} not found in organization {org_id}. Skipping this ID.")
+            networks_to_query = valid_networks_to_query
+            if not networks_to_query:
+                 logging.warning(f"None of the specified network IDs {specified_network_ids} were found or validated for org {org_id}. No clients will be fetched.")
+                 return []
 
+    if not networks_to_query:
+        logging.info("No networks to query after initial filtering. Exiting client search.")
+        return []
 
-    for network in networks_to_query:
+    logging.debug(f"Total networks to query: {len(networks_to_query)}. Network list: {networks_to_query}")
+
+    for network_idx, network in enumerate(networks_to_query):
         network_id = network["id"]
         network_name = network.get("name", "UnknownNetwork") # Get network name for context
-        logging.info(f"Processing network: {network_name} (ID: {network_id})")
+        logging.info(f"Starting processing for network {network_idx + 1}/{len(networks_to_query)}: {network_name} (ID: {network_id})")
+
         clients_in_network = get_network_clients(api_key, network_id)
+
         if clients_in_network:
+            logging.debug(f"Found {len(clients_in_network)} clients in network {network_name} (ID: {network_id}) from API call.")
             for client in clients_in_network:
                 # A client is relevant if it has an IP and a description (hostname)
                 # 'description' is often manually set or is the device name.
@@ -303,7 +308,8 @@ def get_all_relevant_meraki_clients(api_key, config):
                 else:
                     logging.debug(f"Skipping client (ID: {client.get('id')}, MAC: {client.get('mac')}) due to missing name, current IP, or client ID in network {network_name}.")
         else:
-            logging.info(f"No clients found or error fetching clients for network {network_name} (ID: {network_id}).")
+            logging.info(f"No clients found via API or error fetching clients for network {network_name} (ID: {network_id}).")
+        logging.info(f"Finished processing for network {network_idx + 1}/{len(networks_to_query)}: {network_name} (ID: {network_id})")
 
     return list(all_clients_map.values())
 
