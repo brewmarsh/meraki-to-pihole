@@ -219,46 +219,53 @@ def get_network_clients(api_key, network_id, timespan=86400): # Default timespan
 def get_all_relevant_meraki_clients(api_key, config):
     """
     Fetches all clients from specified (or all) Meraki networks
-    that have a description and an IP address.
+    that have a description and an IP address and a matching fixedIpAssignment.
     """
     org_id = config["meraki_org_id"]
     specified_network_ids = config["meraki_network_ids"]
-    all_clients_map = {} # Using a map to ensure unique client entries if IDs overlap or for future structure
+    logging.debug(f"Entering get_all_relevant_meraki_clients. Org ID: {org_id}. Specified Network IDs: '{specified_network_ids}'")
+    all_clients_map = {}
 
     networks_to_query = []
     if not specified_network_ids:
-        logging.info(f"No specific network IDs provided, fetching all networks for org {org_id}.")
+        logging.info(f"No specific Meraki network IDs provided in {ENV_MERAKI_NETWORK_IDS}. Attempting to fetch all networks for organization ID: {org_id}.")
         organization_networks = get_organization_networks(api_key, org_id)
-        if organization_networks:
+        if organization_networks: # Could be an empty list if org has no networks
             networks_to_query = organization_networks
-        else:
-            logging.warning(f"Could not fetch networks for organization {org_id} or no networks found. No clients will be fetched.")
+            if not networks_to_query: # Explicitly check if empty list returned
+                 logging.info(f"Organization {org_id} has no networks according to API. No clients will be fetched.")
+                 return []
+        else: # API call failed or returned None
+            logging.warning(f"Could not fetch networks for organization {org_id} or no networks were found. No clients will be fetched.")
             return []
     else:
         # Logic for specified_network_ids
-        logging.info(f"Specific network IDs provided: {specified_network_ids}. Validating against organization networks.")
-        organization_networks = get_organization_networks(api_key, org_id)
+        logging.info(f"Specific Meraki network IDs provided: {specified_network_ids}. Validating and fetching details for these networks.")
+        organization_networks = get_organization_networks(api_key, org_id) # Still useful to get all names once
         if not organization_networks:
-            logging.warning(f"Could not fetch networks for organization {org_id} to validate specified IDs. Using specified IDs directly if any (names will be unknown).")
-            networks_to_query = [{"id": nid, "name": f"Unknown (specified ID: {nid})"} for nid in specified_network_ids]
+            logging.warning(f"Could not fetch any networks for organization {org_id} to validate specified IDs. Proceeding with specified IDs directly, but network names will be 'Unknown'.")
+            # Fallback: use specified IDs directly if org network list call fails
+            networks_to_query = [{"id": nid, "name": f"Unknown (ID: {nid})"} for nid in specified_network_ids]
         else:
             name_map = {net['id']: net['name'] for net in organization_networks}
             valid_networks_to_query = []
-            for nid in specified_network_ids:
-                if nid in name_map:
-                    valid_networks_to_query.append({"id": nid, "name": name_map[nid]})
+            for nid_spec in specified_network_ids:
+                if nid_spec in name_map:
+                    valid_networks_to_query.append({"id": nid_spec, "name": name_map[nid_spec]})
                 else:
-                    logging.warning(f"Specified network ID {nid} not found in organization {org_id}. Skipping this ID.")
+                    logging.warning(f"Specified network ID {nid_spec} not found in organization {org_id}. It will be skipped.")
             networks_to_query = valid_networks_to_query
-            if not networks_to_query:
-                 logging.warning(f"None of the specified network IDs {specified_network_ids} were found or validated for org {org_id}. No clients will be fetched.")
+            if not networks_to_query: # All specified IDs were invalid or not found
+                 logging.warning(f"None of the specified network IDs {specified_network_ids} were found in organization {org_id}. No clients will be fetched.")
                  return []
 
-    if not networks_to_query:
-        logging.info("No networks to query after initial filtering. Exiting client search.")
+    # This log is crucial for diagnosing iteration issues.
+    if not networks_to_query: # Should be caught by earlier checks, but as a safeguard
+        logging.info("No networks to query after initial determination. Exiting client search.")
         return []
+    else:
+        logging.info(f"Total networks to query: {len(networks_to_query)}. Network IDs: {[n['id'] for n in networks_to_query]}")
 
-    logging.debug(f"Total networks to query: {len(networks_to_query)}. Network list: {networks_to_query}")
 
     for network_idx, network in enumerate(networks_to_query):
         network_id = network["id"]
