@@ -2,12 +2,16 @@
 set -e
 
 # APP_COMMAND is passed from Dockerfile CMD, e.g., ["python", "meraki_pihole_sync.py"]
+# APP_COMMAND is passed from Dockerfile CMD, e.g., ["python", "meraki_pihole_sync.py"]
 APP_COMMAND=("$@")
 
 LOG_DIR="/app/logs"
 APP_LOG_FILE="${LOG_DIR}/sync.log" # Python script logs here (via FileHandler) and to stdout
 CRON_OUTPUT_LOG_FILE="${LOG_DIR}/cron_output.log" # Cron's stdout/stderr for the job goes here
+APP_LOG_FILE="${LOG_DIR}/sync.log" # Python script logs here (via FileHandler) and to stdout
+CRON_OUTPUT_LOG_FILE="${LOG_DIR}/cron_output.log" # Cron's stdout/stderr for the job goes here
 
+# Ensure log directory and initial log files exist. Dockerfile should also create LOG_DIR.
 # Ensure log directory and initial log files exist. Dockerfile should also create LOG_DIR.
 mkdir -p "${LOG_DIR}"
 touch "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}"

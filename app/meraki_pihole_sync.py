@@ -104,6 +104,8 @@ def _meraki_api_request(api_key, method, endpoint, params=None, data=None, attem
         "X-Cisco-Meraki-API-Key": api_key,
         "Content-Type": "application/json",
         "Accept": "application/json"
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
     url = f"{MERAKI_API_BASE_URL}{endpoint}"
     try:
@@ -128,6 +130,7 @@ def _meraki_api_request(api_key, method, endpoint, params=None, data=None, attem
             error_message += f" Status: {e.response.status_code if e.response else 'N/A'}. Response: {e.response.text if e.response else 'No response text'}"
         logging.error(error_message)
     except requests.exceptions.RequestException as e:
+        logging.error(f"Meraki API request failed for {method} {url}: {e}")
         logging.error(f"Meraki API request failed for {method} {url}: {e}")
     return None
 
@@ -192,6 +195,8 @@ def get_all_relevant_meraki_clients(api_key, config):
                  logging.warning(f"None of the specified network IDs {specified_network_ids} were found/valid in organization {org_id}. No clients will be fetched.")
                  return []
 
+    if not networks_to_query:
+        logging.info("No networks to query after initial determination (e.g., all specified IDs were invalid or org has no networks). Exiting client search.")
     if not networks_to_query:
         logging.info("No networks to query after initial determination (e.g., all specified IDs were invalid or org has no networks). Exiting client search.")
         return []
@@ -280,6 +285,7 @@ def _pihole_api_request(pihole_url, api_key, params):
         elif response.ok:
              return {"success": True, "message": "Action successful (empty response)."}
         else:
+        else:
             return {"success": False, "message": f"Request failed with status {response.status_code} (empty response)."}
     except requests.exceptions.HTTPError as e:
         logging.error(f"Pi-hole API HTTP error: {e} - {e.response.text if e.response else 'No response text'}")
@@ -345,6 +351,7 @@ def add_or_update_dns_record_in_pihole(pihole_url, api_key, domain, new_ip, exis
 
     if domain_cleaned in existing_records and new_ip_cleaned in existing_records[domain_cleaned]:
         logging.info(f"DNS record {domain_cleaned} -> {new_ip_cleaned} already exists in Pi-hole. No action needed.")
+        return True
         return True
 
     if domain_cleaned in existing_records:
