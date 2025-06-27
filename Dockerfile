@@ -20,11 +20,12 @@ RUN apt-get update && apt-get install -y cron libffi-dev procps && rm -rf /var/l
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt # meraki SDK will be installed here
 
 # Create directory for the application code
 WORKDIR /app
 COPY ./app /app
+RUN chmod +x /app/meraki_pihole_sync.py # Make python script executable
 
 # Copy the entrypoint script and make it executable
 COPY ./scripts/docker-entrypoint.sh /docker-entrypoint.sh
@@ -45,4 +46,5 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Default command for the entrypoint (e.g. the script to run)
 # This will be passed to the entrypoint script
-CMD ["python", "meraki_pihole_sync.py", "--config", "/config/config.ini"]
+# Changed to python3 and removed obsolete --config argument
+CMD ["python3", "meraki_pihole_sync.py"]
