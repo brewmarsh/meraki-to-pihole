@@ -104,8 +104,6 @@ def _meraki_api_request(api_key, method, endpoint, params=None, data=None, attem
         "X-Cisco-Meraki-API-Key": api_key,
         "Content-Type": "application/json",
         "Accept": "application/json"
-        "Content-Type": "application/json",
-        "Accept": "application/json"
     }
     url = f"{MERAKI_API_BASE_URL}{endpoint}"
     try:
@@ -285,7 +283,6 @@ def _pihole_api_request(pihole_url, api_key, params):
         elif response.ok:
              return {"success": True, "message": "Action successful (empty response)."}
         else:
-        else:
             return {"success": False, "message": f"Request failed with status {response.status_code} (empty response)."}
     except requests.exceptions.HTTPError as e:
         logging.error(f"Pi-hole API HTTP error: {e} - {e.response.text if e.response else 'No response text'}")
@@ -369,6 +366,31 @@ def add_or_update_dns_record_in_pihole(pihole_url, api_key, domain, new_ip, exis
 
     return add_dns_record_to_pihole(pihole_url, api_key, domain_cleaned, new_ip_cleaned)
 
+
+def main():
+    config = load_app_config_from_env()
+    api_key = config["meraki_api_key"]
+    pihole_url = config["pihole_api_url"]
+    pihole_api_key = config["pihole_api_key"]
+    hostname_suffix = config["hostname_suffix"]
+
+    # Fetch relevant Meraki clients
+    clients = get_all_relevant_meraki_clients(api_key, config)
+    if not clients:
+        logging.info("No relevant Meraki clients found. Exiting.")
+        return
+
+    # Fetch existing Pi-hole DNS records
+    existing_records = get_pihole_custom_dns_records(pihole_url, pihole_api_key)
+    if existing_records is None:
+        logging.error("Could not fetch existing Pi-hole DNS records. Exiting.")
+        return
+
+    # Sync each client to Pi-hole
+    for client in clients:
+        domain = f"{client['name']}{hostname_suffix}".lower().replace(" ", "-")
+        ip = client["ip"]
+        add_or_update_dns_record_in_pihole(pihole_url, pihole_api_key, domain, ip, existing_records)
 
 if __name__ == "__main__":
     main()
