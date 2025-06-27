@@ -537,6 +537,31 @@ def main():
     logging.info(f"--- Sync process complete ---")
 
 
+def main():
+    config = load_app_config_from_env()
+    api_key = config["meraki_api_key"]
+    pihole_url = config["pihole_api_url"]
+    pihole_api_key = config["pihole_api_key"]
+    hostname_suffix = config["hostname_suffix"]
+
+    # Fetch relevant Meraki clients
+    clients = get_all_relevant_meraki_clients(api_key, config)
+    if not clients:
+        logging.info("No relevant Meraki clients found. Exiting.")
+        return
+
+    # Fetch existing Pi-hole DNS records
+    existing_records = get_pihole_custom_dns_records(pihole_url, pihole_api_key)
+    if existing_records is None:
+        logging.error("Could not fetch existing Pi-hole DNS records. Exiting.")
+        return
+
+    # Sync each client to Pi-hole
+    for client in clients:
+        domain = f"{client['name']}{hostname_suffix}".lower().replace(" ", "-")
+        ip = client["ip"]
+        add_or_update_dns_record_in_pihole(pihole_url, pihole_api_key, domain, ip, existing_records)
+
 if __name__ == "__main__":
     # This is the main entry point of the script
     try:
