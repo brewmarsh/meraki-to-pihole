@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create directory for the application code
 WORKDIR /app
 COPY ./app /app
+RUN chmod +x /app/meraki_pihole_sync.py # Make python script executable
 
 # Copy the entrypoint script and make it executable
 COPY ./scripts/docker-entrypoint.sh /docker-entrypoint.sh

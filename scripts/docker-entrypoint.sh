@@ -49,18 +49,25 @@ else
   PYTHON_SCRIPT_NAME="${APP_COMMAND[1]}" # e.g., meraki_pihole_sync.py
 
   # Construct the command that cron will run.
-  # It will execute the python3 script directly. All config is via ENV vars.
+  # It will execute the python3 script directly (now that it's executable and has a shebang)
+  # or via the explicit python3 path.
+  # Using the direct script path relies on the shebang working in cron's environment.
+  # Using PYTHON3_EXEC_PATH is more explicit. Let's stick to explicit for now.
   CRON_JOB_SCRIPT_COMMAND="${PYTHON3_EXEC_PATH} /app/${PYTHON_SCRIPT_NAME}"
-
-  # Redirect all output (stdout and stderr) from the cron job to the cron log file.
-  # Prepend with date for better log readability.
-  CRON_JOB_FULL_COMMAND="(echo 'Cron job starting at' \$(date); ${CRON_JOB_SCRIPT_COMMAND}; echo 'Cron job finished at' \$(date)) >> ${CRON_OUTPUT_LOG_FILE} 2>&1"
 
   # Create the cron file. Cron requires a newline at the end of the file.
   CRON_FILE_PATH="/etc/cron.d/meraki-pihole-sync-cron"
-  echo "Entrypoint: Cron job definition will be: ${CRON_SCHEDULE} root ${CRON_JOB_FULL_COMMAND}"
-  # Using bash -c to ensure the full command including redirection is handled correctly by cron's sh.
-  echo "${CRON_SCHEDULE} root bash -c \"${CRON_JOB_FULL_COMMAND}\"" > "${CRON_FILE_PATH}"
+
+  # Remove old cron file if it exists, to ensure no stale entries from previous versions or failed runs
+  rm -f "${CRON_FILE_PATH}"
+  echo "Entrypoint: Removed old cron file (if any) at ${CRON_FILE_PATH}."
+
+  echo "Entrypoint: Writing new cron job definition to ${CRON_FILE_PATH}"
+  # Simplified cron command. Output redirection handles basic logging of execution.
+  # The Python script itself handles detailed logging, including timestamps.
+  # The user 'root' is typically available and has permissions.
+  # No complex subshells like (echo ...; command; echo ...) to reduce shell interpretation issues.
+  echo "${CRON_SCHEDULE} root ${CRON_JOB_SCRIPT_COMMAND} >> ${CRON_OUTPUT_LOG_FILE} 2>&1" > "${CRON_FILE_PATH}"
   echo "" >> "${CRON_FILE_PATH}" # Ensure cron file ends with a newline
   chmod 0644 "${CRON_FILE_PATH}"
   # Apply the cron job. Some cron versions might not need crontab command if using /etc/cron.d/

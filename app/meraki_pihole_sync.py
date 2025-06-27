@@ -1,3 +1,4 @@
+#!/usr/local/bin/python3
 # Python script to sync Meraki client IPs to Pi-hole
 """
 Meraki Pi-hole DNS Sync
@@ -483,15 +484,21 @@ def main():
     if not meraki_clients:
         # This means no clients with fixed IPs were found across ALL processed networks.
         # Or, network fetching itself failed. get_all_relevant_meraki_clients would have logged details.
-        logging.info("No relevant Meraki clients (with fixed IP assignments) found after checking all configured/discovered networks, or network fetching failed. No sync to Pi-hole will be performed for new entries.")
+        logging.info("No relevant Meraki clients (with fixed IP assignments) were found after checking all configured/discovered networks, or network/client fetching failed.")
+
+        # Check current log level. logging.getLogger().getEffectiveLevel() gives the numeric level.
+        # logging.DEBUG is 10, logging.INFO is 20.
+        if logging.getLogger().getEffectiveLevel() > logging.DEBUG:
+            logging.info(f"Consider setting LOG_LEVEL=DEBUG in your .env file and restarting to get detailed client processing information if you expected clients to be found.")
+
+        logging.info("No new DNS entries will be synced to Pi-hole.")
         # Potentially, one might want to proceed to cleanup old entries from Pi-hole even if no new Meraki clients are found.
         # For now, the script exits, matching previous behavior. If cleanup is desired, this logic would change.
-        # Consider if existing_records should be fetched and cleanup performed regardless.
-        # For this iteration, keeping it simple: no new clients = no changes to Pi-hole.
-        logging.info("--- Sync process complete (no clients to sync) ---")
+        # For this iteration, keeping it simple: no new clients = no changes to Pi-hole based on Meraki data.
+        logging.info("--- Sync process complete (no Meraki clients to sync to Pi-hole) ---")
         return
 
-    logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process.")
+    logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process for Pi-hole sync.")
 
     # Fetch existing Pi-hole DNS records to compare against
     # This is now a cache that add_or_update_dns_record_in_pihole will modify.
@@ -535,33 +542,6 @@ def main():
         logging.warning(f"Failed to sync {failed_syncs} client(s). Check logs above for details.")
     logging.info(f"Total Meraki clients processed: {len(meraki_clients)}")
     logging.info(f"--- Sync process complete ---")
-
-
-def main():
-    config = load_app_config_from_env()
-    api_key = config["meraki_api_key"]
-    pihole_url = config["pihole_api_url"]
-    pihole_api_key = config["pihole_api_key"]
-    hostname_suffix = config["hostname_suffix"]
-
-    # Fetch relevant Meraki clients
-    clients = get_all_relevant_meraki_clients(api_key, config)
-    if not clients:
-        logging.info("No relevant Meraki clients found. Exiting.")
-        return
-
-    # Fetch existing Pi-hole DNS records
-    existing_records = get_pihole_custom_dns_records(pihole_url, pihole_api_key)
-    if existing_records is None:
-        logging.error("Could not fetch existing Pi-hole DNS records. Exiting.")
-        return
-
-    # Sync each client to Pi-hole
-    for client in clients:
-        domain = f"{client['name']}{hostname_suffix}".lower().replace(" ", "-")
-        ip = client["ip"]
-        add_or_update_dns_record_in_pihole(pihole_url, pihole_api_key, domain, ip, existing_records)
-
 if __name__ == "__main__":
     # This is the main entry point of the script
     try:

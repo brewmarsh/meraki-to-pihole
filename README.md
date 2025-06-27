@@ -150,12 +150,18 @@ This executes the script inside the running container using `python3`, leveragin
 ## Troubleshooting
 
 *   **"python: not found" or "python3: not found" in cron logs (`cron_output.log`):**
-    *   This should be resolved with the latest updates to `Dockerfile` and `docker-entrypoint.sh` which explicitly use `python3`. Ensure you have pulled the latest changes and rebuilt your Docker image (`docker-compose build`).
+    *   This should be resolved with the latest updates to `Dockerfile` and `docker-entrypoint.sh` which explicitly use `python3` and make the script executable. Ensure you have pulled the latest changes and rebuilt your Docker image (`docker-compose build`).
 *   **"No relevant Meraki clients found" but you expect clients:**
-    *   Double-check `MERAKI_API_KEY`, `MERAKI_ORG_ID`, and `MERAKI_NETWORK_IDS` (if used).
-    *   Ensure clients in Meraki actually have "Fixed IP assignments" and that their *current IP* matches the *fixed IP assignment*. The script specifically filters for this condition.
-    *   Increase `MERAKI_CLIENT_TIMESPAN_SECONDS` if your clients might not have been active recently.
-    *   Set `LOG_LEVEL=DEBUG` in your `.env` file and restart the container (`docker-compose up -d --force-recreate`) to get more detailed logs in `/app/logs/sync.log`. This will show individual client processing and skipping reasons.
+    *   **Verify Meraki Configuration:** The most common reason is that clients in your Meraki network do not meet the script's criteria:
+        *   They MUST have a **Fixed IP assignment** (DHCP reservation) configured in the Meraki dashboard.
+        *   Their **current, active IP address** on the network MUST match this Fixed IP assignment. If a client is configured for a fixed IP but is currently offline or has a different IP, it won't be synced.
+    *   **Check API Key and IDs:** Double-check `MERAKI_API_KEY`, `MERAKI_ORG_ID`, and `MERAKI_NETWORK_IDS` (if used) in your `.env` file for typos or incorrect values.
+    *   **Client Activity Timespan:** Consider increasing `MERAKI_CLIENT_TIMESPAN_SECONDS` (e.g., to `259200` for 3 days) if your clients might not have been seen by Meraki within the default 24-hour window.
+    *   **Enable DEBUG Logging:** This is crucial for diagnosing this issue.
+        1.  Set `LOG_LEVEL=DEBUG` in your `.env` file.
+        2.  Restart the container: `docker-compose up -d --force-recreate meraki-pihole-sync`.
+        3.  Check the script log: `docker-compose logs meraki-pihole-sync` or look in `./meraki_sync_logs/sync.log`.
+        4.  With DEBUG logging, the script will output messages for each client it processes, indicating why it might be skipping them (e.g., "does not have a fixed IP assignment," "fixed IP assignment (...) but current IP (...) differs," "Skipping client ... due to missing name, current IP, or client ID"). The script will also explicitly state if it suggests enabling DEBUG logging if it's not already on.
 *   **Environment Variable Issues (e.g., "Missing mandatory environment variables"):**
     *   Ensure your `.env` file is in the same directory as `docker-compose.yml` and is named exactly `.env`.
     *   Verify all required variables (see table above) are present and correctly spelled in your `.env` file with non-empty values where required (e.g., `HOSTNAME_SUFFIX` cannot be blank).
