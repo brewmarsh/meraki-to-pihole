@@ -14,6 +14,22 @@ custom DNS records in Pi-hole and makes necessary additions or updates.
 
 Configuration is managed entirely through environment variables.
 """
+#!/usr/local/bin/python3
+# Python script to sync Meraki client IPs to Pi-hole
+"""
+Meraki Pi-hole DNS Sync
+
+This script synchronizes client information from the Meraki API to a Pi-hole instance.
+It identifies Meraki clients with Fixed IP Assignments (DHCP Reservations) and
+creates corresponding custom DNS records in Pi-hole. This ensures reliable local
+DNS resolution for these statically assigned devices.
+
+The script fetches clients from specified Meraki networks (or all networks in an
+organization if none are specified). It then compares these clients against existing
+custom DNS records in Pi-hole and makes necessary additions or updates.
+
+Configuration is managed entirely through environment variables.
+"""
 import os
 import sys
 import requests # Still needed for Pi-hole calls
@@ -246,6 +262,16 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                 logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}).")
                 logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}'...")
                 for client in clients_in_network:
+                    # SDK returns client objects as dictionaries.
+                    # Attributes to check: 'description', 'dhcpHostname', 'ip', 'id', and 'fixedIp' (for reserved IP) or 'ip' for current.
+                    # The key: is the client's *configured* "Fixed IP" (often called DHCP reservation in UI) the same as its *current* `ip`?
+                    # The Meraki client object from getNetworkClients has:
+                    # - `ip`: Current IP address of the client.
+                    # - `dhcpHostname`: The hostname of a client as reported by DHCP.
+                    # - `description`: The description of the client.
+                    # - `fixedIp`: The fixed IP address of the client (if assigned). IMPORTANT: This is the *configured* fixed IP.
+                    # - `id`: The Meraki client ID.
+
                     client_name_desc = client.get('description')
                     client_name_dhcp = client.get('dhcpHostname')
                     client_name = client_name_desc or client_name_dhcp
