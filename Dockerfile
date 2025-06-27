@@ -20,7 +20,7 @@ RUN apt-get update && apt-get install -y cron libffi-dev procps && rm -rf /var/l
 
 # Install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt # meraki SDK will be installed here
 
 # Create directory for the application code
 WORKDIR /app

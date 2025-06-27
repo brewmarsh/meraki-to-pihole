@@ -14,11 +14,28 @@ custom DNS records in Pi-hole and makes necessary additions or updates.
 
 Configuration is managed entirely through environment variables.
 """
+#!/usr/local/bin/python3
+# Python script to sync Meraki client IPs to Pi-hole
+"""
+Meraki Pi-hole DNS Sync
+
+This script synchronizes client information from the Meraki API to a Pi-hole instance.
+It identifies Meraki clients with Fixed IP Assignments (DHCP Reservations) and
+creates corresponding custom DNS records in Pi-hole. This ensures reliable local
+DNS resolution for these statically assigned devices.
+
+The script fetches clients from specified Meraki networks (or all networks in an
+organization if none are specified). It then compares these clients against existing
+custom DNS records in Pi-hole and makes necessary additions or updates.
+
+Configuration is managed entirely through environment variables.
+"""
 import os
 import sys
-import requests
+import requests # Still needed for Pi-hole calls
 import logging
 import time
+import meraki # Import the Meraki SDK
 
 # --- Logging Setup ---
 LOG_DIR = "/app/logs"
@@ -58,7 +75,7 @@ logging.basicConfig(
 # --- End Logging Setup ---
 
 # --- Constants ---
-MERAKI_API_BASE_URL = "https://api.meraki.com/api/v1"
+# MERAKI_API_BASE_URL will be handled by the SDK
 
 # Environment Variable Names (used for consistency)
 ENV_APP_VERSION = "APP_VERSION"
@@ -129,73 +146,10 @@ def load_app_config_from_env():
     logging.info("Successfully loaded configuration from environment variables.")
     return config
 
-def _meraki_api_request(api_key, method, endpoint, params=None, data=None, attempt=1, max_attempts=3):
-    """
-    Helper function to make requests to the Meraki API.
-    Includes error handling, rate limit handling (429), and retries.
-    """
-    headers = {
-        "X-Cisco-Meraki-API-Key": api_key,
-        "Content-Type": "application/json",
-        "Accept": "application/json"
-    }
-    url = f"{MERAKI_API_BASE_URL}{endpoint}"
+# Removed _meraki_api_request, get_organization_networks, get_network_clients
+# as these will be replaced by Meraki SDK calls.
 
-    try:
-        logging.debug(f"Meraki API Request: {method} {url} Params: {params if params else 'None'}")
-        response = requests.request(method, url, headers=headers, params=params, json=data, timeout=20)
-
-        if response.status_code == 429: # Rate limit
-            retry_after = int(response.headers.get("Retry-After", "60")) # Default to 60s if header missing
-            logging.warning(f"Meraki API rate limit hit (Status 429) for {method} {url}. Retrying after {retry_after} seconds (attempt {attempt}/{max_attempts})...")
-            if attempt < max_attempts:
-                time.sleep(retry_after)
-                return _meraki_api_request(api_key, method, endpoint, params, data, attempt + 1, max_attempts)
-            else:
-                logging.error(f"Meraki API rate limit hit, and max retries ({max_attempts}) reached for {method} {url}. Giving up.")
-                return None
-
-        response.raise_for_status() # Raises HTTPError for bad responses (4xx or 5xx)
-        return response.json()
-    except requests.exceptions.HTTPError as e:
-        error_message = f"Meraki API HTTP error for {method} {url}: {e}."
-        if e.response is not None:
-            error_message += f" Status: {e.response.status_code}. Response: {e.response.text[:200] if e.response.text else 'No response text'}" # Truncate long responses
-        logging.error(error_message)
-    except requests.exceptions.RequestException as e: # Covers DNS errors, connection timeouts, etc.
-        logging.error(f"Meraki API request failed for {method} {url} due to a network or request issue: {e}")
-    return None
-
-def get_organization_networks(api_key, org_id):
-    """Fetches all networks for a given Meraki organization ID."""
-    logging.info(f"Fetching networks for organization ID: {org_id}")
-    endpoint = f"/organizations/{org_id}/networks"
-    networks = _meraki_api_request(api_key, "GET", endpoint)
-    if networks is not None:
-        logging.info(f"Successfully fetched {len(networks)} networks for organization {org_id}.")
-    else:
-        logging.error(f"Failed to fetch networks for organization {org_id} (API request returned None or error).")
-    return networks
-
-def get_network_clients(api_key, network_id, timespan):
-    """
-    Fetches clients for a specific Meraki network ID seen within a given timespan.
-    """
-    # This is the only place this log message should appear for a given network_id per call to get_all_relevant_meraki_clients
-    logging.info(f"Fetching clients for network ID: {network_id} (timespan: {timespan}s)")
-    endpoint = f"/networks/{network_id}/clients"
-    params = {"timespan": str(timespan), "perPage": "1000"} # Fetch up to 1000 clients, pagination not implemented for >1000
-    clients = _meraki_api_request(api_key, "GET", endpoint, params=params)
-
-    if clients is not None:
-        logging.info(f"API returned {len(clients)} clients for network '{network_id}' (before filtering for fixed IPs).")
-    else:
-        # _meraki_api_request would have logged the error already.
-        logging.warning(f"API call for clients in network {network_id} did not return data or failed.")
-    return clients
-
-
-def get_all_relevant_meraki_clients(api_key, config):
+def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict):
     """
     Fetches all Meraki clients that have a fixed IP assignment.
 
@@ -204,111 +158,119 @@ def get_all_relevant_meraki_clients(api_key, config):
     'fixedIpAssignment' that matches their current IP address.
 
     Args:
-        api_key (str): The Meraki API key.
+        dashboard (meraki.DashboardAPI): Initialized Meraki Dashboard API client.
         config (dict): The application configuration dictionary.
 
     Returns:
         list: A list of client dictionaries, each representing a client with a
-              fixed IP. Returns an empty list if no such clients are found or
-              if network fetching fails.
+              fixed IP matching its current IP. Returns an empty list if no such
+              clients are found or if network fetching fails.
     """
     org_id = config["meraki_org_id"]
     specified_network_ids = config["meraki_network_ids"]
-    client_timespan = config["meraki_client_timespan"]
+    client_timespan = config["meraki_client_timespan"] # In seconds
 
     logging.debug(f"Entering get_all_relevant_meraki_clients. Org ID: {org_id}. Specified Network IDs: {specified_network_ids if specified_network_ids else 'All'}. Client Timespan: {client_timespan}s.")
-    all_clients_map = {} # Using a map keyed by client ID to ensure uniqueness if a client appears in multiple API calls (though unlikely for this use case)
+    all_clients_map = {}
 
-    networks_to_query = []
-    if not specified_network_ids:
-        logging.info(f"No specific Meraki network IDs provided via {ENV_MERAKI_NETWORK_IDS}. Attempting to fetch all networks for organization ID: {org_id}.")
-        organization_networks = get_organization_networks(api_key, org_id) # This is a list of dicts
-        if organization_networks is not None: # API call was successful
-            if not organization_networks: # Successfully fetched, but the list is empty
-                 logging.info(f"Organization {org_id} has no networks according to API. No clients will be fetched.")
-                 return [] # Return empty list, no networks to process
-            networks_to_query = organization_networks
-        else: # API call failed
-            logging.warning(f"Failed to fetch networks for organization {org_id}. No clients will be fetched.")
-            return [] # Return empty list
-    else:
-        logging.info(f"Specific Meraki network IDs provided: {specified_network_ids}. Validating and fetching details for these networks.")
-        # Fetch all org networks to get names and validate IDs
-        organization_networks = get_organization_networks(api_key, org_id)
-        if organization_networks is None:
-            logging.warning(f"Could not fetch network list for organization {org_id} to validate specified IDs. Proceeding with specified IDs directly, but network names will be 'Unknown'.")
-            # Create a list of network-like dicts for consistency
-            networks_to_query = [{"id": nid, "name": f"Unknown (ID: {nid})"} for nid in specified_network_ids]
+    networks_to_query_details = []
+    try:
+        if not specified_network_ids:
+            logging.info(f"No specific Meraki network IDs provided. Fetching all networks for organization ID: {org_id}.")
+            # total_pages='all' should handle pagination for networks if there are many.
+            organization_networks = dashboard.organizations.getOrganizationNetworks(organizationId=org_id, total_pages='all')
+            if not organization_networks:
+                logging.info(f"Organization {org_id} has no networks according to API. No clients will be fetched.")
+                return []
+            networks_to_query_details = organization_networks
         else:
-            name_map = {net['id']: net['name'] for net in organization_networks}
-            valid_networks_to_query = []
-            for nid_spec in specified_network_ids:
-                if nid_spec in name_map:
-                    valid_networks_to_query.append({"id": nid_spec, "name": name_map[nid_spec]})
-                else:
-                    logging.warning(f"Specified network ID {nid_spec} not found in organization {org_id}. It will be skipped.")
-            networks_to_query = valid_networks_to_query
-            if not networks_to_query: # All specified IDs were invalid
-                 logging.warning(f"None of the specified network IDs {specified_network_ids} were found/valid in organization {org_id}. No clients will be fetched.")
-                 return []
+            logging.info(f"Specific Meraki network IDs provided: {specified_network_ids}. Validating and fetching details for these networks.")
+            # Fetch all org networks to get names and validate IDs, then filter.
+            all_org_networks = dashboard.organizations.getOrganizationNetworks(organizationId=org_id, total_pages='all')
+            if not all_org_networks: # Should not happen if IDs are specified, but defensive.
+                logging.warning(f"Could not fetch network list for organization {org_id} to validate specified IDs. Proceeding with specified IDs directly, but network names will be 'Unknown'.")
+                networks_to_query_details = [{"id": nid, "name": f"Unknown (ID: {nid})"} for nid in specified_network_ids]
+            else:
+                name_map = {net['id']: net['name'] for net in all_org_networks}
+                for nid_spec in specified_network_ids:
+                    if nid_spec in name_map:
+                        networks_to_query_details.append({"id": nid_spec, "name": name_map[nid_spec]})
+                    else:
+                        logging.warning(f"Specified network ID {nid_spec} not found in organization {org_id}. It will be skipped.")
+                if not networks_to_query_details:
+                    logging.warning(f"None of the specified network IDs {specified_network_ids} were found/valid in organization {org_id}. No clients will be fetched.")
+                    return []
+    except meraki.exceptions.APIError as e:
+        logging.error(f"Meraki API error while fetching networks for organization {org_id}: {e}")
+        return [] # Critical error, cannot proceed
 
-    if not networks_to_query: # This check covers cases where specified_network_ids was empty and org had no networks, or all specified IDs were invalid.
+    if not networks_to_query_details:
         logging.info("No networks to query after initial determination. Exiting client search.")
         return []
     else:
-        logging.info(f"Total networks to query: {len(networks_to_query)}. Network IDs: {[n['id'] for n in networks_to_query]}")
+        logging.info(f"Total networks to query: {len(networks_to_query_details)}. Network IDs: {[n['id'] for n in networks_to_query_details]}")
 
+    for network_idx, network_detail in enumerate(networks_to_query_details):
+        network_id = network_detail["id"]
+        network_name = network_detail.get("name", f"ID-{network_id}")
+        logging.info(f"--- Processing network {network_idx + 1}/{len(networks_to_query_details)}: '{network_name}' (ID: {network_id}) ---")
 
-    for network_idx, network in enumerate(networks_to_query):
-        network_id = network["id"] # network is a dict e.g. {'id': 'L_123', 'name': 'My Network'}
-        network_name = network.get("name", f"ID-{network_id}")
-        logging.info(f"--- Processing network {network_idx + 1}/{len(networks_to_query)}: '{network_name}' (ID: {network_id}) ---")
+        try:
+            # SDK handles pagination if more than 1000 clients and total_pages is not -1 (or use perPage with total_pages)
+            # The `timespan` parameter in SDK is in seconds.
+            # The SDK's getNetworkClients already returns a list of client dicts.
+            clients_in_network = dashboard.networks.getNetworkClients(networkId=network_id, timespan=client_timespan, perPage=1000, total_pages='all')
 
-        clients_in_network = get_network_clients(api_key, network_id, client_timespan)
-
-        if clients_in_network is not None:
             if clients_in_network:
-                logging.debug(f"Fetched {len(clients_in_network)} clients from network '{network_name}'. Filtering for fixed IPs...")
+                logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}) (before filtering for fixed IPs).")
+                logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}' for fixed IPs...")
                 for client in clients_in_network:
+                    # SDK returns client objects as dictionaries.
+                    # Attributes to check: 'description', 'dhcpHostname', 'ip', 'id', and 'fixedIp' (for reserved IP) or 'ip' for current.
+                    # The key: is the client's *configured* "Fixed IP" (often called DHCP reservation in UI) the same as its *current* `ip`?
+                    # The Meraki client object from getNetworkClients has:
+                    # - `ip`: Current IP address of the client.
+                    # - `dhcpHostname`: The hostname of a client as reported by DHCP.
+                    # - `description`: The description of the client.
+                    # - `fixedIp`: The fixed IP address of the client (if assigned). IMPORTANT: This is the *configured* fixed IP.
+                    # - `id`: The Meraki client ID.
+
                     client_name_desc = client.get('description')
                     client_name_dhcp = client.get('dhcpHostname')
-                    client_name = client_name_desc or client_name_dhcp
+                    client_name = client_name_desc or client_name_dhcp # Prioritize description if available
 
-                    client_ip = client.get('ip')
-                    client_id = client.get('id')
-                    fixed_ip_assignment_data = client.get('fixedIpAssignment')
+                    current_ip = client.get('ip')
+                    client_id = client.get('id') # Meraki's own ID for the client
+                    configured_fixed_ip = client.get('fixedIp') # This is the key field from the SDK for fixed IP
 
-                    if client_name and client_ip and client_id:
-                        is_fixed_ip_client = False
-                        if fixed_ip_assignment_data and isinstance(fixed_ip_assignment_data, dict):
-                            assigned_ip = fixed_ip_assignment_data.get('ip')
-                            if assigned_ip and assigned_ip == client_ip:
-                                is_fixed_ip_client = True
-                                logging.debug(f"Client '{client_name}' (ID: {client_id}) has a matching fixed IP assignment: {assigned_ip} in network '{network_name}'.")
-                            elif assigned_ip:
-                                logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' has a fixed IP assignment ({assigned_ip}) but current IP ({client_ip}) differs. Skipping.")
-                            else:
-                                logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' has a fixedIpAssignment object without an 'ip' field. Skipping.")
-                        else:
-                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' does not have a fixed IP assignment. Skipping.")
-
-                        if is_fixed_ip_client:
+                    if client_name and current_ip and client_id:
+                        if configured_fixed_ip and configured_fixed_ip == current_ip:
+                            # This client has a fixed IP configured AND is currently using it.
                             all_clients_map[client_id] = {
                                 "name": client_name,
-                                "ip": client_ip,
+                                "ip": current_ip, # This is the IP to sync
                                 "network_id": network_id,
                                 "network_name": network_name,
                                 "meraki_client_id": client_id
                             }
-                            logging.info(f"Relevant client with fixed IP: '{client_name}' ({client_ip}) in network '{network_name}' (Meraki ID: {client_id}) will be processed.")
+                            logging.info(f"Relevant client: '{client_name}' (IP: {current_ip}, Meraki ID: {client_id}) in network '{network_name}' has matching fixed IP. Will be processed.")
+                        elif configured_fixed_ip: # Fixed IP is configured, but different from current IP
+                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' has a configured fixed IP ({configured_fixed_ip}) but current IP ({current_ip}) differs. Skipping.")
+                        else: # No fixed IP configured for this client
+                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' does not have a fixed IP assignment (fixedIp field is '{configured_fixed_ip}'). Skipping.")
                     else:
                         logging.debug(f"Skipping client (Meraki ID: {client.get('id')}, MAC: {client.get('mac')}) in network '{network_name}' due to missing name, current IP, or client ID prior to fixed IP check.")
             else:
-                logging.info(f"No clients reported by API for network {network_name} (ID: {network_id}).")
-        else:
-            logging.warning(f"Failed to fetch clients for network {network_name} (ID: {network_id}). Skipping this network.")
+                logging.info(f"No clients reported by SDK for network {network_name} (ID: {network_id}).")
 
-        logging.info(f"--- Finished processing network {network_idx + 1}/{len(networks_to_query)}: {network_name} (ID: {network_id}) ---")
+        except meraki.exceptions.APIError as e:
+            logging.error(f"Meraki API error while fetching clients for network {network_name} (ID: {network_id}): {e}")
+            # Continue to the next network
+        except Exception as e:
+            logging.error(f"An unexpected error occurred while processing network {network_name} (ID: {network_id}): {e}", exc_info=True)
+
+
+        logging.info(f"--- Finished processing network {network_idx + 1}/{len(networks_to_query_details)}: {network_name} (ID: {network_id}) ---")
 
     return list(all_clients_map.values())
 
@@ -472,17 +434,35 @@ def main():
     logging.info(f"--- Starting Meraki Pi-hole Sync Script --- Version: {app_version}, Commit: {commit_sha}")
 
     config = load_app_config_from_env()
-    api_key = config["meraki_api_key"]
+    meraki_api_key = config["meraki_api_key"] # Renamed for clarity with SDK
     pihole_url = config["pihole_api_url"]
     pihole_api_key = config.get("pihole_api_key") # Use .get() as it can be None
     hostname_suffix = config["hostname_suffix"]
 
-    # Fetch relevant Meraki clients with fixed IP assignments
-    # This function now iterates through all configured/discovered networks.
-    meraki_clients = get_all_relevant_meraki_clients(api_key, config)
+    # Initialize Meraki Dashboard API client
+    # SDK handles API key, retries, logging (can be configured), etc.
+    # `suppress_logging=True` for SDK's internal logger if we want to rely solely on our script's logger for Meraki calls.
+    # Or, let SDK log at its default level (INFO) or configure it via `log_level`.
+    # For now, let's allow SDK's default logging and see.
+    # `output_log=False` might also be relevant if we don't want SDK to print to console by default.
+    # Let's start simple and adjust if SDK logging is too verbose or conflicts.
+    # The SDK will use the MERAKI_PYTHON_SDK_LOG_FILE and MERAKI_PYTHON_SDK_LOG_LEVEL env vars if set.
+    # We can also pass `logger` instance to it.
+    # For now, let's use `print_console=False` to avoid duplicate console output if SDK also logs to console.
+    # The SDK's logger can be noisy with DEBUG level; our script's DEBUG is more targeted.
+    dashboard = meraki.DashboardAPI(
+        api_key=meraki_api_key,
+        output_log=False, # We handle our own logging to console/file via script's logger
+        print_console=False, # Explicitly false
+        suppress_logging=True # Suppress SDK's own logger; we will log API calls if needed at debug level
+    )
+
+
+    # Fetch relevant Meraki clients with fixed IP assignments using the SDK
+    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
 
     if not meraki_clients:
-        # This means no clients with fixed IPs were found across ALL processed networks.
+        # This means no clients with fixed IPs (matching current IP) were found across ALL processed networks.
         # Or, network fetching itself failed. get_all_relevant_meraki_clients would have logged details.
         logging.info("No relevant Meraki clients (with fixed IP assignments) were found after checking all configured/discovered networks, or network/client fetching failed.")
 
