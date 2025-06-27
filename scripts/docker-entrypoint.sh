@@ -69,7 +69,8 @@ else
   # No complex subshells like (echo ...; command; echo ...) to reduce shell interpretation issues.
   # Explicitly set PATH for the cron job environment. These are common paths.
   echo "PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin" > "${CRON_FILE_PATH}"
-  echo "${CRON_SCHEDULE} root ${CRON_JOB_SCRIPT_COMMAND} >> ${CRON_OUTPUT_LOG_FILE} 2>&1" >> "${CRON_FILE_PATH}"
+  # Removing 'root' user from the cron line. For /etc/cron.d files, this typically means the command runs as root.
+  echo "${CRON_SCHEDULE} ${CRON_JOB_SCRIPT_COMMAND} >> ${CRON_OUTPUT_LOG_FILE} 2>&1" >> "${CRON_FILE_PATH}"
   echo "" >> "${CRON_FILE_PATH}" # Ensure cron file ends with a newline
   chmod 0644 "${CRON_FILE_PATH}"
   # Apply the cron job. Some cron versions might not need crontab command if using /etc/cron.d/
