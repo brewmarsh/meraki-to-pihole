@@ -75,7 +75,10 @@ def main():
     # parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help=f"Path to the configuration file (default: {DEFAULT_CONFIG_PATH})") # No longer needed
     # args = parser.parse_args() # No longer needed
 
-    logging.info("Starting Meraki Pi-hole Sync Script") # Removed reference to config file path
+    app_version = os.getenv("APP_VERSION", "unknown")
+    commit_sha = os.getenv("COMMIT_SHA", "unknown")
+
+    logging.info(f"Starting Meraki Pi-hole Sync Script - Version: {app_version}, Commit: {commit_sha}")
 
     app_config = load_app_config_from_env()
     meraki_api_key = app_config["meraki_api_key"] # Already fetched in load_app_config_from_env
