@@ -542,6 +542,8 @@ def main():
         logging.warning(f"Failed to sync {failed_syncs} client(s). Check logs above for details.")
     logging.info(f"Total Meraki clients processed: {len(meraki_clients)}")
     logging.info(f"--- Sync process complete ---")
+
+
 if __name__ == "__main__":
     # This is the main entry point of the script
     try:
