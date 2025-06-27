@@ -71,6 +71,11 @@ def load_app_config_from_env():
     return config
 
 def main():
+=======
+    # parser = argparse.ArgumentParser(description="Meraki to Pi-hole DNS Sync Script") # No longer needed
+    # parser.add_argument("--config", default=DEFAULT_CONFIG_PATH, help=f"Path to the configuration file (default: {DEFAULT_CONFIG_PATH})") # No longer needed
+    # args = parser.parse_args() # No longer needed
+
     app_version = os.getenv("APP_VERSION", "unknown")
     commit_sha = os.getenv("COMMIT_SHA", "unknown")
 
@@ -96,11 +101,13 @@ def main():
     pihole_key = app_config["pihole_api_key"]
     hostname_suffix = app_config["hostname_suffix"]
 
+    # 1. Fetch existing custom DNS records from Pi-hole
     existing_pihole_records = get_pihole_custom_dns_records(pihole_url, pihole_key)
     logging.info(f"Found {len(existing_pihole_records)} existing custom domains in Pi-hole.")
 
     processed_hostnames = set()
 
+    # 2. Iterate through Meraki clients and add/update records in Pi-hole
     for client in meraki_clients:
         client_name = client.get("name")
         client_ip = client.get("ip")
@@ -186,6 +193,10 @@ def get_network_clients(api_key, network_id, timespan=86400):
 
 
 def get_all_relevant_meraki_clients(api_key, config):
+    """
+    Fetches all clients from specified (or all) Meraki networks
+    that have a description and an IP address and a matching fixedIpAssignment.
+    """
     org_id = config["meraki_org_id"]
     specified_network_ids = config["meraki_network_ids"]
     logging.debug(f"Entering get_all_relevant_meraki_clients. Org ID: {org_id}. Specified Network IDs: '{specified_network_ids}'")
@@ -314,12 +325,14 @@ def _pihole_api_request(pihole_url, api_key, params):
 
 
 def get_pihole_custom_dns_records(pihole_url, api_key):
+    """Fetches all custom DNS records from Pi-hole."""
     logging.info("Fetching existing custom DNS records from Pi-hole...")
     params = {"customdns": "", "action": "get"}
     response_data = _pihole_api_request(pihole_url, api_key, params)
 
     records = {}
     if response_data and 'data' in response_data:
+        # Pi-hole v5.x returns: {'data': [['domain1', 'ip1'], ['domain2', 'ip2']]}
         for domain, ip_address in response_data['data']:
             if domain not in records:
                 records[domain] = []
@@ -354,6 +367,11 @@ def delete_dns_record_from_pihole(pihole_url, api_key, domain, ip_address):
         return False
 
 def add_or_update_dns_record_in_pihole(pihole_url, api_key, domain, new_ip, existing_records):
+    """
+    Adds a new DNS record or updates an existing one in Pi-hole.
+    If the domain exists with a different IP, the old IP(s) for that domain are deleted first.
+    If the domain exists with the same IP, no action is taken.
+    """
     domain_cleaned = domain.strip().lower()
     new_ip_cleaned = new_ip.strip()
 
@@ -371,6 +389,7 @@ def add_or_update_dns_record_in_pihole(pihole_url, api_key, domain, new_ip, exis
                 logging.info(f"Found old IP {old_ip} for domain {domain_cleaned}. Deleting it before adding new IP {new_ip_cleaned}.")
                 delete_dns_record_from_pihole(pihole_url, api_key, domain_cleaned, old_ip)
 
+    # Add the new record
     return add_dns_record_to_pihole(pihole_url, api_key, domain_cleaned, new_ip_cleaned)
 
 
