@@ -29,7 +29,7 @@ RUN chmod +x /app/meraki_pihole_sync.py # Make python script executable
 
 # Copy the entrypoint and cron wrapper scripts and make them executable
 COPY ./scripts/docker-entrypoint.sh /docker-entrypoint.sh
-COPY ./scripts/run_sync_for_cron.sh /app/run_sync_for_cron.sh # Copy wrapper to /app
+COPY ./scripts/run_sync_for_cron.sh /app/run_sync_for_cron.sh
 RUN chmod +x /docker-entrypoint.sh
 RUN chmod +x /app/run_sync_for_cron.sh
 
