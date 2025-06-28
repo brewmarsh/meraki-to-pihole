@@ -75,6 +75,13 @@ else
   echo "${CRON_SCHEDULE} ${CRON_WRAPPER_SCRIPT_PATH}" >> "${CRON_FILE_PATH}" # Wrapper script handles its own logging to CRON_OUTPUT_LOG_FILE
   echo "" >> "${CRON_FILE_PATH}" # Ensure cron file ends with a newline
   chmod 0644 "${CRON_FILE_PATH}"
+
+  # Log the exact content of the cron file to the main application log for debugging
+  echo "Entrypoint: DEBUG - Content of ${CRON_FILE_PATH} as written by entrypoint:" >> "${APP_LOG_FILE}"
+  cat "${CRON_FILE_PATH}" >> "${APP_LOG_FILE}"
+  echo "" >> "${APP_LOG_FILE}" # Add a newline after cat output for readability
+  echo "Entrypoint: DEBUG - End of ${CRON_FILE_PATH} content." >> "${APP_LOG_FILE}"
+
   # Apply the cron job. Some cron versions might not need crontab command if using /etc/cron.d/
   # but it's safer to include it or ensure the cron daemon picks it up.
   # For busybox cron (often in alpine/slim), files in /etc/cron.d are read automatically.
