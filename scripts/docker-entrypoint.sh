@@ -15,6 +15,7 @@ touch "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}"
 chmod 0666 "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" # Allow write access for cron and app user
 
 echo "Entrypoint: Running initial sync on container startup..."
+echo "Entrypoint: Using python at $(which python)"
 # The Python script (APP_COMMAND) is configured to log to both its own file handler (${APP_LOG_FILE}) and stdout.
 # Docker's `logs` command will capture the stdout from this initial run.
 # APP_COMMAND will now correctly be ["python3", "meraki_pihole_sync.py"] due to Dockerfile CMD change.
@@ -35,7 +36,7 @@ if [ -z "$CRON_SCHEDULE" ]; then
   tail -F "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" /dev/null
 else
   echo "Entrypoint: Initializing cron job with schedule: $CRON_SCHEDULE"
-  ln -s /usr/local/bin/python3 /usr/local/bin/python
+  ln -sf /usr/local/bin/python3 /usr/local/bin/python
   # Use python3 explicitly for the cron job. /usr/local/bin/python3 is standard in python:*-slim images.
   PYTHON3_EXEC_PATH="/usr/local/bin/python3"
 
