@@ -27,6 +27,11 @@ class TestPiholeClient(unittest.TestCase):
 
         # Assert the result
         self.assertEqual(records, {"test.com": ["1.2.3.4"]})
+        mock_get.assert_called_once_with(
+            "http://pi.hole/admin/api.php",
+            params={"customdns": "", "action": "get", "auth": "test_key"},
+            timeout=10,
+        )
 
     @patch("requests.get")
     def test_add_dns_record_to_pihole(self, mock_get):

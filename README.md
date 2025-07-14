@@ -118,8 +118,23 @@ This application is designed to be run using Docker and Docker Compose.
     docker-compose build --build-arg APP_VERSION=${APP_VERSION} --build-arg COMMIT_SHA=${COMMIT_SHA}
     docker-compose up -d
     ```
+    The `docker-compose.yml` file should be updated to include the following port mapping for the web UI:
+    ```yaml
+    ports:
+      - "5001:5001"
+    ```
 
 ## Usage
+
+### Web UI
+
+The application now includes a web UI for monitoring and interacting with the sync process. The web UI is available on port 5001 by default.
+
+#### Features
+
+*   **View Logs:** View the `sync.log` and `cron_output.log` files in real-time.
+*   **Force Refresh:** Manually trigger a sync process.
+*   **View Mappings:** See the custom DNS mappings currently loaded in Pi-hole.
 
 ### Viewing Logs
 

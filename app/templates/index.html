@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meraki Pi-hole Sync</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Meraki Pi-hole Sync</h1>
+
+    <div class="container">
+        <div class="section">
+            <h2>Logs</h2>
+            <div class="log-container">
+                <h3>sync.log</h3>
+                <pre id="sync-log"></pre>
+            </div>
+            <div class="log-container">
+                <h3>cron_output.log</h3>
+                <pre id="cron-log"></pre>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Actions</h2>
+            <button id="force-refresh">Force Refresh</button>
+        </div>
+
+        <div class="section">
+            <h2>Pi-hole Mappings</h2>
+            <pre id="mappings"></pre>
+        </div>
+    </div>
+
+    <script>
+        function getLogs() {
+            fetch('/logs')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('sync-log').textContent = data.sync_log;
+                    document.getElementById('cron-log').textContent = data.cron_log;
+                });
+        }
+
+        function getMappings() {
+            fetch('/mappings')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('mappings').textContent = JSON.stringify(data, null, 2);
+                });
+        }
+
+        document.getElementById('force-refresh').addEventListener('click', () => {
+            fetch('/force-refresh', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    getLogs();
+                    getMappings();
+                });
+        });
+
+        getLogs();
+        getMappings();
+        setInterval(getLogs, 5000);
+        setInterval(getMappings, 5000);
+    </script>
+</body>
+</html>

@@ -40,8 +40,8 @@ RUN mkdir -p /app/logs
 # Runs daily at 2:30 AM by default
 ENV CRON_SCHEDULE "30 2 * * *"
 
-# Expose any ports if your application listens on them (not typical for a cron job script)
-# EXPOSE 8080
+# Expose any ports if your application listens on them
+EXPOSE 5001
 
 # Set the entrypoint
 ENTRYPOINT ["/docker-entrypoint.sh"]
@@ -49,4 +49,4 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 # Default command for the entrypoint (e.g. the script to run)
 # This will be passed to the entrypoint script
 # Changed to python3 and removed obsolete --config argument
-CMD ["python3", "meraki_pihole_sync.py"]
+CMD ["python3", "app.py"]
