@@ -67,7 +67,42 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         network_name = network_detail.get("name", f"ID-{network_id}")
         logging.info(f"--- Processing network {network_idx + 1}/{len(networks_to_query_details)}: '{network_name}' (ID: {network_id}) ---")
 
+        mac_to_reserved_ip_map = {}
         try:
+            # Attempt to get DHCP subnet configurations, which should include fixed IP assignments.
+            # This endpoint is typically for networks with an MX appliance.
+            # Using a more general approach: getNetworkApplianceDhcpSubnets
+            # This might return a list of subnets for the network.
+            # Each subnet object could have 'fixedIpAssignments' or 'reservedIpRanges'.
+            # The SDK documentation for getNetworkApplianceDhcpSubnets indicates it returns a list of subnet DHCP settings.
+            # Each item in this list can have a "fixedIpAssignments" key, which is a list of assignment objects.
+            # Each assignment object has "mac", "name", "ip".
+            logging.debug(f"Fetching DHCP subnet info for network {network_id} to find fixed IP assignments.")
+            # This call might fail if the network is not an Appliance network or has no DHCP settings.
+            # The SDK might return an empty list or raise an APIError (e.g., 404 if endpoint not applicable).
+            appliance_dhcp_subnets = []
+            try:
+                # Check if network is an appliance network first.
+                # This might be an over-optimization; let's try fetching directly and handle errors.
+                # network_info = dashboard.networks.getNetwork(network_id)
+                # if 'appliance' in network_info.get('productTypes', []):
+                vlans = dashboard.appliance.getNetworkApplianceVlans(network_id)
+                if vlans:
+                    for vlan in vlans:
+                        if vlan.get('fixedIpAssignments'):
+                            for mac, assignment_details in vlan['fixedIpAssignments'].items():
+                                if mac and assignment_details.get('ip'):
+                                    mac_to_reserved_ip_map[mac.lower()] = assignment_details['ip']
+                                    logging.debug(f"Found configured DHCP reservation in network {network_id}: MAC {mac.lower()} -> IP {assignment_details['ip']} (Name: {assignment_details.get('name', 'N/A')})")
+                logging.info(f"Found {len(mac_to_reserved_ip_map)} DHCP fixed IP reservations in network {network_name} (ID: {network_id}).")
+
+            except meraki.exceptions.APIError as e:
+                if e.status == 404 and "The requested URL was not found on the server." in str(e.message): # More specific check
+                    logging.info(f"No DHCP subnet/VLAN configuration found via API for network {network_name} (ID: {network_id}) (Endpoint not found - likely not an MX network or no DHCP configured). Will rely on client.fixedIp if available.")
+                else:
+                    logging.warning(f"Could not retrieve DHCP subnet/VLANs info for network {network_name} (ID: {network_id}) to check reservations: {e}. Will rely on client.fixedIp if available.")
+
+
             # Fetch clients for the network
             clients_in_network = dashboard.networks.getNetworkClients(networkId=network_id, timespan=client_timespan, perPage=1000, total_pages='all')
 
@@ -75,14 +110,6 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                 logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}).")
                 logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}'...")
                 for client in clients_in_network:
-                    logging.debug(f"Processing client: {client}")
-                    client_id = client.get('id')
-                    try:
-                        full_client = dashboard.networks.getNetworkClient(networkId=network_id, clientId=client_id)
-                    except meraki.exceptions.APIError as e:
-                        logging.warning(f"Could not get full details for client {client_id} in network {network_id}: {e}")
-                        continue
-
                     # SDK returns client objects as dictionaries.
                     # Attributes to check: 'description', 'dhcpHostname', 'ip', 'id', and 'fixedIp' (for reserved IP) or 'ip' for current.
                     # The key: is the client's *configured* "Fixed IP" (often called DHCP reservation in UI) the same as its *current* `ip`?
@@ -93,12 +120,20 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                     # - `fixedIp`: The fixed IP address of the client (if assigned). IMPORTANT: This is the *configured* fixed IP.
                     # - `id`: The Meraki client ID.
 
-                    client_name_desc = full_client.get('description')
-                    client_name_dhcp = full_client.get('dhcpHostname')
+                    client_name_desc = client.get('description')
+                    client_name_dhcp = client.get('dhcpHostname')
                     client_name = client_name_desc or client_name_dhcp
 
-                    current_ip = full_client.get('ip')
-                    configured_fixed_ip = full_client.get('fixedIp')
+                    current_ip = client.get('ip')
+                    client_id = client.get('id')
+                    client_mac = client.get('mac')
+
+                    # Try to get configured fixed IP from DHCP reservations map first
+                    configured_fixed_ip = client.get('fixedIp')
+                    if not configured_fixed_ip and client_mac:
+                        configured_fixed_ip = mac_to_reserved_ip_map.get(client_mac.lower())
+                        if configured_fixed_ip:
+                            logging.debug(f"Client '{client_name}' (MAC: {client_mac.lower()}) found in DHCP reservations with IP {configured_fixed_ip}.")
 
 
                     if client_name and current_ip and client_id:
