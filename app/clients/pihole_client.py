@@ -1,5 +1,4 @@
 import logging
-
 import requests
 
 
@@ -52,7 +51,7 @@ def _pihole_api_request(pihole_url, api_key, params):
 def get_pihole_custom_dns_records(pihole_url, api_key):
     """Fetches and parses custom DNS records from Pi-hole."""
     logging.info("Fetching existing custom DNS records from Pi-hole...")
-    params = {"customdns": "", "action": "get"}  # Auth is added by _pihole_api_request
+    params = {"customdns": "true", "action": "get"}  # Auth is added by _pihole_api_request
     response_data = _pihole_api_request(pihole_url, api_key, params)
 
     records = {}  # Store as {domain: [ip1, ip2]}
