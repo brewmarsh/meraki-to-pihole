@@ -14,7 +14,7 @@ ls -l /app/meraki_pihole_sync.py >> "${CRON_LOG_FILE}" 2>&1
 
 echo "Running command: /home/jules/.pyenv/shims/python3 /app/meraki_pihole_sync.py" >> "${CRON_LOG_FILE}"
 # Execute the python script, ensuring its output also goes to the main cron log file
-/home/jules/.pyenv/shims/python3 /app/meraki_pihole_sync.py >> "${CRON_LOG_FILE}" 2>&1
+python3 /app/meraki_pihole_sync.py >> "${CRON_LOG_FILE}" 2>&1
 PY_EXIT_CODE=$?
 
 echo "Python script finished with exit code: ${PY_EXIT_CODE}" >> "${CRON_LOG_FILE}"
