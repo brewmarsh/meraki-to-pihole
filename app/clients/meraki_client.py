@@ -86,9 +86,10 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                 # This might be an over-optimization; let's try fetching directly and handle errors.
                 # network_info = dashboard.networks.getNetwork(network_id)
                 # if 'appliance' in network_info.get('productTypes', []):
-                appliance = dashboard.appliance.getNetworkAppliance(network_id)
+                devices = dashboard.networks.getNetworkDevices(network_id)
+                appliance = [d for d in devices if d['model'].startswith('MX')]
                 if appliance:
-                    serial = appliance['serial']
+                    serial = appliance[0]['serial']
                     appliance_dhcp_subnets = dashboard.appliance.getDeviceApplianceDhcpSubnets(serial)
                 else:
                     appliance_dhcp_subnets = []
