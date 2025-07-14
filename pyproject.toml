@@ -1,0 +1,10 @@
+[tool.ruff]
+line-length = 120
+select = ["E", "F", "W", "I", "UP", "B", "A", "C4", "T20", "SIM", "PTH", "ISC"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

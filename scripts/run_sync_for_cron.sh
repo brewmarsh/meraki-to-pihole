@@ -12,7 +12,7 @@ echo "Python3 location: $(which python3 || echo 'python3 not found in PATH')" >>
 echo "Script location: /app/meraki_pihole_sync.py" >> "${CRON_LOG_FILE}"
 ls -l /app/meraki_pihole_sync.py >> "${CRON_LOG_FILE}" 2>&1
 
-echo "Running command: /home/jules/.pyenv/shims/python3 /app/meraki_pihole_sync.py" >> "${CRON_LOG_FILE}"
+echo "Running command: python3 /app/meraki_pihole_sync.py" >> "${CRON_LOG_FILE}"
 # Execute the python script, ensuring its output also goes to the main cron log file
 python3 /app/meraki_pihole_sync.py >> "${CRON_LOG_FILE}" 2>&1
 PY_EXIT_CODE=$?
