@@ -23,15 +23,31 @@ The script runs once on container startup and then on a configurable cron schedu
 ```
 .
 ├── app/
+│   ├── clients/
+│   │   ├── __init__.py
+│   │   ├── meraki_client.py
+│   │   └── pihole_client.py
 │   ├── meraki_pihole_sync.py  # Main Python script
 │   └── VERSION.txt            # Contains the current application version
 ├── scripts/
 │   └── docker-entrypoint.sh   # Docker entrypoint script for cron setup & initial run
+├── tests/
+│   ├── __init__.py
+│   ├── test_meraki_client.py
+│   └── test_pihole_client.py
 ├── .env.example               # Example environment file for docker-compose
 ├── Dockerfile
 ├── docker-compose.yml         # Docker Compose file for easy deployment
 ├── LICENSE                    # MIT License file
 └── README.md                  # This file
+```
+
+## Running Tests
+
+To run the unit tests, run the following command from the root of the project:
+
+```bash
+python3 -m unittest discover tests
 ```
 
 ## How it Works

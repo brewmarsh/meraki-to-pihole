@@ -35,6 +35,7 @@ if [ -z "$CRON_SCHEDULE" ]; then
   tail -F "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" /dev/null
 else
   echo "Entrypoint: Initializing cron job with schedule: $CRON_SCHEDULE"
+  ln -s /usr/local/bin/python3 /usr/local/bin/python
   # Use python3 explicitly for the cron job. /usr/local/bin/python3 is standard in python:*-slim images.
   PYTHON3_EXEC_PATH="/usr/local/bin/python3"
 
@@ -53,7 +54,7 @@ else
   # or via the explicit python3 path.
   # Using the direct script path relies on the shebang working in cron's environment.
   # Using PYTHON3_EXEC_PATH is more explicit. Let's stick to explicit for now.
-  CRON_JOB_SCRIPT_COMMAND="${PYTHON3_EXEC_PATH} /app/${PYTHON_SCRIPT_NAME}"
+  CRON_JOB_SCRIPT_COMMAND="python3 /app/${PYTHON_SCRIPT_NAME}"
 
   # Create the cron file. Cron requires a newline at the end of the file.
   CRON_FILE_PATH="/etc/cron.d/meraki-pihole-sync-cron"
