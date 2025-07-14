@@ -139,34 +139,11 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                     client_mac = client.get('mac')
 
                     # Try to get configured fixed IP from DHCP reservations map first
-                    configured_fixed_ip = None
-                    if client_mac:
+                    configured_fixed_ip = client.get('fixedIp')
+                    if not configured_fixed_ip and client_mac:
                         configured_fixed_ip = mac_to_reserved_ip_map.get(client_mac.lower())
                         if configured_fixed_ip:
                             logging.debug(f"Client '{client_name}' (MAC: {client_mac.lower()}) found in DHCP reservations with IP {configured_fixed_ip}.")
-
-                    # Fallback or alternative: check client.get('fixedIp') if not found in DHCP reservations
-                    # This field might be populated for non-DHCP fixed IP assignments or by different Meraki device types.
-                    if not configured_fixed_ip and client.get('fixedIp'):
-                        configured_fixed_ip_from_client_obj = client.get('fixedIp')
-                        logging.debug(f"Client '{client_name}' (MAC: {client_mac.lower()}) not in DHCP reservations map, but client object has fixedIp: {configured_fixed_ip_from_client_obj}. Using this.")
-                        configured_fixed_ip = configured_fixed_ip_from_client_obj
-                        # No, if it's not in the authoritative reservation list, we should not use client.fixedIp as it was unreliable.
-                        # We only trust the DHCP reservation list now.
-                        # However, if the reservation list is empty (e.g. non-MX network), client.fixedIp is our only hope.
-                        # Let's refine: if mac_to_reserved_ip_map is populated, it's the source of truth.
-                        # If mac_to_reserved_ip_map is empty (e.g. API call failed or no reservations), then we can try client.get('fixedIp') as a fallback.
-                        if mac_to_reserved_ip_map: # If we have an authoritative list, ignore client.fixedIp
-                             configured_fixed_ip = None # Ensure we only use the map if it exists
-                        # If map is empty, then client.get('fixedIp') is the only info we might have.
-                        # This logic is getting complex. Let's simplify:
-                        # Priority 1: DHCP reservations.
-                        # Priority 2 (fallback if no DHCP reservations found for the *entire network*): client.get('fixedIp').
-
-                    if not configured_fixed_ip and not mac_to_reserved_ip_map: # If no DHCP reservations were found for the network at all
-                        configured_fixed_ip = client.get('fixedIp') # Fallback to the client's reported fixedIp
-                        if configured_fixed_ip:
-                             logging.debug(f"No DHCP reservations found for network {network_name}. Client '{client_name}' (MAC: {client_mac.lower()}) has fixedIp attribute: {configured_fixed_ip}. Using this as potential configured IP.")
 
 
                     if client_name and current_ip and client_id:
