@@ -36,7 +36,7 @@ if [ -z "$CRON_SCHEDULE" ]; then
   tail -F "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" /dev/null
 else
   echo "Entrypoint: Initializing cron job with schedule: $CRON_SCHEDULE"
-  ln -s /usr/local/bin/python3 /usr/local/bin/python
+  ln -sf /usr/local/bin/python3 /usr/local/bin/python
   # Use python3 explicitly for the cron job. /usr/local/bin/python3 is standard in python:*-slim images.
   PYTHON3_EXEC_PATH="/usr/local/bin/python3"
 
