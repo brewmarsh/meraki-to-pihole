@@ -120,6 +120,7 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                 logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}).")
                 logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}'...")
                 for client in clients_in_network:
+                    logging.debug(f"Processing client: {client}")
                     # SDK returns client objects as dictionaries.
                     # Attributes to check: 'description', 'dhcpHostname', 'ip', 'id', and 'fixedIp' (for reserved IP) or 'ip' for current.
                     # The key: is the client's *configured* "Fixed IP" (often called DHCP reservation in UI) the same as its *current* `ip`?
