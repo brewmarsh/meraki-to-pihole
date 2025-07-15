@@ -31,34 +31,54 @@ class TestPiholeClient(unittest.TestCase):
             "http://pi.hole/api/auth", json={"password": "test_password"}, timeout=10
         )
 
-    @patch("app.clients.pihole_client._pihole_api_request")
+    @patch("app.clients.pihole_client.csrf_token", "test_token")
+    @patch("app.clients.pihole_client.session.request")
     def test_get_pihole_custom_dns_records(self, mock_request):
         # Mock the API response
-        mock_request.return_value = ["1.2.3.4 test.com"]
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = ["1.2.3.4 test.com"]
+        mock_request.return_value = mock_response
 
         # Call the function
         records = get_pihole_custom_dns_records(self.pihole_url)
 
         # Assert the result
         self.assertEqual(records, {"test.com": ["1.2.3.4"]})
-        mock_request.assert_called_once_with(self.pihole_url, "GET", "/api/config/dns.hosts")
+        mock_request.assert_called_once_with(
+            "GET", "http://pi.hole/api/config/dns.hosts", headers={"X-CSRF-TOKEN": "test_token"}, json=None, timeout=10
+        )
 
-    @patch("app.clients.pihole_client._pihole_api_request")
+    @patch("app.clients.pihole_client.csrf_token", "test_token")
+    @patch("app.clients.pihole_client.session.request")
     def test_add_dns_record_to_pihole(self, mock_request):
         # Mock the API response
-        mock_request.return_value = {"success": True}
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"success": True}
+        mock_request.return_value = mock_response
 
         # Call the function
         result = add_dns_record_to_pihole(self.pihole_url, "test.com", "1.2.3.4")
 
         # Assert the result
         self.assertTrue(result)
-        mock_request.assert_called_once_with(self.pihole_url, "PUT", "/api/config/dns.hosts/1.2.3.4%20test.com")
+        mock_request.assert_called_once_with(
+            "PUT",
+            "http://pi.hole/api/config/dns.hosts/1.2.3.4%20test.com",
+            headers={"X-CSRF-TOKEN": "test_token"},
+            json=None,
+            timeout=10,
+        )
 
-    @patch("app.clients.pihole_client._pihole_api_request")
+    @patch("app.clients.pihole_client.csrf_token", "test_token")
+    @patch("app.clients.pihole_client.session.request")
     def test_delete_dns_record_from_pihole(self, mock_request):
         # Mock the API response
-        mock_request.return_value = {"success": True}
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"success": True}
+        mock_request.return_value = mock_response
 
         # Call the function
         result = delete_dns_record_from_pihole(self.pihole_url, "test.com", "1.2.3.4")
@@ -66,7 +86,11 @@ class TestPiholeClient(unittest.TestCase):
         # Assert the result
         self.assertTrue(result)
         mock_request.assert_called_once_with(
-            self.pihole_url, "DELETE", "/api/config/dns.hosts/1.2.3.4%20test.com"
+            "DELETE",
+            "http://pi.hole/api/config/dns.hosts/1.2.3.4%20test.com",
+            headers={"X-CSRF-TOKEN": "test_token"},
+            json=None,
+            timeout=10,
         )
 
     @patch("app.clients.pihole_client.delete_dns_record_from_pihole")

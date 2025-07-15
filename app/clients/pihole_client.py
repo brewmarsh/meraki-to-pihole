@@ -7,10 +7,12 @@ import requests
 from urllib.parse import quote
 
 session = requests.Session()
+csrf_token = None
 
 
 def authenticate(pihole_url, password):
     """Authenticates with the Pi-hole API and stores the session."""
+    global csrf_token
     logging.info("Authenticating with Pi-hole API...")
     base_url = pihole_url.rstrip("/")
     if base_url.endswith("/admin"):
@@ -22,6 +24,7 @@ def authenticate(pihole_url, password):
     try:
         response = session.post(url, json={"password": password}, timeout=10)
         response.raise_for_status()
+        csrf_token = response.cookies.get("csrf_token")
         logging.info("Successfully authenticated with Pi-hole API.")
         return True
     except requests.exceptions.RequestException as e:
@@ -37,10 +40,13 @@ def _pihole_api_request(pihole_url, method, path, data=None):
         base_url = base_url.replace("/api.php", "")
 
     url = f"{base_url}{path}"
+    headers = {}
+    if csrf_token:
+        headers["X-CSRF-TOKEN"] = csrf_token
 
     try:
         logging.debug(f"Pi-hole API Request: URL={url}, Method={method}, Data={data}")
-        response = session.request(method, url, json=data, timeout=10)
+        response = session.request(method, url, headers=headers, json=data, timeout=10)
         logging.debug(f"Pi-hole API Request URL: {response.url}")
         logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
         logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
