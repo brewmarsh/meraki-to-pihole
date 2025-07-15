@@ -9,9 +9,9 @@ def _pihole_api_request(pihole_url, api_key, data, method="POST"):
 
     # Determine the correct endpoint
     if "customdns" in data:
-        pihole_url = f"{base_url}/scripts/pi-hole/php/customdns.php"
+        pihole_url = f"{base_url}/admin/scripts/pi-hole/php/customdns.php"
     else:
-        pihole_url = f"{base_url}/api.php"
+        pihole_url = f"{base_url}/admin/api.php"
 
     if api_key:
         data["token"] = api_key

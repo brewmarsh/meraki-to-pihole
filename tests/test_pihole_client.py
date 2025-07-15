@@ -28,7 +28,7 @@ class TestPiholeClient(unittest.TestCase):
         # Assert the result
         self.assertEqual(records, {"test.com": ["1.2.3.4"]})
         mock_post.assert_called_once_with(
-            "http://pi.hole/scripts/pi-hole/php/customdns.php",
+            "http://pi.hole/admin/scripts/pi-hole/php/customdns.php",
             data={"customdns": "", "action": "get", "token": "test_key"},
             timeout=10,
         )
