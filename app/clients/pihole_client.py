@@ -2,12 +2,14 @@ import logging
 import requests
 
 
+import urllib.parse
+
 def _pihole_api_request(pihole_url, api_key, params):
     if not pihole_url.endswith("api.php"):
         pihole_url = pihole_url.rstrip("/") + "/api.php"
 
     if api_key:
-        params["auth"] = api_key
+        params["auth"] = urllib.parse.quote(api_key)
 
     try:
         logging.debug(f"Pi-hole API Request: URL={pihole_url}, Params={params}")

@@ -15,7 +15,8 @@
                 <div class="card">
                     <div class="card-header">
                         sync.log
-                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="sync">Clear</button>
+                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="sync" data-action="clear">Clear</button>
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2" data-log="sync" data-action="copy">Copy</button>
                     </div>
                     <div class="card-body">
                         <pre id="sync-log"></pre>
@@ -24,7 +25,8 @@
                 <div class="card mt-3">
                     <div class="card-header">
                         cron_output.log
-                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="cron">Clear</button>
+                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="cron" data-action="clear">Clear</button>
+                        <button class="btn btn-sm btn-outline-secondary float-end me-2" data-log="cron" data-action="copy">Copy</button>
                     </div>
                     <div class="card-body">
                         <pre id="cron-log"></pre>
@@ -80,18 +82,27 @@
         document.querySelectorAll('[data-log]').forEach(button => {
             button.addEventListener('click', () => {
                 const logType = button.dataset.log;
-                fetch('/clear-log', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ log: logType })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        alert(data.message);
-                        getLogs();
+                const action = button.dataset.action;
+
+                if (action === 'clear') {
+                    fetch('/clear-log', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ log: logType })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            alert(data.message);
+                            getLogs();
+                        });
+                } else if (action === 'copy') {
+                    const logContent = document.getElementById(`${logType}-log`).textContent;
+                    navigator.clipboard.writeText(logContent).then(() => {
+                        alert(`${logType} log copied to clipboard.`);
                     });
+                }
             });
         });
 
