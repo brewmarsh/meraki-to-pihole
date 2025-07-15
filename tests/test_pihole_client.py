@@ -14,83 +14,62 @@ class TestPiholeClient(unittest.TestCase):
     def setUp(self):
         self.pihole_url = "http://pi.hole"
         self.password = "test_password"
+        self.session = MagicMock()
 
-    @patch("app.clients.pihole_client.session.post")
-    def test_authenticate(self, mock_post):
+    @patch("requests.Session")
+    def test_authenticate(self, mock_session):
         # Mock the API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_post.return_value = mock_response
+        mock_post = MagicMock()
+        mock_post.status_code = 200
+        mock_session.return_value.post = mock_post
 
         # Call the function
         result = authenticate(self.pihole_url, self.password)
 
         # Assert the result
-        self.assertTrue(result)
+        self.assertIsNotNone(result)
         mock_post.assert_called_once_with(
             "http://pi.hole/api/auth", json={"password": "test_password"}, timeout=10
         )
 
-    @patch("app.clients.pihole_client.csrf_token", "test_token")
-    @patch("app.clients.pihole_client.session.request")
+    @patch("app.clients.pihole_client._pihole_api_request")
     def test_get_pihole_custom_dns_records(self, mock_request):
         # Mock the API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = ["1.2.3.4 test.com"]
-        mock_request.return_value = mock_response
+        mock_request.return_value = ["1.2.3.4 test.com"]
 
         # Call the function
-        records = get_pihole_custom_dns_records(self.pihole_url)
+        records = get_pihole_custom_dns_records(self.session, self.pihole_url)
 
         # Assert the result
         self.assertEqual(records, {"test.com": ["1.2.3.4"]})
-        mock_request.assert_called_once_with(
-            "GET", "http://pi.hole/api/config/dns.hosts", headers={"X-CSRF-TOKEN": "test_token"}, json=None, timeout=10
-        )
+        mock_request.assert_called_once_with(self.session, self.pihole_url, "GET", "/api/config/dns.hosts")
 
-    @patch("app.clients.pihole_client.csrf_token", "test_token")
-    @patch("app.clients.pihole_client.session.request")
+    @patch("app.clients.pihole_client._pihole_api_request")
     def test_add_dns_record_to_pihole(self, mock_request):
         # Mock the API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
-        mock_request.return_value = mock_response
+        mock_request.return_value = {"success": True}
 
         # Call the function
-        result = add_dns_record_to_pihole(self.pihole_url, "test.com", "1.2.3.4")
+        result = add_dns_record_to_pihole(self.session, self.pihole_url, "test.com", "1.2.3.4")
 
         # Assert the result
         self.assertTrue(result)
         mock_request.assert_called_once_with(
-            "PUT",
-            "http://pi.hole/api/config/dns.hosts/1.2.3.4%20test.com",
-            headers={"X-CSRF-TOKEN": "test_token"},
-            json=None,
-            timeout=10,
+            self.session, self.pihole_url, "PUT", "/api/config/dns.hosts/1.2.3.4%20test.com"
         )
 
-    @patch("app.clients.pihole_client.csrf_token", "test_token")
-    @patch("app.clients.pihole_client.session.request")
+    @patch("app.clients.pihole_client._pihole_api_request")
     def test_delete_dns_record_from_pihole(self, mock_request):
         # Mock the API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"success": True}
-        mock_request.return_value = mock_response
+        mock_request.return_value = {"success": True}
 
         # Call the function
-        result = delete_dns_record_from_pihole(self.pihole_url, "test.com", "1.2.3.4")
+        result = delete_dns_record_from_pihole(self.session, self.pihole_url, "test.com", "1.2.3.4")
 
         # Assert the result
         self.assertTrue(result)
         mock_request.assert_called_once_with(
-            "DELETE",
-            "http://pi.hole/api/config/dns.hosts/1.2.3.4%20test.com",
-            headers={"X-CSRF-TOKEN": "test_token"},
-            json=None,
-            timeout=10,
+            self.session, self.pihole_url, "DELETE", "/api/config/dns.hosts/1.2.3.4%20test.com"
         )
 
     @patch("app.clients.pihole_client.delete_dns_record_from_pihole")
@@ -103,13 +82,13 @@ class TestPiholeClient(unittest.TestCase):
         # Call the function
         existing_records = {}
         result = add_or_update_dns_record_in_pihole(
-            self.pihole_url, "test.com", "1.2.3.4", existing_records
+            self.session, self.pihole_url, "test.com", "1.2.3.4", existing_records
         )
 
         # Assert the result
         self.assertTrue(result)
         self.assertEqual(existing_records, {"test.com": ["1.2.3.4"]})
-        mock_add.assert_called_once_with(self.pihole_url, "test.com", "1.2.3.4")
+        mock_add.assert_called_once_with(self.session, self.pihole_url, "test.com", "1.2.3.4")
         mock_delete.assert_not_called()
 
     @patch("app.clients.pihole_client.delete_dns_record_from_pihole")
@@ -122,14 +101,14 @@ class TestPiholeClient(unittest.TestCase):
         # Call the function
         existing_records = {"test.com": ["1.1.1.1"]}
         result = add_or_update_dns_record_in_pihole(
-            self.pihole_url, "test.com", "2.2.2.2", existing_records
+            self.session, self.pihole_url, "test.com", "2.2.2.2", existing_records
         )
 
         # Assert the result
         self.assertTrue(result)
         self.assertEqual(existing_records, {"test.com": ["2.2.2.2"]})
-        mock_delete.assert_called_once_with(self.pihole_url, "test.com", "1.1.1.1")
-        mock_add.assert_called_once_with(self.pihole_url, "test.com", "2.2.2.2")
+        mock_delete.assert_called_once_with(self.session, self.pihole_url, "test.com", "1.1.1.1")
+        mock_add.assert_called_once_with(self.session, self.pihole_url, "test.com", "2.2.2.2")
 
 
 if __name__ == "__main__":

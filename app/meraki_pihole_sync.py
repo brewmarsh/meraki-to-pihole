@@ -164,7 +164,8 @@ def main():
     hostname_suffix = config["hostname_suffix"]
 
     # Authenticate with Pi-hole
-    if not authenticate(pihole_url, pihole_password):
+    session = authenticate(pihole_url, pihole_password)
+    if not session:
         logging.error("Failed to authenticate with Pi-hole. Halting sync.")
         sys.exit(1)
 
@@ -214,7 +215,7 @@ def main():
 
     # Fetch existing Pi-hole DNS records to compare against
     # This is now a cache that add_or_update_dns_record_in_pihole will modify.
-    existing_pihole_records_cache = get_pihole_custom_dns_records(pihole_url)
+    existing_pihole_records_cache = get_pihole_custom_dns_records(session, pihole_url)
     if existing_pihole_records_cache is None:  # This means API call failed critically
         logging.error("Could not fetch existing Pi-hole DNS records. Halting sync to prevent erroneous changes.")
         logging.info("--- Sync process failed (Pi-hole record fetch error) ---")
@@ -237,7 +238,7 @@ def main():
         )
 
         if add_or_update_dns_record_in_pihole(
-            pihole_url, domain_to_sync, ip_to_sync, existing_pihole_records_cache
+            session, pihole_url, domain_to_sync, ip_to_sync, existing_pihole_records_cache
         ):
             successful_syncs += 1
         else:
