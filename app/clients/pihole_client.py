@@ -3,8 +3,11 @@ import requests
 
 
 def _pihole_api_request(pihole_url, api_key, params):
-    if not pihole_url.endswith("api.php"):
-        pihole_url = pihole_url.rstrip("/") + "/api.php"
+    pihole_url = pihole_url.rstrip("/")
+    if pihole_url.endswith("/admin"):
+        pihole_url = pihole_url.replace("/admin", "")
+    if not pihole_url.endswith("/api.php"):
+        pihole_url += "/api.php"
 
     if api_key:
         params["auth"] = api_key
@@ -12,6 +15,10 @@ def _pihole_api_request(pihole_url, api_key, params):
     try:
         logging.debug(f"Pi-hole API Request: URL={pihole_url}, Params={params}")
         response = requests.get(pihole_url, params=params, timeout=10)
+        logging.debug(f"Pi-hole API Request URL: {response.url}")
+        logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
+        logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
+        logging.debug(f"Pi-hole API Response Text: {response.text}")
         response.raise_for_status()
         if response.text:  # Response has content
             try:
@@ -40,6 +47,10 @@ def _pihole_api_request(pihole_url, api_key, params):
         else:  # Response has no content and status is not OK
             return {"success": False, "message": f"Request failed with status {response.status_code} (empty response)."}
     except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 400:
+            logging.error(
+                "Pi-hole API returned a 400 Bad Request. This can be caused by an incorrect API key. Please check your PIHOLE_API_KEY."
+            )
         logging.error(
             f"Pi-hole API HTTP error: {e} - Response: {e.response.text[:200] if e.response and e.response.text else 'No response text'}"
         )
@@ -51,7 +62,7 @@ def _pihole_api_request(pihole_url, api_key, params):
 def get_pihole_custom_dns_records(pihole_url, api_key):
     """Fetches and parses custom DNS records from Pi-hole."""
     logging.info("Fetching existing custom DNS records from Pi-hole...")
-    params = {"customdns": "true", "action": "get"}  # Auth is added by _pihole_api_request
+    params = {"customdns": "", "action": "get"}  # Auth is added by _pihole_api_request
     response_data = _pihole_api_request(pihole_url, api_key, params)
 
     records = {}  # Store as {domain: [ip1, ip2]}
