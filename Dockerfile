@@ -49,4 +49,4 @@ ENTRYPOINT ["/docker-entrypoint.sh"]
 # Default command for the entrypoint (e.g. the script to run)
 # This will be passed to the entrypoint script
 # Changed to python3 and removed obsolete --config argument
-CMD ["python3", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:24653", "app:app"]

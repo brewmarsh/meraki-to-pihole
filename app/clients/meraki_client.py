@@ -103,55 +103,45 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                     logging.warning(f"Could not retrieve DHCP subnet/VLANs info for network {network_name} (ID: {network_id}) to check reservations: {e}. Will rely on client.fixedIp if available.")
 
 
-            # Fetch clients for the network
-            clients_in_network = dashboard.networks.getNetworkClients(networkId=network_id, timespan=client_timespan, perPage=1000, total_pages='all')
+            # Fetch devices for the network
+            devices_in_network = dashboard.networks.getNetworkDevices(network_id)
 
-            if clients_in_network:
-                logging.info(f"SDK returned {len(clients_in_network)} clients for network '{network_name}' (ID: {network_id}).")
-                logging.debug(f"Filtering {len(clients_in_network)} clients from network '{network_name}'...")
-                for client in clients_in_network:
-                    # SDK returns client objects as dictionaries.
-                    # Attributes to check: 'description', 'dhcpHostname', 'ip', 'id', and 'fixedIp' (for reserved IP) or 'ip' for current.
-                    # The key: is the client's *configured* "Fixed IP" (often called DHCP reservation in UI) the same as its *current* `ip`?
-                    # The Meraki client object from getNetworkClients has:
-                    # - `ip`: Current IP address of the client.
-                    # - `dhcpHostname`: The hostname of a client as reported by DHCP.
-                    # - `description`: The description of the client.
-                    # - `fixedIp`: The fixed IP address of the client (if assigned). IMPORTANT: This is the *configured* fixed IP.
-                    # - `id`: The Meraki client ID.
+            if devices_in_network:
+                logging.info(f"SDK returned {len(devices_in_network)} devices for network '{network_name}' (ID: {network_id}).")
+                logging.debug(f"Filtering {len(devices_in_network)} devices from network '{network_name}'...")
+                for device in devices_in_network:
+                    serial = device.get("serial")
+                    if not serial:
+                        continue
 
-                    client_name_desc = client.get('description')
-                    client_name_dhcp = client.get('dhcpHostname')
-                    client_name = client_name_desc or client_name_dhcp
+                    try:
+                        mgmt_interface = dashboard.devices.getDeviceManagementInterface(serial)
+                        wan1 = mgmt_interface.get("wan1", {})
+                        wan2 = mgmt_interface.get("wan2", {})
 
-                    current_ip = client.get('ip')
-                    client_id = client.get('id')
-                    client_mac = client.get('mac')
+                        ip = None
+                        if wan1.get("usingStaticIp"):
+                            ip = wan1.get("staticIp")
+                        elif wan2.get("usingStaticIp"):
+                            ip = wan2.get("staticIp")
 
-                    # Try to get configured fixed IP from DHCP reservations map first
-                    configured_fixed_ip = client.get('fixedIp')
-                    if not configured_fixed_ip and client_mac:
-                        configured_fixed_ip = mac_to_reserved_ip_map.get(client_mac.lower())
-                        if configured_fixed_ip:
-                            logging.debug(f"Client '{client_name}' (MAC: {client_mac.lower()}) found in DHCP reservations with IP {configured_fixed_ip}.")
-
-
-                    if client_name and current_ip and client_id:
-                        if configured_fixed_ip and configured_fixed_ip == current_ip:
+                        if ip:
+                            client_name = device.get("name") or device.get("model")
+                            client_id = device.get("serial")
                             all_clients_map[client_id] = {
-                                "name": client_name, "ip": current_ip,
-                                "network_id": network_id, "network_name": network_name,
-                                "meraki_client_id": client_id
+                                "name": client_name,
+                                "ip": ip,
+                                "network_id": network_id,
+                                "network_name": network_name,
+                                "meraki_client_id": client_id,
                             }
-                            logging.info(f"Relevant client: '{client_name}' (IP: {current_ip}, Meraki ID: {client_id}) in network '{network_name}'. Configured Fixed IP ({configured_fixed_ip}) matches current IP. Will be processed.")
-                        elif configured_fixed_ip:
-                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' has configured Fixed IP ({configured_fixed_ip}) but current IP ({current_ip}) differs. Skipping.")
+                            logging.info(f"Relevant client: '{client_name}' (IP: {ip}, Meraki ID: {client_id}) in network '{network_name}'. Using static IP. Will be processed.")
                         else:
-                            logging.debug(f"Client '{client_name}' (ID: {client_id}) in network '{network_name}' does not have a usable Fixed IP assignment. Skipping.")
-                    else:
-                        logging.debug(f"Skipping client (Meraki ID: {client.get('id')}, MAC: {client.get('mac')}) in network '{network_name}' due to missing name, current IP, or client ID.")
+                            logging.debug(f"Device '{device.get('name')}' (Serial: {serial}) in network '{network_name}' does not have a static IP assignment. Skipping.")
+                    except meraki.exceptions.APIError as e:
+                        logging.warning(f"Could not retrieve management interface for device {serial} in network {network_name}: {e}")
             else:
-                logging.info(f"No clients reported by SDK for network {network_name} (ID: {network_id}).")
+                logging.info(f"No devices reported by SDK for network {network_name} (ID: {network_id}).")
 
         except meraki.exceptions.APIError as e:
             logging.error(f"Meraki API error during processing of network {network_name} (ID: {network_id}): {e}")

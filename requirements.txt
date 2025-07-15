@@ -3,3 +3,4 @@ configparser
 meraki
 ruff
 Flask
+gunicorn

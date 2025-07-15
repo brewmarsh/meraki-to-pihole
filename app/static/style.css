@@ -1,29 +1,9 @@
-body {
-    font-family: sans-serif;
-    margin: 2em;
-}
-
-h1 {
-    text-align: center;
-}
-
-.container {
-    display: flex;
-    justify-content: space-around;
-}
-
-.section {
-    width: 30%;
-}
-
-.log-container {
-    height: 400px;
-    overflow-y: scroll;
-    border: 1px solid #ccc;
-    padding: 1em;
-    margin-bottom: 1em;
-}
-
 pre {
     white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.card-body {
+    height: 400px;
+    overflow-y: scroll;
 }
