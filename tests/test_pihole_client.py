@@ -24,7 +24,7 @@ class TestPiholeClient(unittest.TestCase):
 
         # Assert the result
         self.assertEqual(records, {"test.com": ["1.2.3.4"]})
-        mock_request.assert_called_once_with(self.pihole_url, self.api_key, "GET", "/api/config/dns/hosts")
+        mock_request.assert_called_once_with(self.pihole_url, self.api_key, "GET", "/api/config/dns.hosts")
 
     @patch("app.clients.pihole_client._pihole_api_request")
     def test_add_dns_record_to_pihole(self, mock_request):
@@ -37,7 +37,7 @@ class TestPiholeClient(unittest.TestCase):
         # Assert the result
         self.assertTrue(result)
         mock_request.assert_called_once_with(
-            self.pihole_url, self.api_key, "PUT", "/api/config/dns/hosts/1.2.3.4%20test.com"
+            self.pihole_url, self.api_key, "PUT", "/api/config/dns.hosts/1.2.3.4%20test.com"
         )
 
     @patch("app.clients.pihole_client._pihole_api_request")
@@ -51,7 +51,7 @@ class TestPiholeClient(unittest.TestCase):
         # Assert the result
         self.assertTrue(result)
         mock_request.assert_called_once_with(
-            self.pihole_url, self.api_key, "DELETE", "/api/config/dns/hosts/1.2.3.4%20test.com"
+            self.pihole_url, self.api_key, "DELETE", "/api/config/dns.hosts/1.2.3.4%20test.com"
         )
 
     @patch("app.clients.pihole_client.delete_dns_record_from_pihole")

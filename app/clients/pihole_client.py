@@ -36,7 +36,7 @@ def _pihole_api_request(pihole_url, api_key, method, path, data=None):
 def get_pihole_custom_dns_records(pihole_url, api_key):
     """Fetches and parses custom DNS records from Pi-hole."""
     logging.info("Fetching existing custom DNS records from Pi-hole...")
-    response_data = _pihole_api_request(pihole_url, api_key, "GET", "/api/config/dns/hosts")
+    response_data = _pihole_api_request(pihole_url, api_key, "GET", "/api/config/dns.hosts")
 
     records = {}  # Store as {domain: [ip1, ip2]}
     if response_data:
@@ -61,7 +61,7 @@ def add_dns_record_to_pihole(pihole_url, api_key, domain, ip_address):
     """Adds a single DNS record to Pi-hole."""
     logging.info(f"Adding DNS record to Pi-hole: {domain} -> {ip_address}")
     elem = f"{ip_address} {domain}"
-    path = f"/api/config/dns/hosts/{quote(elem)}"
+    path = f"/api/config/dns.hosts/{quote(elem)}"
     response = _pihole_api_request(pihole_url, api_key, "PUT", path)
     if response and response.get("success"):
         logging.info(f"Successfully added DNS record: {domain} -> {ip_address}.")
@@ -75,7 +75,7 @@ def delete_dns_record_from_pihole(pihole_url, api_key, domain, ip_address):
     """Deletes a single DNS record from Pi-hole."""
     logging.info(f"Deleting DNS record from Pi-hole: {domain} -> {ip_address}")
     elem = f"{ip_address} {domain}"
-    path = f"/api/config/dns/hosts/{quote(elem)}"
+    path = f"/api/config/dns.hosts/{quote(elem)}"
     response = _pihole_api_request(pihole_url, api_key, "DELETE", path)
     if response and response.get("success"):
         logging.info(f"Successfully deleted DNS record: {domain} -> {ip_address}.")
