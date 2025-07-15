@@ -15,6 +15,7 @@
                 <div class="card">
                     <div class="card-header">
                         sync.log
+                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="sync">Clear</button>
                     </div>
                     <div class="card-body">
                         <pre id="sync-log"></pre>
@@ -23,6 +24,7 @@
                 <div class="card mt-3">
                     <div class="card-header">
                         cron_output.log
+                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="cron">Clear</button>
                     </div>
                     <div class="card-body">
                         <pre id="cron-log"></pre>
@@ -73,6 +75,24 @@
                     getLogs();
                     getMappings();
                 });
+        });
+
+        document.querySelectorAll('[data-log]').forEach(button => {
+            button.addEventListener('click', () => {
+                const logType = button.dataset.log;
+                fetch('/clear-log', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ log: logType })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        alert(data.message);
+                        getLogs();
+                    });
+            });
         });
 
         getLogs();

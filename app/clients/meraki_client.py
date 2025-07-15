@@ -68,85 +68,45 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         logging.info(f"--- Processing network {network_idx + 1}/{len(networks_to_query_details)}: '{network_name}' (ID: {network_id}) ---")
 
         mac_to_reserved_ip_map = {}
-        try:
-            # Attempt to get DHCP subnet configurations, which should include fixed IP assignments.
-            # This endpoint is typically for networks with an MX appliance.
-            # Using a more general approach: getNetworkApplianceDhcpSubnets
-            # This might return a list of subnets for the network.
-            # Each subnet object could have 'fixedIpAssignments' or 'reservedIpRanges'.
-            # The SDK documentation for getNetworkApplianceDhcpSubnets indicates it returns a list of subnet DHCP settings.
-            # Each item in this list can have a "fixedIpAssignments" key, which is a list of assignment objects.
-            # Each assignment object has "mac", "name", "ip".
-            logging.debug(f"Fetching DHCP subnet info for network {network_id} to find fixed IP assignments.")
-            # This call might fail if the network is not an Appliance network or has no DHCP settings.
-            # The SDK might return an empty list or raise an APIError (e.g., 404 if endpoint not applicable).
-            appliance_dhcp_subnets = []
-            try:
-                # Check if network is an appliance network first.
-                # This might be an over-optimization; let's try fetching directly and handle errors.
-                # network_info = dashboard.networks.getNetwork(network_id)
-                # if 'appliance' in network_info.get('productTypes', []):
-                vlans = dashboard.appliance.getNetworkApplianceVlans(network_id)
-                if vlans:
-                    for vlan in vlans:
-                        if vlan.get('fixedIpAssignments'):
-                            for mac, assignment_details in vlan['fixedIpAssignments'].items():
-                                if mac and assignment_details.get('ip'):
-                                    mac_to_reserved_ip_map[mac.lower()] = assignment_details['ip']
-                                    logging.debug(f"Found configured DHCP reservation in network {network_id}: MAC {mac.lower()} -> IP {assignment_details['ip']} (Name: {assignment_details.get('name', 'N/A')})")
-                logging.info(f"Found {len(mac_to_reserved_ip_map)} DHCP fixed IP reservations in network {network_name} (ID: {network_id}).")
+        # Fetch devices for the network
+        devices_in_network = dashboard.networks.getNetworkDevices(network_id)
 
-            except meraki.exceptions.APIError as e:
-                if e.status == 404 and "The requested URL was not found on the server." in str(e.message): # More specific check
-                    logging.info(f"No DHCP subnet/VLAN configuration found via API for network {network_name} (ID: {network_id}) (Endpoint not found - likely not an MX network or no DHCP configured). Will rely on client.fixedIp if available.")
-                else:
-                    logging.warning(f"Could not retrieve DHCP subnet/VLANs info for network {network_name} (ID: {network_id}) to check reservations: {e}. Will rely on client.fixedIp if available.")
+        if devices_in_network:
+            logging.info(f"SDK returned {len(devices_in_network)} devices for network '{network_name}' (ID: {network_id}).")
+            logging.debug(f"Filtering {len(devices_in_network)} devices from network '{network_name}'...")
+            for device in devices_in_network:
+                serial = device.get("serial")
+                if not serial:
+                    continue
 
+                try:
+                    mgmt_interface = dashboard.devices.getDeviceManagementInterface(serial)
+                    wan1 = mgmt_interface.get("wan1", {})
+                    wan2 = mgmt_interface.get("wan2", {})
 
-            # Fetch devices for the network
-            devices_in_network = dashboard.networks.getNetworkDevices(network_id)
+                    ip = None
+                    if wan1.get("usingStaticIp"):
+                        ip = wan1.get("staticIp")
+                    elif wan2.get("usingStaticIp"):
+                        ip = wan2.get("staticIp")
 
-            if devices_in_network:
-                logging.info(f"SDK returned {len(devices_in_network)} devices for network '{network_name}' (ID: {network_id}).")
-                logging.debug(f"Filtering {len(devices_in_network)} devices from network '{network_name}'...")
-                for device in devices_in_network:
-                    serial = device.get("serial")
-                    if not serial:
-                        continue
-
-                    try:
-                        mgmt_interface = dashboard.devices.getDeviceManagementInterface(serial)
-                        wan1 = mgmt_interface.get("wan1", {})
-                        wan2 = mgmt_interface.get("wan2", {})
-
-                        ip = None
-                        if wan1.get("usingStaticIp"):
-                            ip = wan1.get("staticIp")
-                        elif wan2.get("usingStaticIp"):
-                            ip = wan2.get("staticIp")
-
-                        if ip:
-                            client_name = device.get("name") or device.get("model")
-                            client_id = device.get("serial")
-                            all_clients_map[client_id] = {
-                                "name": client_name,
-                                "ip": ip,
-                                "network_id": network_id,
-                                "network_name": network_name,
-                                "meraki_client_id": client_id,
-                            }
-                            logging.info(f"Relevant client: '{client_name}' (IP: {ip}, Meraki ID: {client_id}) in network '{network_name}'. Using static IP. Will be processed.")
-                        else:
-                            logging.debug(f"Device '{device.get('name')}' (Serial: {serial}) in network '{network_name}' does not have a static IP assignment. Skipping.")
-                    except meraki.exceptions.APIError as e:
-                        logging.warning(f"Could not retrieve management interface for device {serial} in network {network_name}: {e}")
-            else:
-                logging.info(f"No devices reported by SDK for network {network_name} (ID: {network_id}).")
-
-        except meraki.exceptions.APIError as e:
-            logging.error(f"Meraki API error during processing of network {network_name} (ID: {network_id}): {e}")
-        except Exception as e:
-            logging.error(f"An unexpected error occurred while processing network {network_name} (ID: {network_id}): {e}", exc_info=True)
+                    if ip:
+                        client_name = device.get("name") or device.get("model")
+                        client_id = device.get("serial")
+                        all_clients_map[client_id] = {
+                            "name": client_name,
+                            "ip": ip,
+                            "network_id": network_id,
+                            "network_name": network_name,
+                            "meraki_client_id": client_id,
+                        }
+                        logging.info(f"Relevant client: '{client_name}' (IP: {ip}, Meraki ID: {client_id}) in network '{network_name}'. Using static IP. Will be processed.")
+                    else:
+                        logging.debug(f"Device '{device.get('name')}' (Serial: {serial}) in network '{network_name}' does not have a static IP assignment. Skipping.")
+                except meraki.exceptions.APIError as e:
+                    logging.warning(f"Could not retrieve management interface for device {serial} in network {network_name}: {e}")
+        else:
+            logging.info(f"No devices reported by SDK for network {network_name} (ID: {network_id}).")
 
         logging.info(f"--- Finished processing network {network_idx + 1}/{len(networks_to_query_details)}: {network_name} (ID: {network_id}) ---")
 
