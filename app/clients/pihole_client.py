@@ -15,11 +15,11 @@ def _pihole_api_request(pihole_url, api_key, method, path, data=None):
         base_url = base_url.replace("/api.php", "")
 
     url = f"{base_url}{path}"
-    headers = {"X-Pi-hole-API-Token": api_key}
+    params = {"token": api_key}
 
     try:
         logging.debug(f"Pi-hole API Request: URL={url}, Method={method}, Data={data}")
-        response = requests.request(method, url, headers=headers, json=data, timeout=10)
+        response = requests.request(method, url, params=params, json=data, timeout=10)
         logging.debug(f"Pi-hole API Request URL: {response.url}")
         logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
         logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
