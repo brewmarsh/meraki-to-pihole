@@ -11,35 +11,35 @@ from app.clients.pihole_client import (
 
 class TestPiholeClient(unittest.TestCase):
     def setUp(self):
-        self.pihole_url = "http://pi.hole/admin/"
+        self.pihole_url = "http://pi.hole/admin"
         self.api_key = "test_key"
 
-    @patch("requests.get")
-    def test_get_pihole_custom_dns_records(self, mock_get):
+    @patch("requests.post")
+    def test_get_pihole_custom_dns_records(self, mock_post):
         # Mock the API response
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"data": [["test.com", "1.2.3.4"]]}
-        mock_get.return_value = mock_response
+        mock_post.return_value = mock_response
 
         # Call the function
         records = get_pihole_custom_dns_records(self.pihole_url, self.api_key)
 
         # Assert the result
         self.assertEqual(records, {"test.com": ["1.2.3.4"]})
-        mock_get.assert_called_once_with(
-            "http://pi.hole/admin/api.php",
-            params={"customdns": "", "action": "get", "auth": "test_key"},
+        mock_post.assert_called_once_with(
+            "http://pi.hole/scripts/pi-hole/php/customdns.php",
+            data={"customdns": "", "action": "get", "token": "test_key"},
             timeout=10,
         )
 
-    @patch("requests.get")
-    def test_add_dns_record_to_pihole(self, mock_get):
+    @patch("requests.post")
+    def test_add_dns_record_to_pihole(self, mock_post):
         # Mock the API response
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "message": "Custom DNS entry [...] added"}
-        mock_get.return_value = mock_response
+        mock_post.return_value = mock_response
 
         # Call the function
         result = add_dns_record_to_pihole(self.pihole_url, self.api_key, "test.com", "1.2.3.4")
@@ -47,13 +47,13 @@ class TestPiholeClient(unittest.TestCase):
         # Assert the result
         self.assertTrue(result)
 
-    @patch("requests.get")
-    def test_delete_dns_record_from_pihole(self, mock_get):
+    @patch("requests.post")
+    def test_delete_dns_record_from_pihole(self, mock_post):
         # Mock the API response
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {"success": True, "message": "Custom DNS entry [...] deleted"}
-        mock_get.return_value = mock_response
+        mock_post.return_value = mock_response
 
         # Call the function
         result = delete_dns_record_from_pihole(self.pihole_url, self.api_key, "test.com", "1.2.3.4")
