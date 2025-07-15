@@ -36,8 +36,6 @@ def force_sync():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
-from clients.pihole_client import authenticate
-
 @app.route("/mappings")
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
