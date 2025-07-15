@@ -23,6 +23,7 @@ import meraki
 from clients.meraki_client import get_all_relevant_meraki_clients
 from clients.pihole_client import (
     add_or_update_dns_record_in_pihole,
+    authenticate_to_pihole,
     get_pihole_custom_dns_records,
 )
 
@@ -73,8 +74,7 @@ ENV_MERAKI_API_KEY = "MERAKI_API_KEY"
 ENV_MERAKI_ORG_ID = "MERAKI_ORG_ID"
 ENV_MERAKI_NETWORK_IDS = "MERAKI_NETWORK_IDS"
 ENV_PIHOLE_API_URL = "PIHOLE_API_URL"
-ENV_PIHOLE_SESSION_COOKIE = "PIHOLE_SESSION_COOKIE"
-ENV_PIHOLE_CSRF_TOKEN = "PIHOLE_CSRF_TOKEN"
+ENV_PIHOLE_PASSWORD = "PIHOLE_PASSWORD"
 ENV_HOSTNAME_SUFFIX = "HOSTNAME_SUFFIX"
 ENV_CLIENT_TIMESPAN = "MERAKI_CLIENT_TIMESPAN_SECONDS"
 # --- End Constants ---
@@ -94,6 +94,7 @@ def load_app_config_from_env():
         ENV_MERAKI_API_KEY: "Meraki API Key",
         ENV_MERAKI_ORG_ID: "Meraki Organization ID",
         ENV_PIHOLE_API_URL: "Pi-hole API URL",
+        ENV_PIHOLE_PASSWORD: "Pi-hole Password",
         ENV_HOSTNAME_SUFFIX: "Hostname Suffix",
     }
     missing_vars_messages = []
@@ -111,8 +112,7 @@ def load_app_config_from_env():
         sys.exit(1)
 
     # Optional environment variables
-    config["pihole_session_cookie"] = os.getenv(ENV_PIHOLE_SESSION_COOKIE)
-    config["pihole_csrf_token"] = os.getenv(ENV_PIHOLE_CSRF_TOKEN)
+    config["pihole_password"] = os.getenv(ENV_PIHOLE_PASSWORD)
 
     meraki_network_ids_str = os.getenv(ENV_MERAKI_NETWORK_IDS, "")  # Default to empty string
     config["meraki_network_ids"] = [nid.strip() for nid in meraki_network_ids_str.split(",") if nid.strip()]
@@ -161,8 +161,7 @@ def main():
     config = load_app_config_from_env()
     meraki_api_key = config["meraki_api_key"]  # Renamed for clarity with SDK
     pihole_url = config["pihole_api_url"]
-    pihole_session_cookie = config["pihole_session_cookie"]
-    pihole_csrf_token = config["pihole_csrf_token"]
+    pihole_password = config["pihole_password"]
     hostname_suffix = config["hostname_suffix"]
 
     # Initialize Meraki Dashboard API client
@@ -209,11 +208,16 @@ def main():
 
     logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process for Pi-hole sync.")
 
+    # Authenticate to Pi-hole to get session details
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_password)
+    if not sid or not csrf_token:
+        logging.error("Could not authenticate to Pi-hole. Halting sync.")
+        logging.info("--- Sync process failed (Pi-hole authentication error) ---")
+        return
+
     # Fetch existing Pi-hole DNS records to compare against
     # This is now a cache that add_or_update_dns_record_in_pihole will modify.
-    existing_pihole_records_cache = get_pihole_custom_dns_records(
-        pihole_url, pihole_session_cookie, pihole_csrf_token
-    )
+    existing_pihole_records_cache = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
     if existing_pihole_records_cache is None:  # This means API call failed critically
         logging.error("Could not fetch existing Pi-hole DNS records. Halting sync to prevent erroneous changes.")
         logging.info("--- Sync process failed (Pi-hole record fetch error) ---")
@@ -237,8 +241,8 @@ def main():
 
         if add_or_update_dns_record_in_pihole(
             pihole_url,
-            pihole_session_cookie,
-            pihole_csrf_token,
+            sid,
+            csrf_token,
             domain_to_sync,
             ip_to_sync,
             existing_pihole_records_cache,
