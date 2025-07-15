@@ -6,16 +6,16 @@ def _pihole_api_request(pihole_url, api_key, params):
     if not pihole_url.endswith("api.php"):
         pihole_url = pihole_url.rstrip("/") + "/api.php"
 
-    data = params.copy()
     if api_key:
-        data["auth"] = api_key
+        params["auth"] = api_key
 
     try:
-        logging.debug(f"Pi-hole API Request: URL={pihole_url}, Data={data}")
-        response = requests.post(pihole_url, data=data, timeout=10)
+        logging.debug(f"Pi-hole API Request: URL={pihole_url}, Params={params}")
+        response = requests.get(pihole_url, params=params, timeout=10)
         logging.debug(f"Pi-hole API Request URL: {response.url}")
         logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
-        logging.debug(f"Pi-hole API Request Body: {response.request.body}")
+        logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
+        logging.debug(f"Pi-hole API Response Text: {response.text}")
         response.raise_for_status()
         if response.text:  # Response has content
             try:
