@@ -3,15 +3,15 @@ import requests
 
 
 def _pihole_api_request(pihole_url, api_key, data, method="POST"):
-    pihole_url = pihole_url.rstrip("/")
-    if pihole_url.endswith("/admin"):
-        pihole_url = pihole_url.replace("/admin", "")
-    # Custom DNS requests are now made to a specific endpoint
+    base_url = pihole_url.rstrip("/")
+    if base_url.endswith("/admin"):
+        base_url = base_url.replace("/admin", "")
+
+    # Determine the correct endpoint
     if "customdns" in data:
-        pihole_url += "/scripts/pi-hole/php/customdns.php"
+        pihole_url = f"{base_url}/scripts/pi-hole/php/customdns.php"
     else:
-        if not pihole_url.endswith("/api.php"):
-            pihole_url += "/api.php"
+        pihole_url = f"{base_url}/api.php"
 
     if api_key:
         data["token"] = api_key
