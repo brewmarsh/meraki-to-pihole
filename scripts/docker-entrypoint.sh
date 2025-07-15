@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+# Load environment variables from .env file
+if [ -f /app/.env ]; then
+    export $(cat /app/.env | sed 's/#.*//g' | xargs)
+fi
+
 # APP_COMMAND is passed from Dockerfile CMD. After Dockerfile update, this will be e.g., ["python3", "meraki_pihole_sync.py"]
 APP_COMMAND=("$@")
 
