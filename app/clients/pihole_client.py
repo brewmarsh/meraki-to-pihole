@@ -12,6 +12,7 @@ def _pihole_api_request(pihole_url, api_key, params):
     try:
         logging.debug(f"Pi-hole API Request: URL={pihole_url}, Params={params}")
         response = requests.get(pihole_url, params=params, timeout=10)
+        logging.debug(f"Pi-hole API Request URL: {response.url}")
         response.raise_for_status()
         if response.text:  # Response has content
             try:
@@ -40,6 +41,10 @@ def _pihole_api_request(pihole_url, api_key, params):
         else:  # Response has no content and status is not OK
             return {"success": False, "message": f"Request failed with status {response.status_code} (empty response)."}
     except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 400:
+            logging.error(
+                "Pi-hole API returned a 400 Bad Request. This can be caused by an incorrect API key. Please check your PIHOLE_API_KEY."
+            )
         logging.error(
             f"Pi-hole API HTTP error: {e} - Response: {e.response.text[:200] if e.response and e.response.text else 'No response text'}"
         )
