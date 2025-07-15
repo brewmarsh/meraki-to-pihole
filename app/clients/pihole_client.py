@@ -9,8 +9,9 @@ def _pihole_api_request(pihole_url, api_key, data, method="POST"):
     # Custom DNS requests are now made to a specific endpoint
     if "customdns" in data:
         pihole_url += "/scripts/pi-hole/php/customdns.php"
-    elif not pihole_url.endswith("/api.php"):
-        pihole_url += "/api.php"
+    else:
+        if not pihole_url.endswith("/api.php"):
+            pihole_url += "/api.php"
 
     if api_key:
         data["token"] = api_key
