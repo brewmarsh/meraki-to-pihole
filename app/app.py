@@ -22,8 +22,8 @@ def logs():
         cron_log = f.read()
     return jsonify({"sync_log": sync_log, "cron_log": cron_log})
 
-@app.route("/force-refresh", methods=["POST"])
-def force_refresh():
+@app.route("/force-sync", methods=["POST"])
+def force_sync():
     try:
         run_sync()
         return jsonify({"status": "success", "message": "Sync process triggered."})

@@ -13,6 +13,7 @@ def _pihole_api_request(pihole_url, api_key, params):
         logging.debug(f"Pi-hole API Request: URL={pihole_url}, Params={params}")
         response = requests.get(pihole_url, params=params, timeout=10)
         logging.debug(f"Pi-hole API Request URL: {response.url}")
+        logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
         response.raise_for_status()
         if response.text:  # Response has content
             try:
