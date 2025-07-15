@@ -6,6 +6,10 @@ def _pihole_api_request(pihole_url, api_key, params):
     if not pihole_url.endswith("api.php"):
         pihole_url = pihole_url.rstrip("/") + "/api.php"
 
+    # Correct the URL to not include /admin
+    if "/admin" in pihole_url:
+        pihole_url = pihole_url.replace("/admin", "")
+
     if api_key:
         params["auth"] = api_key
 

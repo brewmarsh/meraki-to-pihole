@@ -94,14 +94,11 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            alert(data.message);
                             getLogs();
                         });
                 } else if (action === 'copy') {
                     const logContent = document.getElementById(`${logType}-log`).textContent;
-                    navigator.clipboard.writeText(logContent).then(() => {
-                        alert(`${logType} log copied to clipboard.`);
-                    });
+                    navigator.clipboard.writeText(logContent);
                 }
             });
         });
