@@ -39,8 +39,9 @@ def force_sync():
 @app.route("/mappings")
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_api_key = os.getenv("PIHOLE_API_KEY")
-    records = get_pihole_custom_dns_records(pihole_url, pihole_api_key)
+    pihole_session_cookie = os.getenv("PIHOLE_SESSION_COOKIE")
+    pihole_csrf_token = os.getenv("PIHOLE_CSRF_TOKEN")
+    records = get_pihole_custom_dns_records(pihole_url, pihole_session_cookie, pihole_csrf_token)
     return jsonify(records)
 
 @app.route("/clear-log", methods=["POST"])

@@ -2,30 +2,8 @@ import logging
 import requests
 from urllib.parse import quote
 
-session = requests.Session()
 
-
-def authenticate(pihole_url, password):
-    """Authenticates with the Pi-hole API and returns a session object."""
-    logging.info("Authenticating with Pi-hole API...")
-    base_url = pihole_url.rstrip("/")
-    if base_url.endswith("/admin"):
-        base_url = base_url.replace("/admin", "")
-    if base_url.endswith("/api.php"):
-        base_url = base_url.replace("/api.php", "")
-
-    url = f"{base_url}/api/auth"
-    try:
-        response = session.post(url, json={"password": password}, timeout=10)
-        response.raise_for_status()
-        logging.info("Successfully authenticated with Pi-hole API.")
-        return session
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Failed to authenticate with Pi-hole API: {e}")
-        return None
-
-
-def _pihole_api_request(session, pihole_url, method, path, data=None):
+def _pihole_api_request(pihole_url, session_cookie, csrf_token, method, path, data=None):
     base_url = pihole_url.rstrip("/")
     if base_url.endswith("/admin"):
         base_url = base_url.replace("/admin", "")
@@ -33,14 +11,14 @@ def _pihole_api_request(session, pihole_url, method, path, data=None):
         base_url = base_url.replace("/api.php", "")
 
     url = f"{base_url}{path}"
-    headers = {}
-    csrf_token = session.cookies.get("csrf_token")
-    if csrf_token:
-        headers["X-CSRF-TOKEN"] = csrf_token
+    headers = {
+        "Cookie": f"PHPSESSID={session_cookie}",
+        "X-CSRF-TOKEN": csrf_token,
+    }
 
     try:
         logging.debug(f"Pi-hole API Request: URL={url}, Method={method}, Headers={headers}, Data={data}")
-        response = session.request(method, url, headers=headers, json=data, timeout=10)
+        response = requests.request(method, url, headers=headers, json=data, timeout=10)
         logging.debug(f"Pi-hole API Request URL: {response.url}")
         logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
         logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
@@ -56,10 +34,10 @@ def _pihole_api_request(session, pihole_url, method, path, data=None):
     return None
 
 
-def get_pihole_custom_dns_records(session, pihole_url):
+def get_pihole_custom_dns_records(pihole_url, session_cookie, csrf_token):
     """Fetches and parses custom DNS records from Pi-hole."""
     logging.info("Fetching existing custom DNS records from Pi-hole...")
-    response_data = _pihole_api_request(session, pihole_url, "GET", "/api/config/dns.hosts")
+    response_data = _pihole_api_request(pihole_url, session_cookie, csrf_token, "GET", "/api/config/dns.hosts")
 
     records = {}  # Store as {domain: [ip1, ip2]}
     if response_data:
@@ -80,12 +58,12 @@ def get_pihole_custom_dns_records(session, pihole_url):
     return records
 
 
-def add_dns_record_to_pihole(session, pihole_url, domain, ip_address):
+def add_dns_record_to_pihole(pihole_url, session_cookie, csrf_token, domain, ip_address):
     """Adds a single DNS record to Pi-hole."""
     logging.info(f"Adding DNS record to Pi-hole: {domain} -> {ip_address}")
     elem = f"{ip_address} {domain}"
     path = f"/api/config/dns.hosts/{quote(elem)}"
-    response = _pihole_api_request(session, pihole_url, "PUT", path)
+    response = _pihole_api_request(pihole_url, session_cookie, csrf_token, "PUT", path)
     if response and response.get("success"):
         logging.info(f"Successfully added DNS record: {domain} -> {ip_address}.")
         return True
@@ -94,12 +72,12 @@ def add_dns_record_to_pihole(session, pihole_url, domain, ip_address):
         return False
 
 
-def delete_dns_record_from_pihole(session, pihole_url, domain, ip_address):
+def delete_dns_record_from_pihole(pihole_url, session_cookie, csrf_token, domain, ip_address):
     """Deletes a single DNS record from Pi-hole."""
     logging.info(f"Deleting DNS record from Pi-hole: {domain} -> {ip_address}")
     elem = f"{ip_address} {domain}"
     path = f"/api/config/dns.hosts/{quote(elem)}"
-    response = _pihole_api_request(session, pihole_url, "DELETE", path)
+    response = _pihole_api_request(pihole_url, session_cookie, csrf_token, "DELETE", path)
     if response and response.get("success"):
         logging.info(f"Successfully deleted DNS record: {domain} -> {ip_address}.")
         return True
@@ -108,7 +86,7 @@ def delete_dns_record_from_pihole(session, pihole_url, domain, ip_address):
         return False
 
 
-def add_or_update_dns_record_in_pihole(session, pihole_url, domain, new_ip, existing_records_cache):
+def add_or_update_dns_record_in_pihole(pihole_url, session_cookie, csrf_token, domain, new_ip, existing_records_cache):
     """
     Adds or updates a DNS record in Pi-hole.
     If the domain exists with a different IP, the old IP(s) are deleted first.
@@ -140,7 +118,7 @@ def add_or_update_dns_record_in_pihole(session, pihole_url, domain, new_ip, exis
                 logging.info(
                     f"Deleting old IP {old_ip} for domain {domain_cleaned} before adding new IP {new_ip_cleaned}."
                 )
-                if delete_dns_record_from_pihole(session, pihole_url, domain_cleaned, old_ip):
+                if delete_dns_record_from_pihole(pihole_url, session_cookie, csrf_token, domain_cleaned, old_ip):
                     if old_ip in existing_records_cache[domain_cleaned]:  # Update cache on successful deletion
                         existing_records_cache[domain_cleaned].remove(old_ip)
                     if not existing_records_cache[domain_cleaned]:  # If all IPs for this domain were removed
@@ -152,7 +130,7 @@ def add_or_update_dns_record_in_pihole(session, pihole_url, domain, new_ip, exis
                     return False  # Stop processing this domain to prevent issues
 
     # Add the new record
-    if add_dns_record_to_pihole(session, pihole_url, domain_cleaned, new_ip_cleaned):
+    if add_dns_record_to_pihole(pihole_url, session_cookie, csrf_token, domain_cleaned, new_ip_cleaned):
         # Update cache on successful addition
         if domain_cleaned not in existing_records_cache:
             existing_records_cache[domain_cleaned] = []
