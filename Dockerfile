@@ -41,7 +41,7 @@ RUN mkdir -p /app/logs
 ENV CRON_SCHEDULE "30 2 * * *"
 
 # Expose any ports if your application listens on them
-EXPOSE 5001
+EXPOSE 24653
 
 # Set the entrypoint
 ENTRYPOINT ["/docker-entrypoint.sh"]

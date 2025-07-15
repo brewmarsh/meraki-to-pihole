@@ -121,14 +121,14 @@ This application is designed to be run using Docker and Docker Compose.
     The `docker-compose.yml` file should be updated to include the following port mapping for the web UI:
     ```yaml
     ports:
-      - "5001:5001"
+      - "24653:24653"
     ```
 
 ## Usage
 
 ### Web UI
 
-The application now includes a web UI for monitoring and interacting with the sync process. The web UI is available on port 5001 by default.
+The application now includes a web UI for monitoring and interacting with the sync process. The web UI is available on port 24653 by default.
 
 #### Features
 
