@@ -11,6 +11,8 @@ def _pihole_api_request(pihole_url, api_key, method, path, data=None):
     base_url = pihole_url.rstrip("/")
     if base_url.endswith("/admin"):
         base_url = base_url.replace("/admin", "")
+    if base_url.endswith("/api.php"):
+        base_url = base_url.replace("/api.php", "")
 
     url = f"{base_url}{path}"
     headers = {"X-Pi-hole-API-Token": api_key}
