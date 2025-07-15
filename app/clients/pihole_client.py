@@ -2,61 +2,29 @@ import logging
 import requests
 
 
-def _pihole_api_request(pihole_url, api_key, data, method="POST"):
+import logging
+import requests
+from urllib.parse import quote
+
+
+def _pihole_api_request(pihole_url, api_key, method, path, data=None):
     base_url = pihole_url.rstrip("/")
     if base_url.endswith("/admin"):
         base_url = base_url.replace("/admin", "")
 
-    # Determine the correct endpoint
-    if "customdns" in data:
-        pihole_url = f"{base_url}/admin/scripts/pi-hole/php/customdns.php"
-    else:
-        pihole_url = f"{base_url}/admin/api.php"
-
-    if api_key:
-        data["token"] = api_key
+    url = f"{base_url}{path}"
+    headers = {"X-Pi-hole-API-Token": api_key}
 
     try:
-        logging.debug(f"Pi-hole API Request: URL={pihole_url}, Method={method}, Data={data}")
-        if method.upper() == "POST":
-            response = requests.post(pihole_url, data=data, timeout=10)
-        else:  # Default to GET for any other case
-            response = requests.get(pihole_url, params=data, timeout=10)
-
+        logging.debug(f"Pi-hole API Request: URL={url}, Method={method}, Data={data}")
+        response = requests.request(method, url, headers=headers, json=data, timeout=10)
         logging.debug(f"Pi-hole API Request URL: {response.url}")
         logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
         logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
         logging.debug(f"Pi-hole API Response Text: {response.text}")
         response.raise_for_status()
-
-        if response.text:
-            try:
-                json_response = response.json()
-                logging.debug(f"Pi-hole API JSON Response: {json_response}")
-                return json_response
-            except ValueError:
-                logging.debug(f"Pi-hole API response was not JSON: {response.text[:200]}")
-                if response.ok:
-                    if response.text.strip() == "[]":
-                        return {"data": []}
-                    return {
-                        "success": True,
-                        "message": f"Action likely successful (non-JSON response, HTTP {response.status_code}): {response.text[:100]}",
-                    }
-                return {
-                    "success": False,
-                    "message": f"Request failed with status {response.status_code}, non-JSON response: {response.text[:100]}",
-                }
-        elif response.ok:
-            logging.debug("Pi-hole API request successful with empty response body.")
-            return {"success": True, "message": "Action successful (empty response)."}
-        else:
-            return {"success": False, "message": f"Request failed with status {response.status_code} (empty response)."}
+        return response.json()
     except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 400:
-            logging.error(
-                "Pi-hole API returned a 400 Bad Request. This can be caused by an incorrect API key. Please check your PIHOLE_API_KEY."
-            )
         logging.error(
             f"Pi-hole API HTTP error: {e} - Response: {e.response.text[:200] if e.response and e.response.text else 'No response text'}"
         )
@@ -66,28 +34,22 @@ def _pihole_api_request(pihole_url, api_key, data, method="POST"):
 
 
 def get_pihole_custom_dns_records(pihole_url, api_key):
-    """Fetches and parses custom DNS records from Pi-hole via POST request."""
+    """Fetches and parses custom DNS records from Pi-hole."""
     logging.info("Fetching existing custom DNS records from Pi-hole...")
-    data = {"customdns": "", "action": "get"}  # Token is added by _pihole_api_request
-    response_data = _pihole_api_request(pihole_url, api_key, data, method="POST")
+    response_data = _pihole_api_request(pihole_url, api_key, "GET", "/api/config/dns/hosts")
 
     records = {}  # Store as {domain: [ip1, ip2]}
-    if response_data and isinstance(response_data.get("data"), list):
-        for item in response_data["data"]:
-            if isinstance(item, list) and len(item) == 2:
-                domain, ip_address = item
+    if response_data:
+        for item in response_data:
+            parts = item.split()
+            if len(parts) == 2:
+                ip_address, domain = parts
                 domain_cleaned = domain.strip().lower()
                 if domain_cleaned not in records:
                     records[domain_cleaned] = []
                 records[domain_cleaned].append(ip_address.strip())
-            else:
-                logging.warning(f"Unexpected item format in Pi-hole custom DNS data: {item}")
         logging.info(
             f"Found {len(records)} unique domains with {sum(len(ips) for ips in records.values())} total custom DNS IP mappings in Pi-hole."
-        )
-    elif response_data:
-        logging.warning(
-            f"Pi-hole custom DNS response format unexpected or 'data' field missing/not a list: {str(response_data)[:200]}"
         )
     else:
         logging.error("Failed to fetch custom DNS records from Pi-hole (API request failed or returned None).")
@@ -96,46 +58,30 @@ def get_pihole_custom_dns_records(pihole_url, api_key):
 
 
 def add_dns_record_to_pihole(pihole_url, api_key, domain, ip_address):
-    """Adds a single DNS record to Pi-hole via POST request."""
+    """Adds a single DNS record to Pi-hole."""
     logging.info(f"Adding DNS record to Pi-hole: {domain} -> {ip_address}")
-    data = {"customdns": "", "action": "add", "domain": domain, "ip": ip_address}
-    response = _pihole_api_request(pihole_url, api_key, data, method="POST")
-    if response and response.get("success") is True:
-        logging.info(
-            f"Successfully added DNS record: {domain} -> {ip_address}. Pi-hole message: {response.get('message', 'OK')}"
-        )
-        return True
-    elif response and isinstance(response.get("message"), str) and "added" in response.get("message").lower():
-        logging.info(
-            f"Processed add DNS record for: {domain} -> {ip_address} (inferred success). Pi-hole Response: {response.get('message')}"
-        )
+    elem = f"{ip_address} {domain}"
+    path = f"/api/config/dns/hosts/{quote(elem)}"
+    response = _pihole_api_request(pihole_url, api_key, "PUT", path)
+    if response and response.get("success"):
+        logging.info(f"Successfully added DNS record: {domain} -> {ip_address}.")
         return True
     else:
-        logging.error(f"Failed to add DNS record {domain} -> {ip_address}. Response: {str(response)[:200]}")
+        logging.error(f"Failed to add DNS record {domain} -> {ip_address}. Response: {response}")
         return False
 
 
 def delete_dns_record_from_pihole(pihole_url, api_key, domain, ip_address):
-    """Deletes a single DNS record from Pi-hole via POST request."""
+    """Deletes a single DNS record from Pi-hole."""
     logging.info(f"Deleting DNS record from Pi-hole: {domain} -> {ip_address}")
-    data = {"customdns": "", "action": "delete", "domain": domain, "ip": ip_address}
-    response = _pihole_api_request(pihole_url, api_key, data, method="POST")
-    if response and response.get("success") is True:
-        logging.info(
-            f"Successfully deleted DNS record: {domain} -> {ip_address}. Pi-hole message: {response.get('message', 'OK')}"
-        )
-        return True
-    elif (
-        response
-        and isinstance(response.get("message"), str)
-        and ("deleted" in response.get("message").lower() or "does not exist" in response.get("message").lower())
-    ):
-        logging.info(
-            f"Processed delete DNS record for: {domain} -> {ip_address} (inferred success/already gone). Pi-hole Response: {response.get('message')}"
-        )
+    elem = f"{ip_address} {domain}"
+    path = f"/api/config/dns/hosts/{quote(elem)}"
+    response = _pihole_api_request(pihole_url, api_key, "DELETE", path)
+    if response and response.get("success"):
+        logging.info(f"Successfully deleted DNS record: {domain} -> {ip_address}.")
         return True
     else:
-        logging.error(f"Failed to delete DNS record {domain} -> {ip_address}. Response: {str(response)[:200]}")
+        logging.error(f"Failed to delete DNS record {domain} -> {ip_address}. Response: {response}")
         return False
 
 
