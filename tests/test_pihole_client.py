@@ -16,12 +16,12 @@ class TestPiholeClient(unittest.TestCase):
         self.password = "test_password"
         self.session = MagicMock()
 
-    @patch("requests.Session")
-    def test_authenticate(self, mock_session):
+    @patch("app.clients.pihole_client.session.post")
+    def test_authenticate(self, mock_post):
         # Mock the API response
-        mock_post = MagicMock()
-        mock_post.status_code = 200
-        mock_session.return_value.post = mock_post
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_post.return_value = mock_response
 
         # Call the function
         result = authenticate(self.pihole_url, self.password)

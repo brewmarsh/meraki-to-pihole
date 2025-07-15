@@ -39,11 +39,8 @@ def force_sync():
 @app.route("/mappings")
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_password = os.getenv("PIHOLE_API_KEY")
-    session = authenticate(pihole_url, pihole_password)
-    if not session:
-        return jsonify({"error": "Failed to authenticate with Pi-hole."}), 500
-    records = get_pihole_custom_dns_records(session, pihole_url)
+    pihole_api_key = os.getenv("PIHOLE_API_KEY")
+    records = get_pihole_custom_dns_records(pihole_url, pihole_api_key)
     return jsonify(records)
 
 @app.route("/clear-log", methods=["POST"])

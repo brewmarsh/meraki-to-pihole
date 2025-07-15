@@ -21,11 +21,7 @@ import sys
 
 import meraki
 from clients.meraki_client import get_all_relevant_meraki_clients
-from clients.pihole_client import (
-    add_or_update_dns_record_in_pihole,
-    authenticate,
-    get_pihole_custom_dns_records,
-)
+from clients.pihole_client import add_or_update_dns_record_in_pihole, get_pihole_custom_dns_records
 
 # --- Logging Setup ---
 LOG_DIR = "/app/logs"
@@ -146,7 +142,7 @@ def load_app_config_from_env():
     return config
 
 
-def main(session):
+def main():
     """
     Main function to run the Meraki to Pi-hole sync process.
     Loads configuration, fetches Meraki clients, gets Pi-hole records,
@@ -160,25 +156,8 @@ def main(session):
     config = load_app_config_from_env()
     meraki_api_key = config["meraki_api_key"]  # Renamed for clarity with SDK
     pihole_url = config["pihole_api_url"]
+    pihole_api_key = config.get("pihole_api_key")  # Use .get() as it can be None
     hostname_suffix = config["hostname_suffix"]
-
-    # Initialize Meraki Dashboard API client
-    # SDK handles API key, retries, logging (can be configured), etc.
-    # `suppress_logging=True` for SDK's internal logger if we want to rely solely on our script's logger for Meraki calls.
-    # Or, let SDK log at its default level (INFO) or configure it via `log_level`.
-    # For now, let's allow SDK's default logging and see.
-    # `output_log=False` might also be relevant if we don't want SDK to print to console by default.
-    # Let's start simple and adjust if SDK logging is too verbose or conflicts.
-    # The SDK will use the MERAKI_PYTHON_SDK_LOG_FILE and MERAKI_PYTHON_SDK_LOG_LEVEL env vars if set.
-    # We can also pass `logger` instance to it.
-    # For now, let's use `print_console=False` to avoid duplicate console output if SDK also logs to console.
-    # The SDK's logger can be noisy with DEBUG level; our script's DEBUG is more targeted.
-    dashboard = meraki.DashboardAPI(
-        api_key=meraki_api_key,
-        output_log=False,  # We handle our own logging to console/file via script's logger
-        print_console=False,  # Explicitly false
-        suppress_logging=True,  # Suppress SDK's own logger; we will log API calls if needed at debug level
-    )
 
     # Initialize Meraki Dashboard API client
     # SDK handles API key, retries, logging (can be configured), etc.
@@ -226,7 +205,7 @@ def main(session):
 
     # Fetch existing Pi-hole DNS records to compare against
     # This is now a cache that add_or_update_dns_record_in_pihole will modify.
-    existing_pihole_records_cache = get_pihole_custom_dns_records(session, pihole_url)
+    existing_pihole_records_cache = get_pihole_custom_dns_records(pihole_url, pihole_api_key)
     if existing_pihole_records_cache is None:  # This means API call failed critically
         logging.error("Could not fetch existing Pi-hole DNS records. Halting sync to prevent erroneous changes.")
         logging.info("--- Sync process failed (Pi-hole record fetch error) ---")
@@ -249,7 +228,7 @@ def main(session):
         )
 
         if add_or_update_dns_record_in_pihole(
-            session, pihole_url, domain_to_sync, ip_to_sync, existing_pihole_records_cache
+            pihole_url, pihole_api_key, domain_to_sync, ip_to_sync, existing_pihole_records_cache
         ):
             successful_syncs += 1
         else:
@@ -277,13 +256,7 @@ def main(session):
 if __name__ == "__main__":
     # This is the main entry point of the script
     try:
-        pihole_url = os.getenv("PIHOLE_API_URL")
-        pihole_password = os.getenv("PIHOLE_API_KEY")
-        session = authenticate(pihole_url, pihole_password)
-        if not session:
-            logging.error("Failed to authenticate with Pi-hole. Halting sync.")
-            sys.exit(1)
-        main(session)
+        main()
     except Exception as e:
         logging.critical(f"An unhandled exception occurred in main: {e}", exc_info=True)
         sys.exit(1)

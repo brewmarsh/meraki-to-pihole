@@ -1,13 +1,8 @@
 import logging
 import requests
-
-
-import logging
-import requests
 from urllib.parse import quote
 
 session = requests.Session()
-csrf_token = None
 
 
 def authenticate(pihole_url, password):
@@ -20,7 +15,6 @@ def authenticate(pihole_url, password):
         base_url = base_url.replace("/api.php", "")
 
     url = f"{base_url}/api/auth"
-    session = requests.Session()
     try:
         response = session.post(url, json={"password": password}, timeout=10)
         response.raise_for_status()
