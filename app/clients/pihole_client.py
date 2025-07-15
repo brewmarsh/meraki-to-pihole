@@ -3,8 +3,8 @@ import requests
 
 
 def _pihole_api_request(pihole_url, api_key, params):
-    if not pihole_url.endswith("api.php"):
-        pihole_url = pihole_url.rstrip("/") + "/api.php"
+    if pihole_url.endswith("/api.php"):
+        pihole_url = pihole_url[:-7]
 
     # Correct the URL to not include /admin
     if "/admin" in pihole_url:

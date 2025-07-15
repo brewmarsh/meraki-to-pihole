@@ -97,8 +97,14 @@
                             getLogs();
                         });
                 } else if (action === 'copy') {
-                    const logContent = document.getElementById(`${logType}-log`).textContent;
-                    navigator.clipboard.writeText(logContent);
+                    const logContent = document.getElementById(`${logType}-log`);
+                    const range = document.createRange();
+                    range.selectNode(logContent);
+                    window.getSelection().removeAllRanges();
+                    window.getSelection().addRange(range);
+                    document.execCommand('copy');
+                    window.getSelection().removeAllRanges();
+                    alert(`${logType} log copied to clipboard.`);
                 }
             });
         });
