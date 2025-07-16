@@ -5,7 +5,7 @@ from urllib.parse import quote
 
 import time
 
-def authenticate_to_pihole(pihole_url, pihole_api_key, sync_interval):
+def authenticate_to_pihole(pihole_url, pihole_api_key):
     """
     Authenticates to the Pi-hole API and returns a session object.
     """
@@ -30,8 +30,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key, sync_interval):
             return session.get("sid"), session.get("csrf")
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 429:
-            logging.warning(f"Pi-hole auth API returned HTTP 429 (Too Many Requests). Waiting for {sync_interval} seconds.")
-            time.sleep(sync_interval)
+            raise
         else:
             logging.warning(f"GET request to /api/auth failed: {e}. Trying POST.")
     except requests.exceptions.RequestException as e:
@@ -55,8 +54,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key, sync_interval):
             return None, None
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 429:
-            logging.warning(f"Pi-hole auth API returned HTTP 429 (Too Many Requests). Waiting for {sync_interval} seconds.")
-            time.sleep(sync_interval)
+            raise
         else:
             logging.error(f"Authentication to Pi-hole failed: {e}")
     except requests.exceptions.RequestException as e:

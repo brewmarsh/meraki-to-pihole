@@ -54,8 +54,13 @@ from clients.pihole_client import authenticate_to_pihole
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
     pihole_api_key = os.getenv("PIHOLE_API_KEY")
-    sync_interval = int(os.getenv("SYNC_INTERVAL_SECONDS", 300))
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key, sync_interval)
+    try:
+        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            return jsonify({"error": "Pi-hole API rate limit exceeded. Please try again later."}), 429
+        else:
+            return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
     if not sid or not csrf_token:
         return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
     records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
