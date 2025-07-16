@@ -64,6 +64,7 @@ def get_mappings():
     meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
 
     mapped_devices = []
+    # If multiple Pi-hole records point to the same IP, all will be mapped to the single Meraki device with that IP.
     for client in meraki_clients:
         for domain, ip in pihole_records.items():
             if client['ip'] == ip:
