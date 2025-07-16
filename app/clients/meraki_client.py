@@ -91,6 +91,7 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                     client_ip = client["fixedIp"]
 
                     # Ensure the client is currently assigned the fixed IP
+                    # This is the primary matching logic between Meraki and Pi-hole
                     if client.get("ip") == client_ip:
                         relevant_clients.append({
                             "name": client_name,
