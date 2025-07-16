@@ -18,7 +18,7 @@ chmod 0666 "${APP_LOG_FILE}"
 
 # Start the web server in the background
 echo "Entrypoint: Starting web server..."
-cd /app && gunicorn --bind 0.0.0.0:24653 app:app &
+cd /app && gunicorn --bind 0.0.0.0:24653 --worker-class gevent app:app &
 
 # Start the sync runner script in the foreground, and tail the logs
 echo "Entrypoint: Starting sync runner and tailing logs..."
