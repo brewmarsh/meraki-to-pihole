@@ -36,12 +36,37 @@ def force_sync():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
+@app.route("/update-interval", methods=["POST"])
+def update_interval():
+    try:
+        interval = int(request.json.get("interval"))
+        if interval < 60:
+            return jsonify({"status": "error", "message": "Interval must be at least 60 seconds."}), 400
+
+        with open(".env", "r") as f:
+            lines = f.readlines()
+
+        with open(".env", "w") as f:
+            for line in lines:
+                if line.startswith("SYNC_INTERVAL_SECONDS"):
+                    f.write(f"SYNC_INTERVAL_SECONDS={interval}\n")
+                else:
+                    f.write(line)
+
+        return jsonify({"status": "success", "message": f"Sync interval updated to {interval} seconds. Please restart the container to apply the changes."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
+from clients.pihole_client import authenticate_to_pihole
+
 @app.route("/mappings")
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_session_cookie = os.getenv("PIHOLE_SESSION_COOKIE")
-    pihole_csrf_token = os.getenv("PIHOLE_CSRF_TOKEN")
-    records = get_pihole_custom_dns_records(pihole_url, pihole_session_cookie, pihole_csrf_token)
+    pihole_api_key = os.getenv("PIHOLE_API_KEY")
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    if not sid or not csrf_token:
+        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
+    records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
     return jsonify(records)
 
 @app.route("/clear-log", methods=["POST"])
