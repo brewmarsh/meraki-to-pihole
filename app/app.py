@@ -63,7 +63,18 @@ def get_mappings():
     )
     meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
 
-    return jsonify({"pihole": pihole_records, "meraki": meraki_clients})
+    mapped_devices = []
+    for client in meraki_clients:
+        for domain, ip in pihole_records.items():
+            if client['ip'] == ip:
+                mapped_devices.append({
+                    "meraki_name": client['name'],
+                    "pihole_domain": domain,
+                    "ip": ip
+                })
+                break
+
+    return jsonify({"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices})
 
 @app.route('/update-interval', methods=['POST'])
 def update_interval():

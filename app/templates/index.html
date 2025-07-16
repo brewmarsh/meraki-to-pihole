@@ -52,6 +52,15 @@
                         <pre id="meraki-mappings" class="log-box"></pre>
                     </div>
                 </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Mapped Devices
+                    </div>
+                    <div class="card-body">
+                        <pre id="mapped-devices" class="log-box"></pre>
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -93,6 +102,7 @@
                 .then(data => {
                     document.getElementById('pihole-mappings').textContent = JSON.stringify(data.pihole, null, 2);
                     document.getElementById('meraki-mappings').textContent = JSON.stringify(data.meraki, null, 2);
+                    document.getElementById('mapped-devices').textContent = JSON.stringify(data.mapped, null, 2);
                 });
         }
 
