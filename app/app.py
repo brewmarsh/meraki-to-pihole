@@ -2,12 +2,9 @@ from flask import Flask, render_template, jsonify, request
 import os
 import logging
 from meraki_pihole_sync import main as run_sync_main
-from multiprocessing import Process
+import threading
 
 app = Flask(__name__)
-
-# In-memory store for the sync process
-sync_process = None
 
 @app.route('/')
 def index():
@@ -16,14 +13,11 @@ def index():
 
 @app.route('/force-sync', methods=['POST'])
 def force_sync():
-    global sync_process
-    if sync_process and sync_process.is_alive():
-        return jsonify({"message": "Sync is already running."}), 409
-
     logging.info("Force sync requested via web UI.")
     try:
-        sync_process = Process(target=run_sync_main)
-        sync_process.start()
+        # Running the sync in a separate thread to avoid blocking the web server
+        sync_thread = threading.Thread(target=run_sync_main)
+        sync_thread.start()
         return jsonify({"message": "Sync process started."})
     except Exception as e:
         logging.error(f"Error starting forced sync: {e}")
@@ -49,12 +43,10 @@ def update_interval():
     data = request.get_json()
     interval = data.get('interval')
     if interval and interval.isdigit():
-        # This is a simple approach. A more robust solution would be to
-        # signal the sync_runner to update its interval.
         with open("/app/sync_interval.txt", "w") as f:
             f.write(interval)
         logging.info(f"Sync interval updated to {interval} seconds.")
-        return jsonify({"message": "Sync interval updated. Restart the container for the change to take effect."})
+        return jsonify({"message": "Sync interval updated."})
     return jsonify({"message": "Invalid interval."}), 400
 
 @app.route('/clear-log', methods=['POST'])
