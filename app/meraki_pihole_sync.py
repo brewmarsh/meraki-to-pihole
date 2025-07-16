@@ -77,6 +77,7 @@ ENV_PIHOLE_API_URL = "PIHOLE_API_URL"
 ENV_PIHOLE_API_KEY = "PIHOLE_API_KEY"
 ENV_HOSTNAME_SUFFIX = "HOSTNAME_SUFFIX"
 ENV_CLIENT_TIMESPAN = "MERAKI_CLIENT_TIMESPAN_SECONDS"
+ENV_SYNC_INTERVAL = "SYNC_INTERVAL_SECONDS"
 # --- End Constants ---
 
 
@@ -114,6 +115,15 @@ def load_app_config_from_env():
     # Optional environment variables
     config["pihole_api_key"] = os.getenv(ENV_PIHOLE_API_KEY)
     logging.debug(f"Pi-hole API Key loaded from environment: {config['pihole_api_key']}")
+
+    try:
+        default_sync_interval = "300"  # 5 minutes in seconds
+        config["sync_interval"] = int(os.getenv(ENV_SYNC_INTERVAL, default_sync_interval))
+    except ValueError:
+        logging.warning(
+            f"Invalid value for {ENV_SYNC_INTERVAL}: '{os.getenv(ENV_SYNC_INTERVAL)}'. Using default {default_sync_interval} seconds (5 minutes)."
+        )
+        config["sync_interval"] = int(default_sync_interval)
 
     meraki_network_ids_str = os.getenv(ENV_MERAKI_NETWORK_IDS, "")  # Default to empty string
     config["meraki_network_ids"] = [nid.strip() for nid in meraki_network_ids_str.split(",") if nid.strip()]

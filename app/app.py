@@ -36,6 +36,27 @@ def force_sync():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
+@app.route("/update-interval", methods=["POST"])
+def update_interval():
+    try:
+        interval = int(request.json.get("interval"))
+        if interval < 60:
+            return jsonify({"status": "error", "message": "Interval must be at least 60 seconds."}), 400
+
+        with open(".env", "r") as f:
+            lines = f.readlines()
+
+        with open(".env", "w") as f:
+            for line in lines:
+                if line.startswith("SYNC_INTERVAL_SECONDS"):
+                    f.write(f"SYNC_INTERVAL_SECONDS={interval}\n")
+                else:
+                    f.write(line)
+
+        return jsonify({"status": "success", "message": f"Sync interval updated to {interval} seconds. Please restart the container to apply the changes."})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)})
+
 from clients.pihole_client import authenticate_to_pihole
 
 @app.route("/mappings")
