@@ -28,14 +28,14 @@ def force_sync():
 @app.route('/stream')
 def stream():
     def event_stream():
+        # Use a generator to stream data, which is more memory-efficient
+        # and avoids holding the worker for a long time.
         while True:
             time.sleep(5)
-            # Send log updates
             with open('/app/logs/sync.log', 'r') as f:
                 log_content = f.read()
             yield f"data: {json.dumps({'log': log_content})}\n\n"
 
-            # Send mapping updates
             mappings = get_mappings_data()
             yield f"data: {json.dumps({'mappings': mappings})}\n\n"
 
