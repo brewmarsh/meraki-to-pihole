@@ -158,7 +158,7 @@ def load_app_config_from_env():
     return config
 
 
-def main(sid=None, csrf_token=None):
+def main():
     """
     Main function to run the Meraki to Pi-hole sync process.
     Loads configuration, fetches Meraki clients, gets Pi-hole records,
@@ -170,78 +170,42 @@ def main(sid=None, csrf_token=None):
     logging.info(f"--- Starting Meraki Pi-hole Sync Script --- Version: {app_version}, Commit: {commit_sha}")
 
     config = load_app_config_from_env()
-    meraki_api_key = config["meraki_api_key"]  # Renamed for clarity with SDK
+    meraki_api_key = config["meraki_api_key"]
     pihole_url = config["pihole_api_url"]
     pihole_api_key = config["pihole_api_key"]
     hostname_suffix = config["hostname_suffix"]
 
     # Initialize Meraki Dashboard API client
-    # SDK handles API key, retries, logging (can be configured), etc.
-    # `suppress_logging=True` for SDK's internal logger if we want to rely solely on our script's logger for Meraki calls.
-    # Or, let SDK log at its default level (INFO) or configure it via `log_level`.
-    # For now, let's allow SDK's default logging and see.
-    # `output_log=False` might also be relevant if we don't want SDK to print to console by default.
-    # Let's start simple and adjust if SDK logging is too verbose or conflicts.
-    # The SDK will use the MERAKI_PYTHON_SDK_LOG_FILE and MERAKI_PYTHON_SDK_LOG_LEVEL env vars if set.
-    # We can also pass `logger` instance to it.
-    # For now, let's use `print_console=False` to avoid duplicate console output if SDK also logs to console.
-    # The SDK's logger can be noisy with DEBUG level; our script's DEBUG is more targeted.
     dashboard = meraki.DashboardAPI(
         api_key=meraki_api_key,
-        output_log=False,  # We handle our own logging to console/file via script's logger
-        print_console=False,  # Explicitly false
-        suppress_logging=True,  # Suppress SDK's own logger; we will log API calls if needed at debug level
+        output_log=False,
+        print_console=False,
+        suppress_logging=True,
     )
 
-    # Fetch relevant Meraki clients with fixed IP assignments using the SDK
+    # Authenticate to Pi-hole and get session details (will be cached by the client)
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    if not sid or not csrf_token:
+        logging.error("Could not authenticate to Pi-hole. Halting sync.")
+        logging.info("--- Sync process failed (Pi-hole authentication error) ---")
+        return
+
+    # Fetch relevant Meraki clients with fixed IP assignments
     meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
 
     if not meraki_clients:
-        # This means no clients with fixed IPs (matching current IP) were found across ALL processed networks.
-        # Or, network fetching itself failed. get_all_relevant_meraki_clients would have logged details.
-        logging.info(
-            "No relevant Meraki clients (with fixed IP assignments) were found after checking all configured/discovered networks, or network/client fetching failed."
-        )
-
-        # Check current log level. logging.getLogger().getEffectiveLevel() gives the numeric level.
-        # logging.DEBUG is 10, logging.INFO is 20.
+        logging.info("No relevant Meraki clients with fixed IP assignments were found.")
         if logging.getLogger().getEffectiveLevel() > logging.DEBUG:
-            logging.info(
-                "Consider setting LOG_LEVEL=DEBUG in your .env file and restarting to get detailed client processing information if you expected clients to be found."
-            )
-
-        logging.info("No new DNS entries will be synced to Pi-hole.")
-        # Potentially, one might want to proceed to cleanup old entries from Pi-hole even if no new Meraki clients are found.
-        # For now, the script exits, matching previous behavior. If cleanup is desired, this logic would change.
-        # For this iteration, keeping it simple: no new clients = no changes to Pi-hole based on Meraki data.
-        logging.info("--- Sync process complete (no Meraki clients to sync to Pi-hole) ---")
+            logging.info("Set LOG_LEVEL=DEBUG for detailed client processing info.")
+        logging.info("--- Sync process complete (no clients to sync) ---")
         return
 
-    logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process for Pi-hole sync.")
-
-    if not sid or not csrf_token:
-        # Authenticate to Pi-hole to get session details
-        try:
-            sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-        except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 429:
-                logging.warning(f"Pi-hole auth API returned HTTP 429 (Too Many Requests). Waiting for {config['sync_interval']} seconds.")
-                time.sleep(config['sync_interval'])
-                raise
-            else:
-                logging.error(f"Authentication to Pi-hole failed: {e}")
-                logging.info("--- Sync process failed (Pi-hole authentication error) ---")
-                return
-        if not sid or not csrf_token:
-            logging.error("Could not authenticate to Pi-hole. Halting sync.")
-            logging.info("--- Sync process failed (Pi-hole authentication error) ---")
-            return
+    logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IPs to process.")
 
     # Fetch existing Pi-hole DNS records to compare against
-    # This is now a cache that add_or_update_dns_record_in_pihole will modify.
-    existing_pihole_records_cache = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
-    if existing_pihole_records_cache is None:  # This means API call failed critically
-        logging.error("Could not fetch existing Pi-hole DNS records. Halting sync to prevent erroneous changes.")
+    existing_pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+    if existing_pihole_records is None:
+        logging.error("Could not fetch Pi-hole DNS records. Halting to prevent errors.")
         logging.info("--- Sync process failed (Pi-hole record fetch error) ---")
         return
 
@@ -249,16 +213,14 @@ def main(sid=None, csrf_token=None):
     failed_syncs = 0
     # Sync each relevant Meraki client to Pi-hole
     for client in meraki_clients:
-        # Ensure client name is sanitized for use in a hostname.
-        # Replace spaces with hyphens, convert to lowercase. Other characters might need handling.
+        # Sanitize client name for use as a hostname
         client_name_sanitized = client["name"].replace(" ", "-").lower()
-        # Further sanitization could be added here if client names contain problematic characters for hostnames.
-
         domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
         ip_to_sync = client["ip"]
 
         logging.info(
-            f"Processing Meraki client: Name='{client['name']}', IP='{ip_to_sync}', Target DNS: {domain_to_sync} -> {ip_to_sync}"
+            f"Processing Meraki client: Name='{client['name']}', IP='{ip_to_sync}', "
+            f"Target DNS: {domain_to_sync} -> {ip_to_sync}"
         )
 
         if add_or_update_dns_record_in_pihole(
@@ -267,7 +229,7 @@ def main(sid=None, csrf_token=None):
             csrf_token,
             domain_to_sync,
             ip_to_sync,
-            existing_pihole_records_cache,
+            existing_pihole_records,
         ):
             successful_syncs += 1
         else:
@@ -276,18 +238,10 @@ def main(sid=None, csrf_token=None):
                 f"Failed to sync client '{client['name']}' (DNS: {domain_to_sync} -> {ip_to_sync}) to Pi-hole."
             )
 
-    # TODO (Future Enhancement): Implement cleanup of stale DNS records in Pi-hole.
-    # This would involve:
-    # 1. Identifying all DNS records in `existing_pihole_records_cache` that match `hostname_suffix`.
-    # 2. Comparing them against the list of `meraki_clients` just processed.
-    # 3. If a record from Pi-hole (matching the suffix) is NOT in the `meraki_clients` list (i.e., no longer a fixed IP client),
-    #    then delete it from Pi-hole.
-    # This was mentioned in the README but not implemented in the original script.
-
     logging.info("--- Meraki to Pi-hole Sync Summary ---")
     logging.info(f"Successfully synced/verified {successful_syncs} client(s).")
     if failed_syncs > 0:
-        logging.warning(f"Failed to sync {failed_syncs} client(s). Check logs above for details.")
+        logging.warning(f"Failed to sync {failed_syncs} client(s). Check logs for details.")
     logging.info(f"Total Meraki clients processed: {len(meraki_clients)}")
     logging.info("--- Sync process complete ---")
 
