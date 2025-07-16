@@ -197,11 +197,8 @@ def main():
         logging.info("No relevant Meraki clients with fixed IP assignments were found.")
         if logging.getLogger().getEffectiveLevel() > logging.DEBUG:
             logging.info("Set LOG_LEVEL=DEBUG for detailed client processing info.")
-        # Continue to process potential stale entries even if no new clients are found
     else:
         logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IPs to process.")
-
-    logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IPs to process.")
 
     # Fetch existing Pi-hole DNS records to compare against
     existing_pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)

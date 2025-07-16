@@ -1,88 +1,75 @@
 from flask import Flask, render_template, jsonify, request
-import subprocess
 import os
-import requests
-from clients.pihole_client import get_pihole_custom_dns_records
-from sync_runner import run_sync
+import logging
+from meraki_pihole_sync import main as run_sync_main
 
 app = Flask(__name__)
 
-@app.after_request
-def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    return response
+# In-memory store for the sync process
+sync_process = None
 
-LOG_DIR = "/app/logs"
-SYNC_LOG = os.path.join(LOG_DIR, "sync.log")
-
-@app.route("/")
+@app.route('/')
 def index():
     sync_interval = os.getenv("SYNC_INTERVAL_SECONDS", 300)
-    return render_template("index.html", sync_interval=sync_interval)
+    return render_template('index.html', sync_interval=sync_interval)
 
-@app.route("/logs")
-def logs():
-    with open(SYNC_LOG, "r") as f:
-        sync_log = f.read()
+@app.route('/force-sync', methods=['POST'])
+def force_sync():
+    global sync_process
+    if sync_process and sync_process.is_alive():
+        return jsonify({"message": "Sync is already running."}), 409
+
+    logging.info("Force sync requested via web UI.")
+    try:
+        # Running the sync in a separate process to avoid blocking the web server
+        from multiprocessing import Process
+        sync_process = Process(target=run_sync_main)
+        sync_process.start()
+        return jsonify({"message": "Sync process started."})
+    except Exception as e:
+        logging.error(f"Error starting forced sync: {e}")
+        return jsonify({"message": f"Sync failed to start: {e}"}), 500
+
+@app.route('/logs')
+def get_logs():
+    try:
+        with open('/app/logs/sync.log', 'r') as f:
+            sync_log = f.read()
+    except FileNotFoundError:
+        sync_log = "Log file not found."
     return jsonify({"sync_log": sync_log})
 
-@app.route("/force-sync", methods=["POST"])
-def force_sync():
-    try:
-        run_sync()
-        return jsonify({"status": "success", "message": "Sync process triggered."})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+@app.route('/mappings')
+def get_mappings():
+    # This is a placeholder. A more robust solution would be to
+    # have the sync script write the mappings to a file that can be read here.
+    return jsonify({})
 
-@app.route("/update-interval", methods=["POST"])
+@app.route('/update-interval', methods=['POST'])
 def update_interval():
-    try:
-        interval = int(request.json.get("interval"))
-        if interval < 60:
-            return jsonify({"status": "error", "message": "Interval must be at least 60 seconds."}), 400
+    data = request.get_json()
+    interval = data.get('interval')
+    if interval and interval.isdigit():
+        # This is a simple approach. A more robust solution would be to
+        # signal the sync_runner to update its interval.
+        with open("/app/sync_interval.txt", "w") as f:
+            f.write(interval)
+        logging.info(f"Sync interval updated to {interval} seconds.")
+        return jsonify({"message": "Sync interval updated. Restart the container for the change to take effect."})
+    return jsonify({"message": "Invalid interval."}), 400
 
-        with open("sync_interval.txt", "w") as f:
-            f.write(str(interval))
-
-        return jsonify({"status": "success", "message": f"Sync interval updated to {interval} seconds."})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
-
-from clients.pihole_client import authenticate_to_pihole
-
-@app.route("/mappings")
-def mappings():
-    pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_api_key = os.getenv("PIHOLE_API_KEY")
-    try:
-        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 429:
-            return jsonify({"error": "Pi-hole API rate limit exceeded. Please try again later."}), 429
-        else:
-            return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
-    if not sid or not csrf_token:
-        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
-    records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
-    return jsonify(records)
-
-@app.route("/clear-log", methods=["POST"])
+@app.route('/clear-log', methods=['POST'])
 def clear_log():
-    log_type = request.json.get("log")
-    if log_type not in ["sync", "cron"]:
-        return jsonify({"status": "error", "message": "Invalid log type"})
+    data = request.get_json()
+    log_type = data.get('log')
+    if log_type == 'sync':
+        try:
+            with open('/app/logs/sync.log', 'w') as f:
+                f.write('')
+            return jsonify({"message": "Sync log cleared."})
+        except FileNotFoundError:
+            return jsonify({"message": "Log file not found."}), 404
+    return jsonify({"message": "Invalid log type."}), 400
 
-    if log_type == "sync":
-        log_file = SYNC_LOG
-    else:
-        log_file = CRON_LOG
-
-    with open(log_file, "w") as f:
-        f.write("")
-
-    return jsonify({"status": "success", "message": f"{log_type} log cleared."})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=24653)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=os.environ.get('FLASK_PORT', 24653))
