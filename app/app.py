@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import subprocess
 import os
+import requests
 from clients.pihole_client import get_pihole_custom_dns_records
 from sync_runner import run_sync
 
