@@ -29,8 +29,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
 
         # If not authenticated, try to authenticate with the API key
         logging.info(f"Authenticating to Pi-hole at {auth_url}")
-        auth_body = {"password": pihole_api_key}
-        response = requests.post(auth_url, json=auth_body, timeout=10)
+        response = requests.post(auth_url, json={"password": pihole_api_key}, timeout=10)
         response.raise_for_status()
         auth_data = response.json()
         session = auth_data.get("session", {})
