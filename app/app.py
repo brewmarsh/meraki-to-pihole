@@ -36,12 +36,16 @@ def force_sync():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
+from clients.pihole_client import authenticate_to_pihole
+
 @app.route("/mappings")
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_session_cookie = os.getenv("PIHOLE_SESSION_COOKIE")
-    pihole_csrf_token = os.getenv("PIHOLE_CSRF_TOKEN")
-    records = get_pihole_custom_dns_records(pihole_url, pihole_session_cookie, pihole_csrf_token)
+    pihole_password = os.getenv("PIHOLE_PASSWORD")
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_password)
+    if not sid or not csrf_token:
+        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
+    records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
     return jsonify(records)
 
 @app.route("/clear-log", methods=["POST"])

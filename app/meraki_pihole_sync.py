@@ -113,6 +113,7 @@ def load_app_config_from_env():
 
     # Optional environment variables
     config["pihole_password"] = os.getenv(ENV_PIHOLE_PASSWORD)
+    logging.debug(f"Pi-hole password loaded from environment: {config['pihole_password']}")
 
     meraki_network_ids_str = os.getenv(ENV_MERAKI_NETWORK_IDS, "")  # Default to empty string
     config["meraki_network_ids"] = [nid.strip() for nid in meraki_network_ids_str.split(",") if nid.strip()]
@@ -277,3 +278,5 @@ if __name__ == "__main__":
     except Exception as e:
         logging.critical(f"An unhandled exception occurred in main: {e}", exc_info=True)
         sys.exit(1)
+
+main()
