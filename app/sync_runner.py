@@ -2,8 +2,8 @@ import os
 import time
 import logging
 from meraki_pihole_sync import main, load_app_config_from_env
-
-from meraki_pihole_sync import main, load_app_config_from_env, authenticate_to_pihole
+import requests
+from clients.pihole_client import authenticate_to_pihole
 
 def run_sync():
     """
