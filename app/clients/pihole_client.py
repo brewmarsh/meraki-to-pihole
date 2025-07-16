@@ -75,8 +75,8 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
             logging.warning("Pi-hole auth API returned HTTP 429 (Too Many Requests). Will retry on next sync cycle.")
         else:
             logging.error(f"Authentication to Pi-hole failed with HTTP error: {e}")
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Authentication to Pi-hole failed due to a network or request issue: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred during Pi-hole authentication: {e}")
 
     # Ensure globals are cleared on failure
     _pihole_sid, _pihole_csrf_token = None, None

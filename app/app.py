@@ -1,8 +1,10 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, Response
 import os
 import logging
 from meraki_pihole_sync import main as run_sync_main
 import threading
+import json
+import time
 
 app = Flask(__name__)
 

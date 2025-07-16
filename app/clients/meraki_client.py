@@ -98,8 +98,8 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                                 "type": "MX VLAN"
                             })
                             logging.info(f"Found relevant client from MX VLAN: {assignment['name']} ({assignment['ip']})")
-            except meraki.exceptions.APIError:
-                logging.debug(f"No VLANs found for network {net_name}, or it's not an MX network.")
+            except meraki.exceptions.APIError as e:
+                logging.debug(f"No VLANs found for network {net_name}, or it's not an MX network. Error: {e}")
 
             # Process switch routing interfaces for switches
             try:
@@ -119,13 +119,11 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                                         "type": "Switch Routing"
                                     })
                                     logging.info(f"Found relevant client from Switch Routing: {assignment['name']} ({assignment['ip']})")
-            except meraki.exceptions.APIError:
-                logging.debug(f"No switch routing interfaces found for network {net_name}.")
+            except meraki.exceptions.APIError as e:
+                logging.debug(f"No switch routing interfaces found for network {net_name}. Error: {e}")
 
-        except meraki.exceptions.APIError as e:
-            logging.warning(
-                f"Could not retrieve or process clients for network '{net_name}' (ID: {net_id}): {e}"
-            )
+        except Exception as e:
+            logging.error(f"An unexpected error occurred while processing network '{net_name}' (ID: {net_id}): {e}")
         finally:
             logging.info(f"--- Finished processing network '{net_name}' ---")
 
