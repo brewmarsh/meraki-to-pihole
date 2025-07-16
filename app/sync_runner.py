@@ -1,15 +1,21 @@
 import time
 import logging
+import os
 from meraki_pihole_sync import main, load_app_config_from_env
+
+def get_sync_interval():
+    try:
+        with open("/app/sync_interval.txt", "r") as f:
+            return int(f.read().strip())
+    except (IOError, ValueError):
+        return int(os.getenv("SYNC_INTERVAL_SECONDS", 300))
 
 def run_sync():
     """
     Runs the main sync script in a loop with a configurable sleep interval.
     """
-    config = load_app_config_from_env()
-    sync_interval = config.get("sync_interval", 300)
-
     while True:
+        sync_interval = get_sync_interval()
         try:
             logging.info("Starting a new sync process...")
             main()

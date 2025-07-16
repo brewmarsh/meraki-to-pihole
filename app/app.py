@@ -2,6 +2,7 @@ from flask import Flask, render_template, jsonify, request
 import os
 import logging
 from meraki_pihole_sync import main as run_sync_main
+from multiprocessing import Process
 
 app = Flask(__name__)
 
@@ -21,8 +22,6 @@ def force_sync():
 
     logging.info("Force sync requested via web UI.")
     try:
-        # Running the sync in a separate process to avoid blocking the web server
-        from multiprocessing import Process
         sync_process = Process(target=run_sync_main)
         sync_process.start()
         return jsonify({"message": "Sync process started."})

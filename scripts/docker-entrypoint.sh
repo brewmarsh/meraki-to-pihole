@@ -18,7 +18,7 @@ chmod 0666 "${APP_LOG_FILE}"
 
 # Start the web server in the background
 echo "Entrypoint: Starting web server..."
-gunicorn --bind 0.0.0.0:24653 app.app:app &
+cd /app && gunicorn --bind 0.0.0.0:24653 app:app &
 WEB_SERVER_PID=$!
 
 # Start the sync runner script in the background
