@@ -23,14 +23,69 @@ def force_sync():
         logging.error(f"Error starting forced sync: {e}")
         return jsonify({"message": f"Sync failed to start: {e}"}), 500
 
-@app.route('/logs')
-def get_logs():
+@app.route('/stream')
+def stream():
+    def event_stream():
+        while True:
+            time.sleep(5)
+            # Send log updates
+            with open('/app/logs/sync.log', 'r') as f:
+                log_content = f.read()
+            yield f"data: {json.dumps({'log': log_content})}\n\n"
+
+            # Send mapping updates
+            mappings = get_mappings_data()
+            yield f"data: {json.dumps({'mappings': mappings})}\n\n"
+
+    return Response(event_stream(), mimetype='text/event-stream')
+
+def get_mappings_data():
+    pihole_url = os.getenv("PIHOLE_API_URL")
+    pihole_api_key = os.getenv("PIHOLE_API_KEY")
+
+    from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
+    import meraki
+    from meraki_pihole_sync import load_app_config_from_env
+    from clients.meraki_client import get_all_relevant_meraki_clients
+
     try:
-        with open('/app/logs/sync.log', 'r') as f:
-            sync_log = f.read()
-    except FileNotFoundError:
-        sync_log = "Log file not found."
-    return jsonify({"sync_log": sync_log})
+        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    except Exception:
+        return {}
+
+    if not sid or not csrf_token:
+        return {}
+
+    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+
+    config = load_app_config_from_env()
+    dashboard = meraki.DashboardAPI(
+        api_key=config["meraki_api_key"],
+        output_log=False,
+        print_console=False,
+        suppress_logging=True,
+    )
+    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
+
+    mapped_devices = []
+    unmapped_meraki_devices = []
+
+    meraki_ips = {client['ip'] for client in meraki_clients}
+    pihole_ips = set(pihole_records.values())
+
+    for client in meraki_clients:
+        if client['ip'] in pihole_ips:
+            for domain, ip in pihole_records.items():
+                if client['ip'] == ip:
+                    mapped_devices.append({
+                        "meraki_name": client['name'],
+                        "pihole_domain": domain,
+                        "ip": ip
+                    })
+        else:
+            unmapped_meraki_devices.append(client)
+
+    return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
 
 @app.route('/mappings')
 def get_mappings():
