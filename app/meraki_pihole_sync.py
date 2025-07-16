@@ -158,7 +158,7 @@ def load_app_config_from_env():
     return config
 
 
-def main():
+def main(sid=None, csrf_token=None):
     """
     Main function to run the Meraki to Pi-hole sync process.
     Loads configuration, fetches Meraki clients, gets Pi-hole records,
@@ -219,22 +219,23 @@ def main():
 
     logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process for Pi-hole sync.")
 
-    # Authenticate to Pi-hole to get session details
-    try:
-        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 429:
-            logging.warning(f"Pi-hole auth API returned HTTP 429 (Too Many Requests). Waiting for {config['sync_interval']} seconds.")
-            time.sleep(config['sync_interval'])
-            return
-        else:
-            logging.error(f"Authentication to Pi-hole failed: {e}")
+    if not sid or not csrf_token:
+        # Authenticate to Pi-hole to get session details
+        try:
+            sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 429:
+                logging.warning(f"Pi-hole auth API returned HTTP 429 (Too Many Requests). Waiting for {config['sync_interval']} seconds.")
+                time.sleep(config['sync_interval'])
+                raise
+            else:
+                logging.error(f"Authentication to Pi-hole failed: {e}")
+                logging.info("--- Sync process failed (Pi-hole authentication error) ---")
+                return
+        if not sid or not csrf_token:
+            logging.error("Could not authenticate to Pi-hole. Halting sync.")
             logging.info("--- Sync process failed (Pi-hole authentication error) ---")
             return
-    if not sid or not csrf_token:
-        logging.error("Could not authenticate to Pi-hole. Halting sync.")
-        logging.info("--- Sync process failed (Pi-hole authentication error) ---")
-        return
 
     # Fetch existing Pi-hole DNS records to compare against
     # This is now a cache that add_or_update_dns_record_in_pihole will modify.
