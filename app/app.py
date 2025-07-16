@@ -24,9 +24,7 @@ def index():
 def logs():
     with open(SYNC_LOG, "r") as f:
         sync_log = f.read()
-    with open(CRON_LOG, "r") as f:
-        cron_log = f.read()
-    return jsonify({"sync_log": sync_log, "cron_log": cron_log})
+    return jsonify({"sync_log": sync_log})
 
 @app.route("/force-sync", methods=["POST"])
 def force_sync():
@@ -56,7 +54,8 @@ from clients.pihole_client import authenticate_to_pihole
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
     pihole_api_key = os.getenv("PIHOLE_API_KEY")
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    sync_interval = int(os.getenv("SYNC_INTERVAL_SECONDS", 300))
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key, sync_interval)
     if not sid or not csrf_token:
         return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
     records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
