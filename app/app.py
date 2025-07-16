@@ -34,9 +34,36 @@ def get_logs():
 
 @app.route('/mappings')
 def get_mappings():
-    # This is a placeholder. A more robust solution would be to
-    # have the sync script write the mappings to a file that can be read here.
-    return jsonify({})
+    pihole_url = os.getenv("PIHOLE_API_URL")
+    pihole_api_key = os.getenv("PIHOLE_API_KEY")
+
+    # Import here to avoid circular dependency
+    from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
+    import meraki
+    from meraki_pihole_sync import load_app_config_from_env
+    from clients.meraki_client import get_all_relevant_meraki_clients
+
+    try:
+        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    except Exception as e:
+        logging.error(f"Error authenticating to Pi-hole: {e}")
+        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
+
+    if not sid or not csrf_token:
+        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
+
+    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+
+    config = load_app_config_from_env()
+    dashboard = meraki.DashboardAPI(
+        api_key=config["meraki_api_key"],
+        output_log=False,
+        print_console=False,
+        suppress_logging=True,
+    )
+    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
+
+    return jsonify({"pihole": pihole_records, "meraki": meraki_clients})
 
 @app.route('/update-interval', methods=['POST'])
 def update_interval():
