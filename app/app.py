@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 import subprocess
 import os
+import requests
 from clients.pihole_client import get_pihole_custom_dns_records
 from sync_runner import run_sync
 
@@ -14,7 +15,6 @@ def add_security_headers(response):
 
 LOG_DIR = "/app/logs"
 SYNC_LOG = os.path.join(LOG_DIR, "sync.log")
-CRON_LOG = os.path.join(LOG_DIR, "cron_output.log")
 
 @app.route("/")
 def index():
@@ -25,9 +25,7 @@ def index():
 def logs():
     with open(SYNC_LOG, "r") as f:
         sync_log = f.read()
-    with open(CRON_LOG, "r") as f:
-        cron_log = f.read()
-    return jsonify({"sync_log": sync_log, "cron_log": cron_log})
+    return jsonify({"sync_log": sync_log})
 
 @app.route("/force-sync", methods=["POST"])
 def force_sync():
@@ -57,7 +55,13 @@ from clients.pihole_client import authenticate_to_pihole
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
     pihole_api_key = os.getenv("PIHOLE_API_KEY")
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    try:
+        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            return jsonify({"error": "Pi-hole API rate limit exceeded. Please try again later."}), 429
+        else:
+            return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
     if not sid or not csrf_token:
         return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
     records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)

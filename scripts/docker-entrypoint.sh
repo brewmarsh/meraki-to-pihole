@@ -13,13 +13,12 @@ APP_COMMAND=("$@")
 
 LOG_DIR="/app/logs"
 APP_LOG_FILE="${LOG_DIR}/sync.log"        # Python script logs here (via FileHandler) and to stdout
-CRON_OUTPUT_LOG_FILE="${LOG_DIR}/cron_output.log" # Cron's stdout/stderr for the job goes here
 
 # Ensure log directory and initial log files exist. Dockerfile also creates LOG_DIR.
 mkdir -p "${LOG_DIR}"
 # Create files if they don't exist, and ensure they are writable by any user (cron might run as different user)
-touch "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}"
-chmod 0666 "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" # Allow write access for cron and app user
+touch "${APP_LOG_FILE}"
+chmod 0666 "${APP_LOG_FILE}" # Allow write access for cron and app user
 
 echo "Entrypoint: Running initial sync on container startup..."
 echo "Entrypoint: Using python at $(which python)"
@@ -40,7 +39,7 @@ if [ -z "$CRON_SCHEDULE" ]; then
   echo "Entrypoint: CRON_SCHEDULE environment variable not set or empty. Cron job will not be scheduled."
   echo "Entrypoint: Container will continue running and tailing logs (if any from initial run)."
   # Tail /dev/null to keep container running if logs are empty or not being written to
-  tail -F "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" /dev/null
+  tail -F "${APP_LOG_FILE}" /dev/null
 else
   echo "Entrypoint: Initializing cron job with schedule: $CRON_SCHEDULE"
   ln -sf /usr/local/bin/python3 /usr/local/bin/python
@@ -52,7 +51,7 @@ else
   if [ ${#APP_COMMAND[@]} -lt 2 ]; then
     echo "Entrypoint: ERROR - APP_COMMAND is not in the expected format ('executable scriptname ...'). Cannot determine script name for cron."
     # Fallback to tailing logs and not setting up cron
-    tail -F "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" /dev/null
+    tail -F "${APP_LOG_FILE}" /dev/null
     exit 1 # Exit because cron setup is critical if CRON_SCHEDULE is set
   fi
   PYTHON_SCRIPT_NAME="${APP_COMMAND[1]}" # e.g., meraki_pihole_sync.py
@@ -106,11 +105,11 @@ else
   cron -f &
   CRON_PID=$!
 
-  echo "Entrypoint: Tailing application log (${APP_LOG_FILE}) and cron job output log (${CRON_OUTPUT_LOG_FILE})..."
+  echo "Entrypoint: Tailing application log (${APP_LOG_FILE})..."
   # Tail the logs. If cron stops or the script wants to exit, tail will keep running.
   # Using `wait` on cron's PID isn't standard for this kind of multi-process container management.
   # Tailing logs is a common way to keep the container alive.
-  tail -F "${APP_LOG_FILE}" "${CRON_OUTPUT_LOG_FILE}" &
+  tail -F "${APP_LOG_FILE}" &
   TAIL_PID=$!
 
   # Wait for either cron or tail to exit.

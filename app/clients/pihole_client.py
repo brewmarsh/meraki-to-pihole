@@ -3,6 +3,8 @@ import requests
 from urllib.parse import quote
 
 
+import time
+
 def authenticate_to_pihole(pihole_url, pihole_api_key):
     """
     Authenticates to the Pi-hole API and returns a session object.
@@ -17,6 +19,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
     try:
         # First, try a GET request to see if we already have a valid session
         response = requests.get(auth_url, timeout=10)
+        response.raise_for_status()
         auth_data = response.json()
         session = auth_data.get("session", {})
 
@@ -25,6 +28,11 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
             if session.get("totp"):
                 logging.warning("2FA is enabled on this Pi-hole, but this script does not support it.")
             return session.get("sid"), session.get("csrf")
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            raise
+        else:
+            logging.warning(f"GET request to /api/auth failed: {e}. Trying POST.")
     except requests.exceptions.RequestException as e:
         logging.warning(f"GET request to /api/auth failed: {e}. Trying POST.")
 
@@ -44,9 +52,14 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
         else:
             logging.error(f"Failed to authenticate to Pi-hole: {session.get('message')}")
             return None, None
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 429:
+            raise
+        else:
+            logging.error(f"Authentication to Pi-hole failed: {e}")
     except requests.exceptions.RequestException as e:
         logging.error(f"Authentication to Pi-hole failed: {e}")
-        return None, None
+    return None, None
 
 
 def _pihole_api_request(pihole_url, sid, csrf_token, method, path, data=None):
@@ -87,19 +100,17 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
         return None
 
     logging.info("Fetching existing custom DNS records from Pi-hole...")
-    response_data = _pihole_api_request(pihole_url, sid, csrf_token, "GET", "/api/domains")
+    response_data = _pihole_api_request(pihole_url, sid, csrf_token, "GET", "/api/config/dns/hosts")
 
-    records = {}  # Store as {domain: [ip1, ip2]}
-    if response_data and 'data' in response_data:
-        for item in response_data['data']:
-            if item['type'] == 'A' or item['type'] == 'AAAA':
-                domain = item['domain'].strip().lower()
-                ip_address = item['ip'].strip()
-                if domain not in records:
-                    records[domain] = []
-                records[domain].append(ip_address)
+    records = {}  # Store as {domain: ip}
+    if response_data and "config" in response_data and "dns" in response_data["config"] and "hosts" in response_data["config"]["dns"]:
+        for item in response_data["config"]["dns"]["hosts"]:
+            parts = item.split()
+            if len(parts) == 2:
+                ip_address, domain = parts
+                records[domain.strip().lower()] = ip_address.strip()
         logging.info(
-            f"Found {len(records)} unique domains with {sum(len(ips) for ips in records.values())} total custom DNS IP mappings in Pi-hole."
+            f"Found {len(records)} custom DNS IP mappings in Pi-hole."
         )
     else:
         logging.error("Failed to fetch custom DNS records from Pi-hole (API request failed or returned None).")
@@ -107,36 +118,9 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
     return records
 
 
-def add_dns_record_to_pihole(pihole_url, sid, csrf_token, domain, ip_address):
-    """Adds a single DNS record to Pi-hole."""
-    logging.info(f"Adding DNS record to Pi-hole: {domain} -> {ip_address}")
-    data = {"domain": domain, "ip": ip_address}
-    response = _pihole_api_request(pihole_url, sid, csrf_token, "POST", "/api/domains", data=data)
-    if response and response.get("success"):
-        logging.info(f"Successfully added DNS record: {domain} -> {ip_address}.")
-        return True
-    else:
-        logging.error(f"Failed to add DNS record {domain} -> {ip_address}. Response: {response}")
-        return False
-
-
-def delete_dns_record_from_pihole(pihole_url, sid, csrf_token, domain, ip_address):
-    """Deletes a single DNS record from Pi-hole."""
-    logging.info(f"Deleting DNS record from Pi-hole: {domain} -> {ip_address}")
-    data = {"domain": domain, "ip": ip_address}
-    response = _pihole_api_request(pihole_url, sid, csrf_token, "DELETE", "/api/domains", data=data)
-    if response and response.get("success"):
-        logging.info(f"Successfully deleted DNS record: {domain} -> {ip_address}.")
-        return True
-    else:
-        logging.error(f"Failed to delete DNS record {domain} -> {ip_address}. Response: {response}")
-        return False
-
-
 def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_ip, existing_records_cache):
     """
     Adds or updates a DNS record in Pi-hole.
-    If the domain exists with a different IP, the old IP(s) are deleted first.
     The `existing_records_cache` is modified by this function upon successful deletions/additions.
     """
     domain_cleaned = domain.strip().lower()
@@ -151,37 +135,18 @@ def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_
         return False
 
     # Check if the exact domain-ip pair already exists
-    if domain_cleaned in existing_records_cache and new_ip_cleaned in existing_records_cache[domain_cleaned]:
+    if existing_records_cache.get(domain_cleaned) == new_ip_cleaned:
         logging.info(f"DNS record {domain_cleaned} -> {new_ip_cleaned} already exists in Pi-hole. No action needed.")
         return True
 
-    # If domain exists, but with different IP(s), remove old ones first
-    if domain_cleaned in existing_records_cache:
-        logging.info(
-            f"Domain {domain_cleaned} found in Pi-hole with IP(s): {existing_records_cache[domain_cleaned]}. Will ensure only {new_ip_cleaned} remains for this domain."
-        )
-        for old_ip in list(existing_records_cache[domain_cleaned]):  # Iterate over a copy for safe removal from cache
-            if old_ip != new_ip_cleaned:
-                logging.info(
-                    f"Deleting old IP {old_ip} for domain {domain_cleaned} before adding new IP {new_ip_cleaned}."
-                )
-                if delete_dns_record_from_pihole(pihole_url, sid, csrf_token, domain_cleaned, old_ip):
-                    if old_ip in existing_records_cache[domain_cleaned]:  # Update cache on successful deletion
-                        existing_records_cache[domain_cleaned].remove(old_ip)
-                    if not existing_records_cache[domain_cleaned]:  # If all IPs for this domain were removed
-                        del existing_records_cache[domain_cleaned]
-                else:
-                    logging.error(
-                        f"Failed to delete old record {domain_cleaned} -> {old_ip}. Halting update for this domain to avoid potential IP conflicts or orphaned entries."
-                    )
-                    return False  # Stop processing this domain to prevent issues
+    # Add or update the record
+    path = f"/api/config/dns/hosts/{quote(new_ip_cleaned + ' ' + domain_cleaned)}"
+    response = _pihole_api_request(pihole_url, sid, csrf_token, "PUT", path)
 
-    # Add the new record
-    if add_dns_record_to_pihole(pihole_url, sid, csrf_token, domain_cleaned, new_ip_cleaned):
-        # Update cache on successful addition
-        if domain_cleaned not in existing_records_cache:
-            existing_records_cache[domain_cleaned] = []
-        if new_ip_cleaned not in existing_records_cache[domain_cleaned]:  # Avoid duplicates if somehow added again
-            existing_records_cache[domain_cleaned].append(new_ip_cleaned)
+    if response and response.get("success"):
+        logging.info(f"Successfully added/updated DNS record: {domain_cleaned} -> {new_ip_cleaned}.")
+        existing_records_cache[domain_cleaned] = new_ip_cleaned
         return True
-    return False
+    else:
+        logging.error(f"Failed to add/update DNS record {domain_cleaned} -> {new_ip_cleaned}. Response: {response}")
+        return False
