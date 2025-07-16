@@ -104,17 +104,13 @@ def load_app_config_from_env():
         value = os.getenv(var_name)
         if not value:
             missing_vars_messages.append(f"{desc} ({var_name})")
-        config[var_name.lower()] = value  # Store keys in lowercase for consistent access
+        config[var_name.lower()] = value
 
     if missing_vars_messages:
         logging.error(
             f"Missing mandatory environment variables: {', '.join(missing_vars_messages)}. Please set them and try again."
         )
         sys.exit(1)
-
-    # Optional environment variables
-    config["pihole_api_key"] = os.getenv(ENV_PIHOLE_API_KEY)
-    logging.debug(f"Pi-hole API Key loaded from environment: {config['pihole_api_key']}")
 
     try:
         default_sync_interval = "300"  # 5 minutes in seconds

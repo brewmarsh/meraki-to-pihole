@@ -9,62 +9,60 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Meraki Pi-hole Sync</a>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            Account
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="#">Profile</a></li>
-                            <li><a class="dropdown-item" href="#">Change Password</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="#">Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
         </div>
     </nav>
 
     <div class="container">
-        <h1 class="mt-5">Meraki Pi-hole Sync</h1>
-
-        <div class="row mt-5">
-            <div class="col-md-6">
-                <h2>Logs</h2>
+        <div class="row mt-4">
+            <div class="col-md-8">
                 <div class="card">
                     <div class="card-header">
-                        sync.log
-                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="sync" data-action="clear">Clear</button>
-                        <button class="btn btn-sm btn-outline-secondary float-end me-2" data-log="sync" data-action="copy">Copy</button>
+                        Logs
                     </div>
                     <div class="card-body">
-                        <pre id="sync-log"></pre>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5>sync.log</h5>
+                                <pre id="sync-log" class="log-box"></pre>
+                                <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
+                                <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>cron_output.log</h5>
+                                <pre id="cron-log" class="log-box"></pre>
+                                <button class="btn btn-sm btn-outline-secondary" data-log="cron" data-action="copy">Copy</button>
+                                <button class="btn btn-sm btn-outline-danger" data-log="cron" data-action="clear">Clear</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="card mt-3">
+
+                <div class="card mt-4">
                     <div class="card-header">
-                        cron_output.log
-                        <button class="btn btn-sm btn-outline-secondary float-end" data-log="cron" data-action="clear">Clear</button>
-                        <button class="btn btn-sm btn-outline-secondary float-end me-2" data-log="cron" data-action="copy">Copy</button>
+                        Pi-hole DNS Records
                     </div>
                     <div class="card-body">
-                        <pre id="cron-log"></pre>
+                        <pre id="mappings" class="log-box"></pre>
                     </div>
                 </div>
             </div>
-            <div class="col-md-6">
-                <h2>Actions</h2>
-                <button id="force-sync" class="btn btn-primary">Force Sync</button>
 
-                <h2 class="mt-5">Pi-hole Mappings</h2>
+            <div class="col-md-4">
                 <div class="card">
                     <div class="card-header">
-                        Mappings
+                        Controls
                     </div>
                     <div class="card-body">
-                        <pre id="mappings"></pre>
+                        <button id="force-sync" class="btn btn-primary w-100">Force Sync</button>
+                        <hr>
+                        <div class="mb-3">
+                            <label for="sync-interval" class="form-label">Sync Interval (seconds)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="sync-interval" value="{{ sync_interval }}">
+                                <button class="btn btn-outline-secondary" id="update-interval">Update</button>
+                            </div>
+                            <div class="form-text">The interval between automatic syncs.</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -98,6 +96,21 @@
                     getLogs();
                     getMappings();
                 });
+        });
+
+        document.getElementById('update-interval').addEventListener('click', () => {
+            const interval = document.getElementById('sync-interval').value;
+            fetch('/update-interval', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ interval: interval })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            });
         });
 
         document.querySelectorAll('[data-log]').forEach(button => {
@@ -135,11 +148,5 @@
         setInterval(getLogs, 5000);
         setInterval(getMappings, 5000);
     </script>
-
-    <footer class="footer mt-auto py-3 bg-light">
-        <div class="container">
-            <span class="text-muted">© 2024 Meraki Pi-hole Sync</span>
-        </div>
-    </footer>
 </body>
 </html>

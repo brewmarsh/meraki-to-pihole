@@ -4,23 +4,20 @@ import meraki
 def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict):
     """
     Fetches all Meraki clients that have a fixed IP assignment.
-
     It queries either all networks in the organization or a specified list of
     network IDs. Clients are filtered to include only those with a
-    'fixedIpAssignment' that matches their current IP address.
-
+    'fixedIpAssignment'.
     Args:
         dashboard (meraki.DashboardAPI): Initialized Meraki Dashboard API client.
         config (dict): The application configuration dictionary.
-
     Returns:
         list: A list of client dictionaries, each representing a client with a
-              fixed IP matching its current IP. Returns an empty list if no such
+              fixed IP. Returns an empty list if no such
               clients are found or if network fetching fails.
     """
     org_id = config["meraki_org_id"]
     specified_network_ids = config["meraki_network_ids"]
-    client_timespan = config["meraki_client_timespan"] # In seconds
+    client_timespan = config["meraki_client_timespan_seconds"]
 
     logging.debug(f"Entering get_all_relevant_meraki_clients. Org ID: {org_id}. Specified Network IDs: {specified_network_ids if specified_network_ids else 'All'}. Client Timespan: {client_timespan}s.")
     all_clients_map = {}
@@ -29,7 +26,6 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
     try:
         if not specified_network_ids:
             logging.info(f"No specific Meraki network IDs provided. Fetching all networks for organization ID: {org_id}.")
-            # total_pages='all' should handle pagination for networks if there are many.
             organization_networks = dashboard.organizations.getOrganizationNetworks(organizationId=org_id, total_pages='all')
             if not organization_networks:
                 logging.info(f"Organization {org_id} has no networks according to API. No clients will be fetched.")
@@ -37,9 +33,8 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
             networks_to_query_details = organization_networks
         else:
             logging.info(f"Specific Meraki network IDs provided: {specified_network_ids}. Validating and fetching details for these networks.")
-            # Fetch all org networks to get names and validate IDs, then filter.
             all_org_networks = dashboard.organizations.getOrganizationNetworks(organizationId=org_id, total_pages='all')
-            if not all_org_networks: # Should not happen if IDs are specified, but defensive.
+            if not all_org_networks:
                 logging.warning(f"Could not fetch network list for organization {org_id} to validate specified IDs. Proceeding with specified IDs directly, but network names will be 'Unknown'.")
                 networks_to_query_details = [{"id": nid, "name": f"Unknown (ID: {nid})"} for nid in specified_network_ids]
             else:
@@ -54,7 +49,7 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                     return []
     except meraki.exceptions.APIError as e:
         logging.error(f"Meraki API error while fetching networks for organization {org_id}: {e}")
-        return [] # Critical error, cannot proceed
+        return []
 
     if not networks_to_query_details:
         logging.info("No networks to query after initial determination. Exiting client search.")
@@ -67,46 +62,27 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         network_name = network_detail.get("name", f"ID-{network_id}")
         logging.info(f"--- Processing network {network_idx + 1}/{len(networks_to_query_details)}: '{network_name}' (ID: {network_id}) ---")
 
-        mac_to_reserved_ip_map = {}
-        # Fetch devices for the network
-        devices_in_network = dashboard.networks.getNetworkDevices(network_id)
+        try:
+            clients_in_network = dashboard.networks.getNetworkClients(network_id, timespan=client_timespan, perPage=1000, total_pages='all')
+            if not clients_in_network:
+                logging.info(f"No clients found in network '{network_name}' (ID: {network_id}) within the timespan.")
+                continue
 
-        if devices_in_network:
-            logging.info(f"SDK returned {len(devices_in_network)} devices for network '{network_name}' (ID: {network_id}).")
-            logging.debug(f"Filtering {len(devices_in_network)} devices from network '{network_name}'...")
-            for device in devices_in_network:
-                serial = device.get("serial")
-                if not serial:
-                    continue
-
-                try:
-                    mgmt_interface = dashboard.devices.getDeviceManagementInterface(serial)
-                    wan1 = mgmt_interface.get("wan1", {})
-                    wan2 = mgmt_interface.get("wan2", {})
-
-                    ip = None
-                    if wan1.get("usingStaticIp"):
-                        ip = wan1.get("staticIp")
-                    elif wan2.get("usingStaticIp"):
-                        ip = wan2.get("staticIp")
-
-                    if ip:
-                        client_name = device.get("name") or device.get("model")
-                        client_id = device.get("serial")
-                        all_clients_map[client_id] = {
-                            "name": client_name,
-                            "ip": ip,
-                            "network_id": network_id,
-                            "network_name": network_name,
-                            "meraki_client_id": client_id,
-                        }
-                        logging.info(f"Relevant client: '{client_name}' (IP: {ip}, Meraki ID: {client_id}) in network '{network_name}'. Using static IP. Will be processed.")
-                    else:
-                        logging.debug(f"Device '{device.get('name')}' (Serial: {serial}) in network '{network_name}' does not have a static IP assignment. Skipping.")
-                except meraki.exceptions.APIError as e:
-                    logging.warning(f"Could not retrieve management interface for device {serial} in network {network_name}: {e}")
-        else:
-            logging.info(f"No devices reported by SDK for network {network_name} (ID: {network_id}).")
+            for client in clients_in_network:
+                if client.get('fixedIp'):
+                    client_id = client['id']
+                    all_clients_map[client_id] = {
+                        "name": client.get('description') or client.get('mac'),
+                        "ip": client['fixedIp'],
+                        "network_id": network_id,
+                        "network_name": network_name,
+                        "meraki_client_id": client_id,
+                    }
+                    logging.info(f"Relevant client: '{all_clients_map[client_id]['name']}' (IP: {client['fixedIp']}, Meraki ID: {client_id}) in network '{network_name}'. Using fixed IP. Will be processed.")
+                else:
+                    logging.debug(f"Client '{client.get('description') or client.get('mac')}' in network '{network_name}' does not have a fixed IP assignment. Skipping.")
+        except meraki.exceptions.APIError as e:
+            logging.warning(f"Could not retrieve clients for network {network_name}: {e}")
 
         logging.info(f"--- Finished processing network {network_idx + 1}/{len(networks_to_query_details)}: {network_name} (ID: {network_id}) ---")
 

@@ -18,7 +18,8 @@ CRON_LOG = os.path.join(LOG_DIR, "cron_output.log")
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    sync_interval = os.getenv("SYNC_INTERVAL_SECONDS", 300)
+    return render_template("index.html", sync_interval=sync_interval)
 
 @app.route("/logs")
 def logs():
@@ -43,17 +44,10 @@ def update_interval():
         if interval < 60:
             return jsonify({"status": "error", "message": "Interval must be at least 60 seconds."}), 400
 
-        with open(".env", "r") as f:
-            lines = f.readlines()
+        with open("sync_interval.txt", "w") as f:
+            f.write(str(interval))
 
-        with open(".env", "w") as f:
-            for line in lines:
-                if line.startswith("SYNC_INTERVAL_SECONDS"):
-                    f.write(f"SYNC_INTERVAL_SECONDS={interval}\n")
-                else:
-                    f.write(line)
-
-        return jsonify({"status": "success", "message": f"Sync interval updated to {interval} seconds. Please restart the container to apply the changes."})
+        return jsonify({"status": "success", "message": f"Sync interval updated to {interval} seconds."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)})
 
