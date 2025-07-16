@@ -211,6 +211,9 @@ def main():
     failed_syncs = 0
     # Sync each relevant Meraki client to Pi-hole
     for client in meraki_clients:
+        if not client.get("name"):
+            logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
+            continue
         # Sanitize client name for use as a hostname
         client_name_sanitized = client["name"].replace(" ", "-").lower()
         domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
