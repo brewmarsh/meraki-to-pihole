@@ -103,8 +103,8 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
     response_data = _pihole_api_request(pihole_url, sid, csrf_token, "GET", "/api/config/dns/hosts")
 
     records = {}  # Store as {domain: ip}
-    if response_data:
-        for item in response_data.get("hosts", []):
+    if response_data and "config" in response_data and "dns" in response_data["config"] and "hosts" in response_data["config"]["dns"]:
+        for item in response_data["config"]["dns"]["hosts"]:
             parts = item.split()
             if len(parts) == 2:
                 ip_address, domain = parts
