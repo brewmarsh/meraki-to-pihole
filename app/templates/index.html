@@ -15,32 +15,50 @@
     <div class="container">
         <div class="row mt-4">
             <div class="col-md-8">
-                <div class="card">
+                <div class="card mt-4">
                     <div class="card-header">
-                        Logs
+                        Pi-hole DNS Records [<span id="pihole-count">0</span>]
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>sync.log</h5>
-                                <pre id="sync-log" class="log-box"></pre>
-                                <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
-                                <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
-                            </div>
-                            <div class="col-md-6">
-                                <button class="btn btn-sm btn-outline-secondary" data-log="cron" data-action="copy">Copy</button>
-                                <button class="btn btn-sm btn-outline-danger" data-log="cron" data-action="clear">Clear</button>
-                            </div>
-                        </div>
+                        <pre id="pihole-mappings" class="log-box"></pre>
                     </div>
                 </div>
 
                 <div class="card mt-4">
                     <div class="card-header">
-                        Pi-hole DNS Records
+                        Meraki IP Records [<span id="meraki-count">0</span>]
                     </div>
                     <div class="card-body">
-                        <pre id="mappings" class="log-box"></pre>
+                        <pre id="meraki-mappings" class="log-box"></pre>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Mapped Devices [<span id="mapped-count">0</span>]
+                    </div>
+                    <div class="card-body">
+                        <pre id="mapped-devices" class="log-box"></pre>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Unmapped Meraki Devices [<span id="unmapped-meraki-count">0</span>]
+                    </div>
+                    <div class="card-body">
+                        <pre id="unmapped-meraki-devices" class="log-box"></pre>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Logs
+                    </div>
+                    <div class="card-body">
+                        <pre id="sync-log" class="log-box"></pre>
+                        <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
+                        <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
                     </div>
                 </div>
             </div>
@@ -67,8 +85,27 @@
         </div>
     </div>
 
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+          <strong class="me-auto">Notification</strong>
+          <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body">
+        </div>
+      </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script>
+        const toastLiveExample = document.getElementById('liveToast')
+        const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
+
+        function showToast(message) {
+            toastLiveExample.querySelector('.toast-body').textContent = message;
+            toastBootstrap.show()
+        }
+
         function getLogs() {
             fetch('/logs')
                 .then(response => response.json())
@@ -82,7 +119,10 @@
             fetch('/mappings')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('mappings').textContent = JSON.stringify(data, null, 2);
+                    document.getElementById('pihole-mappings').textContent = JSON.stringify(data.pihole, null, 2);
+                    document.getElementById('meraki-mappings').textContent = JSON.stringify(data.meraki, null, 2);
+                    document.getElementById('mapped-devices').textContent = JSON.stringify(data.mapped, null, 2);
+                    document.getElementById('unmapped-meraki-devices').textContent = JSON.stringify(data.unmapped_meraki, null, 2);
                 });
         }
 
@@ -90,9 +130,7 @@
             fetch('/force-sync', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    alert(data.message);
-                    getLogs();
-                    getMappings();
+                    showToast(data.message);
                 });
         });
 
@@ -107,7 +145,7 @@
             })
             .then(response => response.json())
             .then(data => {
-                alert(data.message);
+                showToast(data.message);
             });
         });
 
@@ -136,15 +174,43 @@
                     window.getSelection().addRange(range);
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
-                    alert(`${logType} log copied to clipboard.`);
+                    showToast(`${logType} log copied to clipboard.`);
                 }
             });
         });
 
-        getLogs();
-        getMappings();
-        setInterval(getLogs, 5000);
-        setInterval(getMappings, 5000);
+        // Initial load
+        if (typeof EventSource !== "undefined") {
+            var source = new EventSource("/stream");
+            source.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.log) {
+                    document.getElementById('sync-log').textContent = data.log;
+                    fetch('/check-pihole-error')
+                        .then(response => response.json())
+                        .then(errorData => {
+                            if (errorData.error === 'forbidden') {
+                                showToast("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.");
+                            }
+                        });
+                }
+                if (data.mappings) {
+                    document.getElementById('pihole-mappings').textContent = JSON.stringify(data.mappings.pihole, null, 2);
+                    document.getElementById('meraki-mappings').textContent = JSON.stringify(data.mappings.meraki, null, 2);
+                    document.getElementById('mapped-devices').textContent = JSON.stringify(data.mappings.mapped, null, 2);
+                    document.getElementById('unmapped-meraki-devices').textContent = JSON.stringify(data.mappings.unmapped_meraki, null, 2);
+
+                    document.getElementById('pihole-count').textContent = Object.keys(data.mappings.pihole).length;
+                    document.getElementById('meraki-count').textContent = data.mappings.meraki.length;
+                    document.getElementById('mapped-count').textContent = data.mappings.mapped.length;
+                    document.getElementById('unmapped-meraki-count').textContent = data.mappings.unmapped_meraki.length;
+                }
+            };
+        } else {
+            // Fallback for browsers that don't support EventSource
+            setInterval(getLogs, 5000);
+            setInterval(getMappings, 5000);
+        }
     </script>
 </body>
 </html>

@@ -1,0 +1,771 @@
+2025-07-16 18:29:03,061 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:29:03,061 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 18:29:03,062 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:29:03,062 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:29:03,062 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:29:03,062 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:29:03,063 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:29:03,064 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:29:03,064 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:29:03,064 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:29:03,064 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:29:03,064 - INFO - [meraki_client.py:102] - Found relevant client: 'Test Client' (Fixed IP: 1.2.3.4) in network 'Network 1'.
+2025-07-16 18:29:03,064 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:29:03,065 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:29:03,065 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 18:29:03,066 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 2' ---
+2025-07-16 18:29:03,067 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 18:29:03,068 - INFO - [meraki_pihole_sync.py:203] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 18:29:03,068 - INFO - [meraki_pihole_sync.py:221] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 18:29:03,068 - INFO - [meraki_pihole_sync.py:241] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 18:29:03,068 - INFO - [meraki_pihole_sync.py:242] - Successfully synced/verified 1 client(s).
+2025-07-16 18:29:03,068 - INFO - [meraki_pihole_sync.py:245] - Total Meraki clients processed: 1
+2025-07-16 18:29:03,068 - INFO - [meraki_pihole_sync.py:246] - --- Sync process complete ---
+2025-07-16 18:29:03,069 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 18:29:03,069 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 18:29:03,069 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 18:29:03,071 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 18:29:03,071 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 18:29:03,071 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:29:03,072 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:29:03,072 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:29:03,072 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:40:18,853 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:40:18,853 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 18:40:18,855 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:40:18,855 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:40:18,855 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:40:18,855 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:40:18,856 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:40:18,857 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:40:18,857 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:40:18,857 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:40:18,857 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:40:18,858 - INFO - [meraki_client.py:102] - Found relevant client: 'Test Client' (Fixed IP: 1.2.3.4) in network 'Network 1'.
+2025-07-16 18:40:18,858 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 18:40:18,859 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 2' ---
+2025-07-16 18:40:18,861 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:202] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:204] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 18:40:18,862 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 18:40:18,863 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 18:40:18,863 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 18:40:18,864 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 18:40:18,865 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 18:40:18,866 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 18:40:18,866 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:40:18,866 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:40:18,867 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:40:18,867 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:45:40,784 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:45:40,785 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 18:45:40,787 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:45:40,787 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:45:40,787 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:45:40,787 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:45:40,787 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:45:40,789 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:45:40,790 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:45:40,790 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:45:40,790 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:45:40,790 - INFO - [meraki_client.py:102] - Found relevant client: 'Test Client' (Fixed IP: 1.2.3.4) in network 'Network 1'.
+2025-07-16 18:45:40,790 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:45:40,791 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 18:45:40,792 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 2' ---
+2025-07-16 18:45:40,794 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 18:45:40,794 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 18:45:40,794 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 18:45:40,795 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 18:45:40,795 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 18:45:40,795 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 18:45:40,795 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 18:45:40,796 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 18:45:40,796 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 18:45:40,797 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 18:45:40,798 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 18:45:40,799 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 18:45:40,799 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:45:40,800 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:45:40,800 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:45:40,800 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:51:33,246 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:51:33,246 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 18:51:33,248 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:51:33,248 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:51:33,248 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:51:33,248 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:51:33,248 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:51:33,250 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:51:33,250 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:51:33,250 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 18:51:33,250 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:51:33,250 - INFO - [meraki_client.py:102] - Found relevant client: 'Test Client' (Fixed IP: 1.2.3.4) in network 'Network 1'.
+2025-07-16 18:51:33,250 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 18:51:33,252 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 2' ---
+2025-07-16 18:51:33,254 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 18:51:33,254 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 18:51:33,255 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 18:51:33,255 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 18:51:33,255 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 18:51:33,255 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 18:51:33,255 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 18:51:33,256 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 18:51:33,256 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 18:51:33,256 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 18:51:33,258 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 18:51:33,258 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 18:51:33,259 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:51:33,259 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 18:51:33,260 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 18:51:33,260 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:05:53,122 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:05:53,123 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 19:05:53,125 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:05:53,125 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:05:53,125 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:05:53,125 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:05:53,125 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:05:53,126 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:05:53,127 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:05:53,127 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:05:53,127 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:05:53,127 - INFO - [meraki_client.py:102] - Found relevant client: 'Test Client' (Fixed IP: 1.2.3.4) in network 'Network 1'.
+2025-07-16 19:05:53,127 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 19:05:53,129 - INFO - [meraki_client.py:120] - --- Finished processing network 'Network 2' ---
+2025-07-16 19:05:53,131 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 19:05:53,132 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 19:05:53,132 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 19:05:53,132 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 19:05:53,132 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 19:05:53,132 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 19:05:53,132 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 19:05:53,133 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 19:05:53,133 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 19:05:53,133 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 19:05:53,135 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 19:05:53,135 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 19:05:53,136 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:05:53,136 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:05:53,137 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:05:53,137 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:39:59,213 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:39:59,214 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 19:39:59,217 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:39:59,217 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:39:59,217 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:39:59,218 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:39:59,218 - INFO - [meraki_client.py:121] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:39:59,220 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:39:59,221 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:39:59,221 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:39:59,221 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:39:59,221 - INFO - [meraki_client.py:103] - Found relevant client: 'Test Client' (Fixed IP: 1.2.3.4) in network 'Network 1'.
+2025-07-16 19:39:59,221 - INFO - [meraki_client.py:121] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:39:59,223 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:39:59,224 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:39:59,224 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 19:39:59,224 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:39:59,224 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 19:39:59,224 - INFO - [meraki_client.py:121] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:39:59,224 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 19:39:59,225 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 19:39:59,225 - INFO - [meraki_client.py:121] - --- Finished processing network 'Network 2' ---
+2025-07-16 19:39:59,228 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 19:39:59,229 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 19:39:59,229 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 19:39:59,229 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 19:39:59,229 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 19:39:59,229 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 19:39:59,229 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 19:39:59,230 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 19:39:59,230 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 19:39:59,231 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 19:39:59,233 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 19:39:59,233 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 19:39:59,234 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:39:59,234 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:39:59,235 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:39:59,235 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:54:54,164 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:54:54,165 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 19:54:54,166 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:54:54,166 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:54:54,166 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:54:54,166 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:54:54,169 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:54:54,170 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:54:54,170 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:54:54,170 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:54:54,170 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:54:54,172 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:54:54,177 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:54:54,177 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 19:54:54,178 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 19:54:54,180 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 19:54:54,180 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 19:54:54,180 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 19:54:54,181 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 19:54:54,181 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 19:54:54,181 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 19:54:54,181 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 19:54:54,181 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 19:54:54,182 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 19:54:54,182 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 19:54:54,184 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 19:54:54,184 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 19:54:54,185 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:54:54,185 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:54:54,185 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:54:54,185 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:55:28,424 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:55:28,424 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 19:55:28,426 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:55:28,426 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:55:28,426 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:55:28,426 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:55:28,429 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:55:28,431 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:55:28,431 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:55:28,431 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 19:55:28,431 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:55:28,432 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 19:55:28,432 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:55:28,434 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 19:55:28,434 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 19:55:28,434 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 19:55:28,434 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 19:55:28,434 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 19:55:28,435 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 19:55:28,435 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 19:55:28,435 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 19:55:28,435 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 19:55:28,437 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 19:55:28,437 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 19:55:28,437 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 19:55:28,438 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 19:55:28,438 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 19:55:28,438 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 19:55:28,438 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 19:55:28,439 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 19:55:28,439 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 19:55:28,439 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 19:55:28,441 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 19:55:28,441 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 19:55:28,442 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:55:28,442 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 19:55:28,443 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 19:55:28,443 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 20:05:07,012 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:05:07,013 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 20:05:07,014 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:05:07,014 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:05:07,014 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 20:05:07,014 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:05:07,016 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:05:07,018 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:05:07,019 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:05:07,019 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 20:05:07,019 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:05:07,020 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 20:05:07,020 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:05:07,021 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:05:07,021 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:05:07,021 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 20:05:07,022 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:05:07,022 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 20:05:07,022 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:05:07,022 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 20:05:07,022 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 20:05:07,022 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 20:05:07,024 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 20:05:07,024 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 20:05:07,024 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 20:05:07,025 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 20:05:07,025 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 20:05:07,025 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 20:05:07,025 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 20:05:07,026 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 20:05:07,026 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 20:05:07,026 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 20:05:07,028 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 20:05:07,028 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 20:05:07,029 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 20:05:07,029 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 20:05:07,029 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 20:05:07,030 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 20:48:05,705 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:48:05,706 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 20:48:05,707 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:48:05,708 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:48:05,708 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 20:48:05,708 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:48:05,710 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:48:05,712 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:48:05,713 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:48:05,713 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 20:48:05,713 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:48:05,714 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 20:48:05,714 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:48:05,715 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 20:48:05,716 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 20:48:05,718 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 20:48:05,719 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 20:48:05,719 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 20:48:05,719 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 20:48:05,719 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 20:48:05,719 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 20:48:05,719 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 20:48:05,720 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 20:48:05,720 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 20:48:05,721 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 20:48:05,722 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 20:48:05,723 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 20:48:05,723 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 20:48:05,723 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 20:48:05,724 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 20:48:05,724 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 20:58:08,294 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:58:08,294 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 20:58:08,296 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:58:08,296 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:58:08,296 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 20:58:08,296 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:58:08,299 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:58:08,301 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:58:08,301 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:58:08,301 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 20:58:08,301 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:58:08,302 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 20:58:08,303 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:58:08,304 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 20:58:08,304 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 20:58:08,304 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 20:58:08,304 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 20:58:08,304 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 20:58:08,305 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 20:58:08,305 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 20:58:08,305 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 20:58:08,305 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 20:58:08,307 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 20:58:08,307 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 20:58:08,307 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 20:58:08,307 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 20:58:08,308 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 20:58:08,308 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 20:58:08,308 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 20:58:08,308 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 20:58:08,309 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 20:58:08,309 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 20:58:08,311 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 20:58:08,311 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 20:58:08,312 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 20:58:08,312 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 20:58:08,313 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 20:58:08,313 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:05:20,456 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:05:20,456 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:05:20,458 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:05:20,458 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:05:20,458 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:05:20,458 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:05:20,460 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:05:20,462 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:05:20,462 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:05:20,463 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:05:20,463 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:05:20,464 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:05:20,464 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:05:20,465 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:05:20,466 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:05:20,468 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:05:20,469 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:05:20,469 - INFO - [meraki_pihole_sync.py:219] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:05:20,469 - INFO - [meraki_pihole_sync.py:239] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:05:20,469 - INFO - [meraki_pihole_sync.py:240] - Successfully synced/verified 1 client(s).
+2025-07-16 21:05:20,469 - INFO - [meraki_pihole_sync.py:243] - Total Meraki clients processed: 1
+2025-07-16 21:05:20,469 - INFO - [meraki_pihole_sync.py:244] - --- Sync process complete ---
+2025-07-16 21:05:20,470 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:05:20,470 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:05:20,471 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:05:20,472 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:05:20,472 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:05:20,473 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:05:20,473 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:05:20,474 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:05:20,474 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:09:17,577 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:09:17,577 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:09:17,579 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:09:17,579 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:09:17,579 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:09:17,579 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:09:17,581 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:09:17,583 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:09:17,583 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:09:17,583 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:09:17,583 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:09:17,584 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:09:17,584 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:09:17,586 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:09:17,588 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:09:17,589 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:09:17,589 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 21:09:17,589 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:09:17,589 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 21:09:17,589 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:09:17,589 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:09:17,591 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:09:17,592 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:09:17,592 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:09:17,593 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:09:17,594 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:09:17,596 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:09:17,597 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:09:17,597 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:09:17,597 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:09:17,597 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:15:53,481 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:15:53,481 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:15:53,483 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:15:53,483 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:15:53,483 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:15:53,483 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:15:53,485 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:15:53,487 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:15:53,487 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:15:53,487 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:15:53,487 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:15:53,488 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:15:53,489 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:15:53,490 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:15:53,490 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:15:53,490 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:15:53,490 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:15:53,491 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:15:53,491 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:15:53,491 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:15:53,491 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:15:53,491 - INFO - [meraki_client.py:130] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:15:53,493 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:15:53,493 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:15:53,493 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 21:15:53,493 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:15:53,493 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 21:15:53,493 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:15:53,494 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:15:53,495 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:15:53,496 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:15:53,496 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:15:53,496 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:15:53,496 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 21:15:53,496 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:15:53,496 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:15:53,497 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:15:53,497 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:15:53,498 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:15:53,499 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:15:53,501 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:15:53,502 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:15:53,502 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:15:53,502 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:15:53,502 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:25:50,762 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:25:50,763 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:25:50,764 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:25:50,764 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:25:50,764 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:25:50,764 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:25:50,767 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:25:50,769 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:25:50,769 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:25:50,769 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:25:50,769 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:25:50,771 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:25:50,771 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:25:50,772 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:25:50,772 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:25:50,773 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:25:50,775 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:25:50,775 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:25:50,776 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 21:25:50,776 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:25:50,776 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 21:25:50,776 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:25:50,776 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:25:50,778 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:25:50,778 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:25:50,778 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:25:50,779 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:25:50,779 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 21:25:50,779 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:25:50,779 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:25:50,780 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:25:50,780 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:25:50,780 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:25:50,782 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:25:50,784 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:25:50,784 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:25:50,785 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:25:50,785 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:25:50,785 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:34:36,249 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:34:36,249 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:34:36,251 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:34:36,251 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:34:36,251 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:34:36,251 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:34:36,253 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:34:36,255 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:34:36,255 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:34:36,255 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:34:36,255 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:34:36,256 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:34:36,256 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:34:36,258 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:34:36,260 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:34:36,261 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:34:36,261 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 21:34:36,261 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:34:36,261 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 21:34:36,261 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:34:36,261 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:34:36,263 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:34:36,264 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:34:36,264 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:34:36,265 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:34:36,266 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:34:36,268 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:34:36,269 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:34:36,269 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:34:36,269 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:34:36,269 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:43:01,656 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:43:01,657 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:43:01,658 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:43:01,658 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:43:01,658 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:43:01,658 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:43:01,660 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:43:01,662 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:43:01,662 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:43:01,662 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:43:01,662 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:43:01,663 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:43:01,664 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:43:01,665 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:43:01,665 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:43:01,665 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:43:01,665 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:43:01,666 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:43:01,666 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:43:01,666 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:43:01,666 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:43:01,666 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:43:01,668 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:43:01,668 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:43:01,669 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 21:43:01,669 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:43:01,669 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 21:43:01,669 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:43:01,669 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:43:01,670 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:43:01,671 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:43:01,671 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:43:01,671 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:43:01,671 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 21:43:01,671 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:43:01,671 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:43:01,672 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:43:01,672 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:43:01,673 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:43:01,674 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:43:01,676 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:43:01,677 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:43:01,677 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:43:01,678 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:43:01,678 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:51:30,916 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:51:30,916 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 21:51:30,918 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:51:30,918 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:51:30,918 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:51:30,918 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:51:30,920 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:51:30,921 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:51:30,922 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:51:30,922 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 21:51:30,922 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:51:30,923 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 21:51:30,923 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:51:30,924 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 21:51:30,925 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 2' ---
+2025-07-16 21:51:30,927 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:51:30,928 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:51:30,928 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 21:51:30,928 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:51:30,928 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 21:51:30,928 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:51:30,928 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:51:30,930 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 21:51:30,930 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 21:51:30,930 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 21:51:30,930 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 21:51:30,930 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 21:51:30,930 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 21:51:30,931 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 21:51:30,931 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 21:51:30,932 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 21:51:30,932 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 21:51:30,933 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 21:51:30,935 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 21:51:30,936 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:51:30,936 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 21:51:30,936 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 21:51:30,937 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.
+2025-07-16 22:21:41,231 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 22:21:41,232 - WARNING - [meraki_client.py:43] - No networks found in organization 12345. Cannot proceed.
+2025-07-16 22:21:41,233 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 22:21:41,233 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 22:21:41,233 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 22:21:41,233 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 22:21:41,235 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 22:21:41,238 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 22:21:41,238 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 22:21:41,238 - INFO - [meraki_client.py:68] - Will query for clients in 1 network(s).
+2025-07-16 22:21:41,238 - INFO - [meraki_client.py:74] - --- (1/1) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 22:21:41,239 - INFO - [meraki_client.py:100] - Found relevant client from MX VLAN: Test Client (1.2.3.4)
+2025-07-16 22:21:41,239 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:39] - Fetching all networks for organization ID: 12345.
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:61] - No specific network IDs provided. Querying all networks in the organization.
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:68] - Will query for clients in 2 network(s).
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:74] - --- (1/2) Processing network: 'Network 1' (ID: N_1) ---
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:83] - No clients found in network 'Network 1' within the last 86400 seconds.
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 1' ---
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:74] - --- (2/2) Processing network: 'Network 2' (ID: N_2) ---
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:83] - No clients found in network 'Network 2' within the last 86400 seconds.
+2025-07-16 22:21:41,241 - INFO - [meraki_client.py:128] - --- Finished processing network 'Network 2' ---
+2025-07-16 22:21:41,243 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 22:21:41,244 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 22:21:41,244 - WARNING - [meraki_pihole_sync.py:215] - Skipping client with no name and IP 192.168.1.11
+2025-07-16 22:21:41,244 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 22:21:41,244 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 0 client(s).
+2025-07-16 22:21:41,244 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 22:21:41,244 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 22:21:41,246 - INFO - [meraki_pihole_sync.py:170] - --- Starting Meraki Pi-hole Sync Script --- Version: Not Set, Commit: Not Set
+2025-07-16 22:21:41,246 - INFO - [meraki_pihole_sync.py:201] - Found 1 Meraki client(s) with fixed IPs to process.
+2025-07-16 22:21:41,246 - INFO - [meraki_pihole_sync.py:222] - Processing Meraki client: Name='Test-Client-1', IP='192.168.1.10', Target DNS: test-client-1.lan -> 192.168.1.10
+2025-07-16 22:21:41,246 - INFO - [meraki_pihole_sync.py:242] - --- Meraki to Pi-hole Sync Summary ---
+2025-07-16 22:21:41,246 - INFO - [meraki_pihole_sync.py:243] - Successfully synced/verified 1 client(s).
+2025-07-16 22:21:41,247 - INFO - [meraki_pihole_sync.py:246] - Total Meraki clients processed: 1
+2025-07-16 22:21:41,247 - INFO - [meraki_pihole_sync.py:247] - --- Sync process complete ---
+2025-07-16 22:21:41,247 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: new.com -> 9.9.9.9.
+2025-07-16 22:21:41,248 - INFO - [pihole_client.py:160] - DNS record existing.com -> 1.1.1.1 already exists in Pi-hole. No action needed.
+2025-07-16 22:21:41,248 - INFO - [pihole_client.py:168] - Successfully added/updated DNS record: existing.com -> 2.2.2.2.
+2025-07-16 22:21:41,250 - INFO - [pihole_client.py:52] - No valid cached session. Authenticating to Pi-hole at http://pi.hole/api/auth
+2025-07-16 22:21:41,252 - INFO - [pihole_client.py:62] - Successfully authenticated to Pi-hole and cached new session.
+2025-07-16 22:21:41,252 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 22:21:41,252 - INFO - [pihole_client.py:133] - Found 2 custom DNS IP mappings in Pi-hole.
+2025-07-16 22:21:41,253 - INFO - [pihole_client.py:123] - Fetching existing custom DNS records from Pi-hole...
+2025-07-16 22:21:41,253 - INFO - [pihole_client.py:133] - Found 0 custom DNS IP mappings in Pi-hole.

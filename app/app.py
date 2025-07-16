@@ -1,88 +1,176 @@
-from flask import Flask, render_template, jsonify, request
-import subprocess
+from flask import Flask, render_template, jsonify, request, Response
 import os
-import requests
-from clients.pihole_client import get_pihole_custom_dns_records
-from sync_runner import run_sync
+import logging
+from meraki_pihole_sync import main as run_sync_main
+import threading
+import json
+import time
 
 app = Flask(__name__)
 
-@app.after_request
-def add_security_headers(response):
-    response.headers['X-Content-Type-Options'] = 'nosniff'
-    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
-    return response
-
-LOG_DIR = "/app/logs"
-SYNC_LOG = os.path.join(LOG_DIR, "sync.log")
-
-@app.route("/")
+@app.route('/')
 def index():
     sync_interval = os.getenv("SYNC_INTERVAL_SECONDS", 300)
-    return render_template("index.html", sync_interval=sync_interval)
+    return render_template('index.html', sync_interval=sync_interval)
 
-@app.route("/logs")
-def logs():
-    with open(SYNC_LOG, "r") as f:
-        sync_log = f.read()
-    return jsonify({"sync_log": sync_log})
-
-@app.route("/force-sync", methods=["POST"])
+@app.route('/force-sync', methods=['POST'])
 def force_sync():
+    logging.info("Force sync requested via web UI.")
     try:
-        run_sync()
-        return jsonify({"status": "success", "message": "Sync process triggered."})
+        # Running the sync in a separate thread to avoid blocking the web server
+        sync_thread = threading.Thread(target=run_sync_main)
+        sync_thread.start()
+        return jsonify({"message": "Sync process started."})
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+        logging.error(f"Error starting forced sync: {e}")
+        return jsonify({"message": f"Sync failed to start: {e}"}), 500
 
-@app.route("/update-interval", methods=["POST"])
-def update_interval():
-    try:
-        interval = int(request.json.get("interval"))
-        if interval < 60:
-            return jsonify({"status": "error", "message": "Interval must be at least 60 seconds."}), 400
+@app.route('/check-pihole-error', methods=['GET'])
+def check_pihole_error():
+    with open('/app/logs/sync.log', 'r') as f:
+        log_content = f.read()
+    if "Pi-hole API returned a 'forbidden' error" in log_content:
+        return jsonify({"error": "forbidden"})
+    return jsonify({})
 
-        with open("sync_interval.txt", "w") as f:
-            f.write(str(interval))
+@app.route('/stream')
+def stream():
+    def event_stream():
+        # Use a generator to stream data, which is more memory-efficient
+        # and avoids holding the worker for a long time.
+        while True:
+            time.sleep(5)
+            with open('/app/logs/sync.log', 'r') as f:
+                log_content = f.read()
+            yield f"data: {json.dumps({'log': log_content})}\n\n"
 
-        return jsonify({"status": "success", "message": f"Sync interval updated to {interval} seconds."})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)})
+            mappings = get_mappings_data()
+            yield f"data: {json.dumps({'mappings': mappings})}\n\n"
 
-from clients.pihole_client import authenticate_to_pihole
+    return Response(event_stream(), mimetype='text/event-stream')
 
-@app.route("/mappings")
-def mappings():
+def get_mappings_data():
     pihole_url = os.getenv("PIHOLE_API_URL")
     pihole_api_key = os.getenv("PIHOLE_API_KEY")
+
+    from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
+    import meraki
+    from meraki_pihole_sync import load_app_config_from_env
+    from clients.meraki_client import get_all_relevant_meraki_clients
+
     try:
         sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-    except requests.exceptions.HTTPError as e:
-        if e.response.status_code == 429:
-            return jsonify({"error": "Pi-hole API rate limit exceeded. Please try again later."}), 429
+    except Exception:
+        return {}
+
+    if not sid or not csrf_token:
+        return {}
+
+    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+
+    config = load_app_config_from_env()
+    dashboard = meraki.DashboardAPI(
+        api_key=config["meraki_api_key"],
+        output_log=False,
+        print_console=False,
+        suppress_logging=True,
+    )
+    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
+
+    mapped_devices = []
+    unmapped_meraki_devices = []
+
+    meraki_ips = {client['ip'] for client in meraki_clients}
+    pihole_ips = set(pihole_records.values())
+
+    for client in meraki_clients:
+        if client['ip'] in pihole_ips:
+            for domain, ip in pihole_records.items():
+                if client['ip'] == ip:
+                    mapped_devices.append({
+                        "meraki_name": client['name'],
+                        "pihole_domain": domain,
+                        "ip": ip
+                    })
         else:
-            return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
+            unmapped_meraki_devices.append(client)
+
+    return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+
+@app.route('/mappings')
+def get_mappings():
+    pihole_url = os.getenv("PIHOLE_API_URL")
+    pihole_api_key = os.getenv("PIHOLE_API_KEY")
+
+    # Import here to avoid circular dependency
+    from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
+    import meraki
+    from meraki_pihole_sync import load_app_config_from_env
+    from clients.meraki_client import get_all_relevant_meraki_clients
+
+    try:
+        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    except Exception as e:
+        logging.error(f"Error authenticating to Pi-hole: {e}")
+        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
+
     if not sid or not csrf_token:
         return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
-    records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
-    return jsonify(records)
 
-@app.route("/clear-log", methods=["POST"])
+    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+
+    config = load_app_config_from_env()
+    dashboard = meraki.DashboardAPI(
+        api_key=config["meraki_api_key"],
+        output_log=False,
+        print_console=False,
+        suppress_logging=True,
+    )
+    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
+
+    mapped_devices = []
+    unmapped_meraki_devices = []
+
+    meraki_ips = {client['ip'] for client in meraki_clients}
+    pihole_ips = set(pihole_records.values())
+
+    for client in meraki_clients:
+        if client['ip'] in pihole_ips:
+            for domain, ip in pihole_records.items():
+                if client['ip'] == ip:
+                    mapped_devices.append({
+                        "meraki_name": client['name'],
+                        "pihole_domain": domain,
+                        "ip": ip
+                    })
+        else:
+            unmapped_meraki_devices.append(client)
+
+    return jsonify({"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices})
+
+@app.route('/update-interval', methods=['POST'])
+def update_interval():
+    data = request.get_json()
+    interval = data.get('interval')
+    if interval and interval.isdigit():
+        with open("/app/sync_interval.txt", "w") as f:
+            f.write(interval)
+        logging.info(f"Sync interval updated to {interval} seconds.")
+        return jsonify({"message": "Sync interval updated."})
+    return jsonify({"message": "Invalid interval."}), 400
+
+@app.route('/clear-log', methods=['POST'])
 def clear_log():
-    log_type = request.json.get("log")
-    if log_type not in ["sync", "cron"]:
-        return jsonify({"status": "error", "message": "Invalid log type"})
+    data = request.get_json()
+    log_type = data.get('log')
+    if log_type == 'sync':
+        try:
+            with open('/app/logs/sync.log', 'w') as f:
+                f.write('')
+            return jsonify({"message": "Sync log cleared."})
+        except FileNotFoundError:
+            return jsonify({"message": "Log file not found."}), 404
+    return jsonify({"message": "Invalid log type."}), 400
 
-    if log_type == "sync":
-        log_file = SYNC_LOG
-    else:
-        log_file = CRON_LOG
-
-    with open(log_file, "w") as f:
-        f.write("")
-
-    return jsonify({"status": "success", "message": f"{log_type} log cleared."})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=24653)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=os.environ.get('FLASK_PORT', 24653))
