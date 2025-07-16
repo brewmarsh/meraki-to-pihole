@@ -83,35 +83,44 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                 logging.info(f"No clients found in network '{net_name}' within the last {timespan} seconds.")
                 continue
 
-            # Filter for clients that have a fixed IP assignment
-            for client in clients_in_network:
-                # The key for a DHCP reservation is 'dhcpHostname' being present and a 'fixedIp' assignment
-                if client.get("fixedIp"):
-                    client_name = client.get("description") or client.get("dhcpHostname") or client.get("mac")
-                    client_ip = client["fixedIp"]
+            # Process VLANs for MX devices
+            try:
+                vlans = dashboard.appliance.getNetworkApplianceVlans(net_id)
+                for vlan in vlans:
+                    if vlan.get('fixedIpAssignments'):
+                        for client_mac, assignment in vlan['fixedIpAssignments'].items():
+                            relevant_clients.append({
+                                "name": assignment['name'],
+                                "ip": assignment['ip'],
+                                "network_id": net_id,
+                                "network_name": net_name,
+                                "meraki_client_id": client_mac,
+                                "type": "MX VLAN"
+                            })
+                            logging.info(f"Found relevant client from MX VLAN: {assignment['name']} ({assignment['ip']})")
+            except meraki.exceptions.APIError:
+                logging.debug(f"No VLANs found for network {net_name}, or it's not an MX network.")
 
-                    # Ensure the client is currently assigned the fixed IP
-                    # This is the primary matching logic between Meraki and Pi-hole
-                    if client.get("ip") == client_ip:
-                        relevant_clients.append({
-                            "name": client_name,
-                            "ip": client_ip,
-                            "network_id": net_id,
-                            "network_name": net_name,
-                            "meraki_client_id": client['id'],
-                        })
-                        logging.info(
-                            f"Found relevant client: '{client_name}' (Fixed IP: {client_ip}) in network '{net_name}'."
-                        )
-                    else:
-                        logging.debug(
-                            f"Client '{client_name}' has a fixed IP ({client_ip}) but is currently using a different IP "
-                            f"({client.get('ip', 'N/A')}). Skipping."
-                        )
-                else:
-                    logging.debug(
-                        f"Client with MAC {client.get('mac')} does not have a fixed IP assignment. Skipping."
-                    )
+            # Process switch routing interfaces for switches
+            try:
+                devices = dashboard.networks.getNetworkDevices(net_id)
+                for device in devices:
+                    if device['model'].startswith('MS'):
+                        interfaces = dashboard.switch.getDeviceSwitchRoutingInterfaces(device['serial'])
+                        for interface in interfaces:
+                            if interface.get('fixedIpAssignments'):
+                                for client_mac, assignment in interface['fixedIpAssignments'].items():
+                                    relevant_clients.append({
+                                        "name": assignment['name'],
+                                        "ip": assignment['ip'],
+                                        "network_id": net_id,
+                                        "network_name": net_name,
+                                        "meraki_client_id": client_mac,
+                                        "type": "Switch Routing"
+                                    })
+                                    logging.info(f"Found relevant client from Switch Routing: {assignment['name']} ({assignment['ip']})")
+            except meraki.exceptions.APIError:
+                logging.debug(f"No switch routing interfaces found for network {net_name}.")
 
         except meraki.exceptions.APIError as e:
             logging.warning(

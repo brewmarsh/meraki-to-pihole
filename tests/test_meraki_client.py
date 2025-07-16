@@ -60,9 +60,11 @@ class TestMerakiClient(unittest.TestCase):
     def test_get_all_relevant_meraki_clients_with_clients_with_fixed_ip(self, mock_dashboard):
         # Arrange
         mock_dashboard.organizations.getOrganizationNetworks.return_value = [{"id": "N_1", "name": "Network 1"}]
-        mock_dashboard.networks.getNetworkClients.return_value = [
-            {"id": "c_1", "description": "Test Client", "fixedIp": "1.2.3.4", "ip": "1.2.3.4"}
+        mock_dashboard.appliance.getNetworkApplianceVlans.return_value = [
+            {"fixedIpAssignments": {"mac_1": {"name": "Test Client", "ip": "1.2.3.4"}}}
         ]
+        mock_dashboard.networks.getNetworkDevices.return_value = []
+
 
         # Act
         clients = get_all_relevant_meraki_clients(mock_dashboard, self.config)
