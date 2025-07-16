@@ -61,6 +61,15 @@
                         <pre id="mapped-devices" class="log-box"></pre>
                     </div>
                 </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Unmapped Meraki Devices
+                    </div>
+                    <div class="card-body">
+                        <pre id="unmapped-meraki-devices" class="log-box"></pre>
+                    </div>
+                </div>
             </div>
 
             <div class="col-md-4">
@@ -103,6 +112,7 @@
                     document.getElementById('pihole-mappings').textContent = JSON.stringify(data.pihole, null, 2);
                     document.getElementById('meraki-mappings').textContent = JSON.stringify(data.meraki, null, 2);
                     document.getElementById('mapped-devices').textContent = JSON.stringify(data.mapped, null, 2);
+                    document.getElementById('unmapped-meraki-devices').textContent = JSON.stringify(data.unmapped_meraki, null, 2);
                 });
         }
 

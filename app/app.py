@@ -64,18 +64,24 @@ def get_mappings():
     meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
 
     mapped_devices = []
-    # If multiple Pi-hole records point to the same IP, all will be mapped to the single Meraki device with that IP.
-    for client in meraki_clients:
-        for domain, ip in pihole_records.items():
-            if client['ip'] == ip:
-                mapped_devices.append({
-                    "meraki_name": client['name'],
-                    "pihole_domain": domain,
-                    "ip": ip
-                })
-                break
+    unmapped_meraki_devices = []
 
-    return jsonify({"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices})
+    meraki_ips = {client['ip'] for client in meraki_clients}
+    pihole_ips = set(pihole_records.values())
+
+    for client in meraki_clients:
+        if client['ip'] in pihole_ips:
+            for domain, ip in pihole_records.items():
+                if client['ip'] == ip:
+                    mapped_devices.append({
+                        "meraki_name": client['name'],
+                        "pihole_domain": domain,
+                        "ip": ip
+                    })
+        else:
+            unmapped_meraki_devices.append(client)
+
+    return jsonify({"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices})
 
 @app.route('/update-interval', methods=['POST'])
 def update_interval():
