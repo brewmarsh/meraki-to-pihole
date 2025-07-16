@@ -15,29 +15,9 @@
     <div class="container">
         <div class="row mt-4">
             <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        Logs
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h5>sync.log</h5>
-                                <pre id="sync-log" class="log-box"></pre>
-                                <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
-                                <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
-                            </div>
-                            <div class="col-md-6">
-                                <button class="btn btn-sm btn-outline-secondary" data-log="cron" data-action="copy">Copy</button>
-                                <button class="btn btn-sm btn-outline-danger" data-log="cron" data-action="clear">Clear</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="card mt-4">
                     <div class="card-header">
-                        Pi-hole DNS Records
+                        Pi-hole DNS Records [<span id="pihole-count">0</span>]
                     </div>
                     <div class="card-body">
                         <pre id="pihole-mappings" class="log-box"></pre>
@@ -46,7 +26,7 @@
 
                 <div class="card mt-4">
                     <div class="card-header">
-                        Meraki IP Records
+                        Meraki IP Records [<span id="meraki-count">0</span>]
                     </div>
                     <div class="card-body">
                         <pre id="meraki-mappings" class="log-box"></pre>
@@ -55,7 +35,7 @@
 
                 <div class="card mt-4">
                     <div class="card-header">
-                        Mapped Devices
+                        Mapped Devices [<span id="mapped-count">0</span>]
                     </div>
                     <div class="card-body">
                         <pre id="mapped-devices" class="log-box"></pre>
@@ -64,10 +44,21 @@
 
                 <div class="card mt-4">
                     <div class="card-header">
-                        Unmapped Meraki Devices
+                        Unmapped Meraki Devices [<span id="unmapped-meraki-count">0</span>]
                     </div>
                     <div class="card-body">
                         <pre id="unmapped-meraki-devices" class="log-box"></pre>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        Logs
+                    </div>
+                    <div class="card-body">
+                        <pre id="sync-log" class="log-box"></pre>
+                        <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
+                        <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
                     </div>
                 </div>
             </div>
@@ -208,6 +199,11 @@
                     document.getElementById('meraki-mappings').textContent = JSON.stringify(data.mappings.meraki, null, 2);
                     document.getElementById('mapped-devices').textContent = JSON.stringify(data.mappings.mapped, null, 2);
                     document.getElementById('unmapped-meraki-devices').textContent = JSON.stringify(data.mappings.unmapped_meraki, null, 2);
+
+                    document.getElementById('pihole-count').textContent = Object.keys(data.mappings.pihole).length;
+                    document.getElementById('meraki-count').textContent = data.mappings.meraki.length;
+                    document.getElementById('mapped-count').textContent = data.mappings.mapped.length;
+                    document.getElementById('unmapped-meraki-count').textContent = data.mappings.unmapped_meraki.length;
                 }
             };
         } else {
