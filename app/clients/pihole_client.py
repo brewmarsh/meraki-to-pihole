@@ -7,7 +7,12 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
     """
     Authenticates to the Pi-hole API and returns a session object.
     """
-    auth_url = f"{pihole_url.rstrip('/')}/api/auth"
+    base_url = pihole_url.rstrip("/")
+    if base_url.endswith("/admin"):
+        base_url = base_url.replace("/admin", "")
+    if base_url.endswith("/api.php"):
+        base_url = base_url.replace("/api.php", "")
+    auth_url = f"{base_url}/api/auth"
     auth_body = {"password": pihole_api_key}
     logging.info(f"Authenticating to Pi-hole at {auth_url}")
     try:
