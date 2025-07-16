@@ -16,7 +16,7 @@ The script runs once on container startup and then on a configurable cron schedu
 *   **All configuration is managed via environment variables.**
 *   Securely handles Meraki & Pi-hole API keys.
 *   Easy deployment using Docker and `docker-compose.yml`.
-*   **Logs script activity to `/app/logs/sync.log` and cron job output to `/app/logs/cron_output.log` inside the container, accessible via a host-mounted volume.**
+*   **Logs script activity to `/app/logs/sync.log` inside the container, accessible via a host-mounted volume.**
 
 ## Directory Structure
 
@@ -54,7 +54,7 @@ python3 -m unittest discover tests
 
 1.  The Docker container starts. The `docker-entrypoint.sh` script immediately runs the `meraki_pihole_sync.py` Python script for an initial sync. Output is logged to `/app/logs/sync.log`.
 2.  After the initial run, the `docker-entrypoint.sh` script sets up a cron job based on the `CRON_SCHEDULE` environment variable.
-3.  At each scheduled time, cron executes the `meraki_pihole_sync.py` script. Output from these scheduled runs is logged to `/app/logs/cron_output.log`.
+3.  At each scheduled time, cron executes the `meraki_pihole_sync.py` script.
 4.  The Python script (`meraki_pihole_sync.py`) reads all its configuration (Meraki API Key, Org ID, Network IDs, Pi-hole URL/Key, Hostname Suffix) from environment variables.
 5.  It connects to the Meraki API:
     *   Fetches a list of networks for the configured `MERAKI_ORG_ID`.
@@ -132,7 +132,7 @@ The application now includes a web UI for monitoring and interacting with the sy
 
 #### Features
 
-*   **View Logs:** View the `sync.log` and `cron_output.log` files in real-time.
+*   **View Logs:** View the `sync.log` file in real-time.
 *   **Force Refresh:** Manually trigger a sync process.
 *   **View Mappings:** See the custom DNS mappings currently loaded in Pi-hole.
 
@@ -145,10 +145,10 @@ The application now includes a web UI for monitoring and interacting with the sy
 *   **Persistent application log file (from initial run and subsequent script runs if it also logs to file):**
     Check the file `./meraki_sync_logs/sync.log` on your host (or the directory you configured for the volume mount).
 *   **Persistent cron job output log file:**
-    Check the file `./meraki_sync_logs/cron_output.log` on your host.
+    Check the file `./meraki_sync_logs/sync.log` on your host.
 *   **To tail logs from within the container (if needed for debugging):**
     ```bash
-    docker-compose exec meraki-pihole-sync tail -F /app/logs/sync.log /app/logs/cron_output.log
+    docker-compose exec meraki-pihole-sync tail -F /app/logs/sync.log
     ```
 
 ### Stopping the Container
@@ -180,7 +180,7 @@ This executes the script inside the running container using `python3`, leveragin
 
 ## Troubleshooting
 
-*   **"python: not found" or "python3: not found" in cron logs (`cron_output.log`):**
+*   **"python: not found" or "python3: not found" in logs:**
     *   This should be resolved with the latest updates to `Dockerfile` and `docker-entrypoint.sh` which explicitly use `python3` and make the script executable. Ensure you have pulled the latest changes and rebuilt your Docker image (`docker-compose build`).
 *   **"No relevant Meraki clients found" but you expect clients:**
     *   **Verify Meraki Configuration:** The most common reason is that clients in your Meraki network do not meet the script's criteria:
@@ -201,7 +201,7 @@ This executes the script inside the running container using `python3`, leveragin
 *   **Log File Issues:**
     *   If `./meraki_sync_logs` (or your custom host path) is not showing logs, check permissions on the host directory. The `docker-entrypoint.sh` now attempts to `chmod 0666` the log files inside the container, which should help with most permission issues.
     *   Ensure the volume mount in `docker-compose.yml` is correct: `- ./meraki_sync_logs:/app/logs`.
-*   **Pi-hole API Errors / Records Not Updating** (Check `/app/logs/sync.log` or `cron_output.log`):
+*   **Pi-hole API Errors / Records Not Updating** (Check `/app/logs/sync.log`):
     *   **URL:** Double-check `PIHOLE_API_URL`. It should point to the admin directory (e.g., `http://pi.hole/admin` or `http://192.168.1.10/admin`). The script automatically appends `/api.php`.
     *   **API Key:** Ensure `PIHOLE_API_KEY` (your Pi-hole Webpassword/API Token) is correct if your Pi-hole admin interface is password-protected. If it's not password-protected, you can leave `PIHOLE_API_KEY` blank.
     *   **Connectivity:** Confirm the container can reach Pi-hole. Use `docker-compose exec meraki-pihole-sync curl -v <PIHOLE_API_URL>` (e.g. `http://pi.hole/admin/api.php`) to test.
@@ -211,7 +211,7 @@ This executes the script inside the running container using `python3`, leveragin
     *   **Rate Limits:** For very large setups with many networks/clients, Meraki API rate limits (HTTP 429 errors) could be a factor. The script has a basic retry mechanism.
 *   **Cron Job Not Running / Incorrect Times**
     *   Verify `CRON_SCHEDULE` syntax (e.g., using [crontab.guru](https://crontab.guru/)).
-    *   Check `/app/logs/cron_output.log` for output from scheduled runs. The entrypoint script now adds timestamps to this log for each job execution.
+    *   Check `/app/logs/sync.log` for output from scheduled runs.
     *   Ensure `TZ` (timezone) is set correctly in your `.env` file if jobs run at unexpected UTC times.
     *   To see the cron job installed in the container: `docker-compose exec meraki-pihole-sync cat /etc/cron.d/meraki-pihole-sync-cron`.
     *   To see running processes, including cron: `docker-compose exec meraki-pihole-sync ps aux`.

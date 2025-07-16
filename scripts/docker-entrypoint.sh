@@ -13,7 +13,6 @@ APP_COMMAND=("$@")
 
 LOG_DIR="/app/logs"
 APP_LOG_FILE="${LOG_DIR}/sync.log"        # Python script logs here (via FileHandler) and to stdout
-CRON_OUTPUT_LOG_FILE="${LOG_DIR}/cron_output.log" # Cron's stdout/stderr for the job goes here
 
 # Ensure log directory and initial log files exist. Dockerfile also creates LOG_DIR.
 mkdir -p "${LOG_DIR}"

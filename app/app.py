@@ -14,7 +14,6 @@ def add_security_headers(response):
 
 LOG_DIR = "/app/logs"
 SYNC_LOG = os.path.join(LOG_DIR, "sync.log")
-CRON_LOG = os.path.join(LOG_DIR, "cron_output.log")
 
 @app.route("/")
 def index():

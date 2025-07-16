@@ -220,7 +220,7 @@ def main():
     logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process for Pi-hole sync.")
 
     # Authenticate to Pi-hole to get session details
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key, config["sync_interval"])
     if not sid or not csrf_token:
         logging.error("Could not authenticate to Pi-hole. Halting sync.")
         logging.info("--- Sync process failed (Pi-hole authentication error) ---")
