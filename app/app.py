@@ -41,8 +41,8 @@ from clients.pihole_client import authenticate_to_pihole
 @app.route("/mappings")
 def mappings():
     pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_password = os.getenv("PIHOLE_PASSWORD")
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_password)
+    pihole_api_key = os.getenv("PIHOLE_API_KEY")
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
     if not sid or not csrf_token:
         return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
     records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)

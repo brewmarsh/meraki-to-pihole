@@ -74,7 +74,7 @@ ENV_MERAKI_API_KEY = "MERAKI_API_KEY"
 ENV_MERAKI_ORG_ID = "MERAKI_ORG_ID"
 ENV_MERAKI_NETWORK_IDS = "MERAKI_NETWORK_IDS"
 ENV_PIHOLE_API_URL = "PIHOLE_API_URL"
-ENV_PIHOLE_PASSWORD = "PIHOLE_PASSWORD"
+ENV_PIHOLE_API_KEY = "PIHOLE_API_KEY"
 ENV_HOSTNAME_SUFFIX = "HOSTNAME_SUFFIX"
 ENV_CLIENT_TIMESPAN = "MERAKI_CLIENT_TIMESPAN_SECONDS"
 # --- End Constants ---
@@ -94,7 +94,7 @@ def load_app_config_from_env():
         ENV_MERAKI_API_KEY: "Meraki API Key",
         ENV_MERAKI_ORG_ID: "Meraki Organization ID",
         ENV_PIHOLE_API_URL: "Pi-hole API URL",
-        ENV_PIHOLE_PASSWORD: "Pi-hole Password",
+        ENV_PIHOLE_API_KEY: "Pi-hole API Key",
         ENV_HOSTNAME_SUFFIX: "Hostname Suffix",
     }
     missing_vars_messages = []
@@ -112,8 +112,8 @@ def load_app_config_from_env():
         sys.exit(1)
 
     # Optional environment variables
-    config["pihole_password"] = os.getenv(ENV_PIHOLE_PASSWORD)
-    logging.debug(f"Pi-hole password loaded from environment: {config['pihole_password']}")
+    config["pihole_api_key"] = os.getenv(ENV_PIHOLE_API_KEY)
+    logging.debug(f"Pi-hole API Key loaded from environment: {config['pihole_api_key']}")
 
     meraki_network_ids_str = os.getenv(ENV_MERAKI_NETWORK_IDS, "")  # Default to empty string
     config["meraki_network_ids"] = [nid.strip() for nid in meraki_network_ids_str.split(",") if nid.strip()]
@@ -162,7 +162,7 @@ def main():
     config = load_app_config_from_env()
     meraki_api_key = config["meraki_api_key"]  # Renamed for clarity with SDK
     pihole_url = config["pihole_api_url"]
-    pihole_password = config["pihole_password"]
+    pihole_api_key = config["pihole_api_key"]
     hostname_suffix = config["hostname_suffix"]
 
     # Initialize Meraki Dashboard API client
@@ -210,7 +210,7 @@ def main():
     logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IP assignments to process for Pi-hole sync.")
 
     # Authenticate to Pi-hole to get session details
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_password)
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
     if not sid or not csrf_token:
         logging.error("Could not authenticate to Pi-hole. Halting sync.")
         logging.info("--- Sync process failed (Pi-hole authentication error) ---")

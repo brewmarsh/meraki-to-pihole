@@ -3,12 +3,12 @@ import requests
 from urllib.parse import quote
 
 
-def authenticate_to_pihole(pihole_url, pihole_password):
+def authenticate_to_pihole(pihole_url, pihole_api_key):
     """
     Authenticates to the Pi-hole API and returns a session object.
     """
     auth_url = f"{pihole_url.rstrip('/')}/api/auth"
-    auth_body = {"password": pihole_password}
+    auth_body = {"password": pihole_api_key}
     logging.info(f"Authenticating to Pi-hole at {auth_url}")
     try:
         response = requests.post(auth_url, json=auth_body, timeout=10)
