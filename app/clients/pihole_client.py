@@ -9,6 +9,7 @@ def authenticate_to_pihole(pihole_url, pihole_password):
     """
     auth_url = f"{pihole_url.rstrip('/')}/api/auth"
     auth_body = {"password": pihole_password}
+    logging.info(f"Authenticating to Pi-hole at {auth_url}")
     try:
         response = requests.post(auth_url, json=auth_body, timeout=10)
         response.raise_for_status()
