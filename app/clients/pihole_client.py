@@ -17,7 +17,6 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
     try:
         # First, try a GET request to see if we already have a valid session
         response = requests.get(auth_url, timeout=10)
-        response.raise_for_status()
         auth_data = response.json()
         session = auth_data.get("session", {})
 
@@ -26,8 +25,11 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
             if session.get("totp"):
                 logging.warning("2FA is enabled on this Pi-hole, but this script does not support it.")
             return session.get("sid"), session.get("csrf")
+    except requests.exceptions.RequestException as e:
+        logging.warning(f"GET request to /api/auth failed: {e}. Trying POST.")
 
-        # If not authenticated, try to authenticate with the API key
+    # If GET fails or session is not valid, try to authenticate with the API key
+    try:
         logging.info(f"Authenticating to Pi-hole at {auth_url}")
         response = requests.post(auth_url, json={"password": pihole_api_key}, timeout=10)
         response.raise_for_status()
@@ -42,7 +44,6 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
         else:
             logging.error(f"Failed to authenticate to Pi-hole: {session.get('message')}")
             return None, None
-
     except requests.exceptions.RequestException as e:
         logging.error(f"Authentication to Pi-hole failed: {e}")
         return None, None
