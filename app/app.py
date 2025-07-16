@@ -25,6 +25,14 @@ def force_sync():
         logging.error(f"Error starting forced sync: {e}")
         return jsonify({"message": f"Sync failed to start: {e}"}), 500
 
+@app.route('/check-pihole-error', methods=['GET'])
+def check_pihole_error():
+    with open('/app/logs/sync.log', 'r') as f:
+        log_content = f.read()
+    if "Pi-hole API returned a 'forbidden' error" in log_content:
+        return jsonify({"error": "forbidden"})
+    return jsonify({})
+
 @app.route('/stream')
 def stream():
     def event_stream():

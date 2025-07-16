@@ -168,6 +168,9 @@ def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_
         logging.info(f"Successfully added/updated DNS record: {domain_cleaned} -> {new_ip_cleaned}.")
         existing_records_cache[domain_cleaned] = new_ip_cleaned
         return True
+    elif response and response.get("error", {}).get("key") == "forbidden":
+        logging.error("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.")
+        return False
     else:
         logging.error(f"Failed to add/update DNS record {domain_cleaned} -> {new_ip_cleaned}. Response: {response}")
         return False

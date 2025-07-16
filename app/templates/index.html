@@ -195,6 +195,13 @@
                 const data = JSON.parse(event.data);
                 if (data.log) {
                     document.getElementById('sync-log').textContent = data.log;
+                    fetch('/check-pihole-error')
+                        .then(response => response.json())
+                        .then(errorData => {
+                            if (errorData.error === 'forbidden') {
+                                showToast("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.");
+                            }
+                        });
                 }
                 if (data.mappings) {
                     document.getElementById('pihole-mappings').textContent = JSON.stringify(data.mappings.pihole, null, 2);
