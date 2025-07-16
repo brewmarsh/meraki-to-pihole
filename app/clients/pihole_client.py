@@ -13,19 +13,37 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
     if base_url.endswith("/api.php"):
         base_url = base_url.replace("/api.php", "")
     auth_url = f"{base_url}/api/auth"
-    auth_body = {"password": pihole_api_key}
-    logging.info(f"Authenticating to Pi-hole at {auth_url}")
+
     try:
+        # First, try a GET request to see if we already have a valid session
+        response = requests.get(auth_url, timeout=10)
+        response.raise_for_status()
+        auth_data = response.json()
+        session = auth_data.get("session", {})
+
+        if session.get("valid"):
+            logging.info("Already authenticated to Pi-hole.")
+            if session.get("totp"):
+                logging.warning("2FA is enabled on this Pi-hole, but this script does not support it.")
+            return session.get("sid"), session.get("csrf")
+
+        # If not authenticated, try to authenticate with the API key
+        logging.info(f"Authenticating to Pi-hole at {auth_url}")
+        auth_body = {"password": pihole_api_key}
         response = requests.post(auth_url, json=auth_body, timeout=10)
         response.raise_for_status()
         auth_data = response.json()
-        sid = auth_data.get("session", {}).get("sid")
-        csrf = auth_data.get("session", {}).get("csrf")
-        if not sid or not csrf:
-            logging.error("Failed to retrieve SID or CSRF token from Pi-hole.")
+        session = auth_data.get("session", {})
+
+        if session.get("valid"):
+            logging.info("Successfully authenticated to Pi-hole.")
+            if session.get("totp"):
+                logging.warning("2FA is enabled on this Pi-hole, but this script does not support it.")
+            return session.get("sid"), session.get("csrf")
+        else:
+            logging.error(f"Failed to authenticate to Pi-hole: {session.get('message')}")
             return None, None
-        logging.info("Successfully authenticated to Pi-hole.")
-        return sid, csrf
+
     except requests.exceptions.RequestException as e:
         logging.error(f"Authentication to Pi-hole failed: {e}")
         return None, None
@@ -64,6 +82,10 @@ def _pihole_api_request(pihole_url, sid, csrf_token, method, path, data=None):
 
 def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
     """Fetches and parses custom DNS records from Pi-hole."""
+    if not sid or not csrf_token:
+        logging.error("Cannot fetch Pi-hole DNS records without a valid session.")
+        return None
+
     logging.info("Fetching existing custom DNS records from Pi-hole...")
     response_data = _pihole_api_request(pihole_url, sid, csrf_token, "GET", "/api/domains")
 
