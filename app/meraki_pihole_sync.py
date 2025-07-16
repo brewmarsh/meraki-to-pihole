@@ -130,12 +130,12 @@ def load_app_config_from_env():
 
     try:
         default_timespan = "86400"  # 24 hours in seconds
-        config["meraki_client_timespan"] = int(os.getenv(ENV_CLIENT_TIMESPAN, default_timespan))
+        config["meraki_client_timespan_seconds"] = int(os.getenv(ENV_CLIENT_TIMESPAN, default_timespan))
     except ValueError:
         logging.warning(
             f"Invalid value for {ENV_CLIENT_TIMESPAN}: '{os.getenv(ENV_CLIENT_TIMESPAN)}'. Using default {default_timespan} seconds (24 hours)."
         )
-        config["meraki_client_timespan"] = int(default_timespan)
+        config["meraki_client_timespan_seconds"] = int(default_timespan)
 
     # Sanity checks for placeholder values
     if config["meraki_org_id"].upper() == "YOUR_MERAKI_ORGANIZATION_ID":
@@ -288,5 +288,3 @@ if __name__ == "__main__":
     except Exception as e:
         logging.critical(f"An unhandled exception occurred in main: {e}", exc_info=True)
         sys.exit(1)
-
-main()
