@@ -50,7 +50,9 @@ class TestMerakiClient(unittest.TestCase):
         ]
         mock_dashboard.switch.getDeviceSwitchRoutingInterfaces.return_value = [{"interfaceId": "int_1"}]
         mock_dashboard.switch.getDeviceSwitchRoutingInterfaceDhcp.return_value = {
-            "fixedIpAssignments": [{"mac": "mac_1", "name": "Test Client", "ip": "1.2.3.4"}]
+            "fixedIpAssignments": [
+                {"mac": "mac_1", "name": "Test Client", "ip": "1.2.3.4"}
+            ]
         }
 
         # Act
