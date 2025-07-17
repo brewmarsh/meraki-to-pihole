@@ -1,6 +1,7 @@
 import time
 import logging
 import os
+import sys
 from meraki_pihole_sync import main, load_app_config_from_env
 
 def get_sync_interval():
@@ -14,6 +15,13 @@ def run_sync():
     """
     Runs the main sync script in a loop with a configurable sleep interval.
     """
+    # --- Logging Setup ---
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        format="%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+        stream=sys.stdout,
+    )
+    # --- End Logging Setup ---
     while True:
         sync_interval = get_sync_interval()
         try:

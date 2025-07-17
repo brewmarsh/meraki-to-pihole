@@ -17,38 +17,21 @@ class TestMerakiClient(unittest.TestCase):
         }
 
     @patch('meraki.DashboardAPI')
-    def test_get_all_relevant_meraki_clients_no_networks(self, mock_dashboard):
+    def test_get_all_relevant_meraki_clients_no_clients(self, mock_dashboard):
         # Arrange
-        mock_dashboard.organizations.getOrganizationNetworks.return_value = []
+        mock_dashboard.organizations.getOrganizationClients.return_value = []
 
         # Act
         clients = get_all_relevant_meraki_clients(mock_dashboard, self.config)
 
         # Assert
         self.assertEqual(clients, [])
-        mock_dashboard.organizations.getOrganizationNetworks.assert_called_once_with(organizationId="12345", total_pages='all')
-
-    @patch('meraki.DashboardAPI')
-    def test_get_all_relevant_meraki_clients_with_networks_no_clients(self, mock_dashboard):
-        # Arrange
-        mock_dashboard.organizations.getOrganizationNetworks.return_value = [
-            {"id": "N_1", "name": "Network 1"},
-            {"id": "N_2", "name": "Network 2"}
-        ]
-        mock_dashboard.networks.getNetworkClients.return_value = []
-
-        # Act
-        clients = get_all_relevant_meraki_clients(mock_dashboard, self.config)
-
-        # Assert
-        self.assertEqual(clients, [])
-        self.assertEqual(mock_dashboard.networks.getNetworkClients.call_count, 2)
+        mock_dashboard.organizations.getOrganizationClients.assert_called_once_with(organizationId="12345", total_pages='all', timespan=86400)
 
     @patch('meraki.DashboardAPI')
     def test_get_all_relevant_meraki_clients_with_clients_no_fixed_ip(self, mock_dashboard):
         # Arrange
-        mock_dashboard.organizations.getOrganizationNetworks.return_value = [{"id": "N_1", "name": "Network 1"}]
-        mock_dashboard.networks.getNetworkClients.return_value = [{"id": "c_1", "mac": "00:11:22:33:44:55", "ip": "10.0.0.1"}]
+        mock_dashboard.organizations.getOrganizationClients.return_value = [{"id": "c_1", "mac": "00:11:22:33:44:55", "ip": "10.0.0.1"}]
 
         # Act
         clients = get_all_relevant_meraki_clients(mock_dashboard, self.config)
@@ -59,12 +42,9 @@ class TestMerakiClient(unittest.TestCase):
     @patch('meraki.DashboardAPI')
     def test_get_all_relevant_meraki_clients_with_clients_with_fixed_ip(self, mock_dashboard):
         # Arrange
-        mock_dashboard.organizations.getOrganizationNetworks.return_value = [{"id": "N_1", "name": "Network 1"}]
-        mock_dashboard.appliance.getNetworkApplianceVlans.return_value = [
-            {"fixedIpAssignments": {"mac_1": {"name": "Test Client", "ip": "1.2.3.4"}}}
+        mock_dashboard.organizations.getOrganizationClients.return_value = [
+            {"mac": "mac_1", "description": "Test Client", "fixedIp": "1.2.3.4"}
         ]
-        mock_dashboard.networks.getNetworkDevices.return_value = []
-
 
         # Act
         clients = get_all_relevant_meraki_clients(mock_dashboard, self.config)

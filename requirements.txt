@@ -4,3 +4,4 @@ meraki
 ruff
 Flask
 gunicorn
+gevent
