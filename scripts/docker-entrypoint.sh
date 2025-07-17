@@ -16,16 +16,10 @@ mkdir -p "${LOG_DIR}"
 touch "${APP_LOG_FILE}"
 chmod 0666 "${APP_LOG_FILE}"
 
-# Start the web server in the background
-echo "Entrypoint: Starting web server..."
-cd /app && gunicorn --bind 0.0.0.0:24653 --worker-class gevent app:app &
-
 # Start the sync runner script in the background
 echo "Entrypoint: Starting sync runner..."
 python3 /app/sync_runner.py &
 
-# Wait for any process to exit
-wait -n
-
-# Exit with status of process that exited first
-exit $?
+# Start the web server in the foreground
+echo "Entrypoint: Starting web server..."
+cd /app && gunicorn --bind 0.0.0.0:24653 --worker-class gevent app:app
