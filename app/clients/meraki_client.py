@@ -34,15 +34,15 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
 
     try:
         logging.info(f"Fetching all clients for organization ID: {org_id}.")
-        all_org_clients = dashboard.organizations.getOrganizationClients(
+        all_org_clients = dashboard.organizations.getOrganizationClientsOverview(
             organizationId=org_id, total_pages='all', timespan=timespan
         )
 
-        if not all_org_clients:
+        if not all_org_clients or not all_org_clients.get('counts', {}).get('total'):
             logging.warning(f"No clients found in organization {org_id}. Cannot proceed.")
             return []
 
-        for client in all_org_clients:
+        for client in all_org_clients.get('clients', []):
             if specified_network_ids and client.get('networkId') not in specified_network_ids:
                 continue
 

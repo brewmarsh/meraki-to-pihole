@@ -150,4 +150,10 @@ def health_check():
     return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
+    # When running locally, start the sync runner in a background thread
+    if not os.environ.get("gunicorn"):
+        from sync_runner import run_sync
+        sync_thread = threading.Thread(target=run_sync)
+        sync_thread.daemon = True
+        sync_thread.start()
     app.run(host='0.0.0.0', port=os.environ.get('FLASK_PORT', 24653))
