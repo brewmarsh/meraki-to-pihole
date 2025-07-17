@@ -8,10 +8,11 @@ import time
 
 app = Flask(__name__)
 
+from sync_runner import get_sync_interval
+
 @app.route('/')
 def index():
-    sync_interval = os.getenv("SYNC_INTERVAL_SECONDS", 300)
-    return render_template('index.html', sync_interval=sync_interval)
+    return render_template('index.html', sync_interval=get_sync_interval())
 
 @app.route('/force-sync', methods=['POST'])
 def force_sync():
@@ -36,7 +37,6 @@ def check_pihole_error():
 @app.route('/stream')
 def stream():
     def event_stream():
-        from sync_runner import get_sync_interval
         while True:
             try:
                 with open('/app/logs/sync.log', 'r') as f:
