@@ -52,21 +52,15 @@ python3 -m unittest discover tests
 
 ## How it Works
 
-1.  The Docker container starts. The `docker-entrypoint.sh` script immediately runs the `meraki_pihole_sync.py` Python script for an initial sync. Output is logged to `/app/logs/sync.log`.
-2.  After the initial run, the `docker-entrypoint.sh` script sets up a cron job based on the `CRON_SCHEDULE` environment variable.
-3.  At each scheduled time, cron executes the `meraki_pihole_sync.py` script.
-4.  The Python script (`meraki_pihole_sync.py`) reads all its configuration (Meraki API Key, Org ID, Network IDs, Pi-hole URL/Key, Hostname Suffix) from environment variables.
-5.  It connects to the Meraki API:
-    *   Fetches a list of networks for the configured `MERAKI_ORG_ID`.
-    *   Filters for specific networks if `MERAKI_NETWORK_IDS` is set.
-    *   For each relevant network, it fetches clients and filters them to include only those with a "Fixed IP Assignment" where the assigned IP matches the client's current IP. The script processes all configured/discovered networks before making decisions based on the collected client list.
-6.  It connects to the Pi-hole API (using `PIHOLE_API_URL` and `PIHOLE_API_KEY` if provided):
-    *   Retrieves the current list of custom DNS records from Pi-hole. This list is used as a cache to determine necessary changes.
-7.  For each relevant Meraki client (with a valid Fixed IP Assignment):
-    *   Constructs a hostname using the client's Meraki description or DHCP hostname, sanitizes it (e.g., converts spaces to hyphens, lowercases), and appends the `HOSTNAME_SUFFIX`.
-    *   Adds or updates the DNS record in Pi-hole for this hostname and its fixed IP. If the domain already exists in Pi-hole with a different IP, the old IP mapping for that specific domain is removed before the new one is added. The local cache of Pi-hole records is updated to reflect these changes.
-8.  **Cleanup of Stale Records (Future Enhancement):** The current version of the script focuses on adding/updating records based on Meraki. The cleanup of DNS records in Pi-hole that match the `HOSTNAME_SUFFIX` but no longer correspond to an active Meraki client with a Fixed IP Assignment is a planned future enhancement (this was mentioned in previous READMEs but not fully implemented in the script logic being updated).
-9.  The Python script logs its detailed actions, including version and commit SHA on startup, configuration loading, API interactions, and a summary of synced/failed entries, to `/app/logs/sync.log` (and also to stdout, visible with `docker logs`). If no relevant Meraki clients are found after checking all networks, this is logged, and the script exits gracefully without attempting Pi-hole modifications for new entries.
+1.  The Docker container starts. The `docker-entrypoint.sh` script starts the `sync_runner.py` script in the background and the Gunicorn web server in the foreground.
+2.  The `sync_runner.py` script runs the `meraki_pihole_sync.py` script at a configurable interval.
+3.  The Python script (`meraki_pihole_sync.py`) reads all its configuration (Meraki API Key, Org ID, Network IDs, Pi-hole URL/Key, Hostname Suffix) from environment variables.
+4.  It connects to the Meraki API and fetches a list of all clients in the organization.
+5.  It connects to the Pi-hole API and retrieves the current list of custom DNS records.
+6.  For each relevant Meraki client (with a valid Fixed IP Assignment):
+    *   Constructs a hostname using the client's Meraki description or MAC address, sanitizes it, and appends the `HOSTNAME_SUFFIX`.
+    *   Adds or updates the DNS record in Pi-hole for this hostname and its fixed IP.
+7.  The Python script logs its detailed actions to standard output, which is visible with `docker logs`.
 
 ## Installation
 
@@ -174,7 +168,7 @@ This executes the script inside the running container using `python3`, leveragin
 | `PIHOLE_API_KEY`        | No        | Your Pi-hole API token (Webpassword/API Token). Required if Pi-hole admin interface is password-protected.   | `YOUR_PIHOLE_API_TOKEN`                                              |
 | `HOSTNAME_SUFFIX`       | Yes       | Domain suffix for DNS records (e.g., `.lan`, `.home.arpa`). Ensure it starts with a `.` if intended.          | `.example.local`                                                     |
 | `MERAKI_CLIENT_TIMESPAN_SECONDS` | No | Optional. Timespan in seconds for fetching Meraki clients (e.g., clients seen in the last X seconds). Defaults to `86400` (24 hours). | `259200` (72 hours)                                                 |
-| `CRON_SCHEDULE`         | No        | Cron schedule for syncs. Default in `docker-compose.yml` is `30 2 * * *`. If not set in `.env`, this default will be used. If set to empty string in `.env`, cron will be disabled. | `"0 */6 * * *"` (every 6 hours at minute 0)                          |
+| `SYNC_INTERVAL_SECONDS` | No        | The interval, in seconds, at which to sync the clients. Defaults to `300`.                              | `600` (10 minutes)                                                   |
 | `LOG_LEVEL`             | No        | Logging level for the Python script. Options: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. Defaults to `INFO`. | `DEBUG`                                                              |
 | `TZ`                    | No        | Timezone for the container (e.g., `America/New_York`). Affects cron job timing and log timestamps. Defaults to UTC. | `Europe/London`                                                      |
 

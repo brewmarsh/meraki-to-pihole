@@ -31,7 +31,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
 
     # 1. If we have a cached session, check if it's still valid
     if _pihole_sid and _pihole_csrf_token:
-        logging.info("Found cached Pi-hole session. Verifying...")
+        logging.debug("Found cached Pi-hole session. Verifying...")
         try:
             # A lightweight way to check session validity is to make a simple, authenticated API call.
             # Fetching custom DNS hosts is a good candidate as it's a necessary part of the sync anyway.
@@ -41,7 +41,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
             )
             # If the request was successful (i.e., didn't return None), the session is valid.
             if verification_response is not None:
-                logging.info("Cached Pi-hole session is still valid.")
+                logging.debug("Cached Pi-hole session is still valid.")
                 return _pihole_sid, _pihole_csrf_token
             else:
                 logging.warning("Cached Pi-hole session appears to be invalid/expired. Attempting to re-authenticate.")
@@ -120,7 +120,7 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
         logging.error("Cannot fetch Pi-hole DNS records without a valid session.")
         return None
 
-    logging.info("Fetching existing custom DNS records from Pi-hole...")
+    logging.debug("Fetching existing custom DNS records from Pi-hole...")
     response_data = _pihole_api_request(pihole_url, sid, csrf_token, "GET", "/api/config/dns/hosts")
 
     records = {}  # Store as {domain: ip}
@@ -130,7 +130,7 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
             if len(parts) == 2:
                 ip_address, domain = parts
                 records[domain.strip().lower()] = ip_address.strip()
-        logging.info(
+        logging.debug(
             f"Found {len(records)} custom DNS IP mappings in Pi-hole."
         )
     else:
@@ -157,7 +157,7 @@ def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_
 
     # Check if the exact domain-ip pair already exists
     if existing_records_cache.get(domain_cleaned) == new_ip_cleaned:
-        logging.info(f"DNS record {domain_cleaned} -> {new_ip_cleaned} already exists in Pi-hole. No action needed.")
+        logging.debug(f"DNS record {domain_cleaned} -> {new_ip_cleaned} already exists in Pi-hole. No action needed.")
         return True
 
     # Add or update the record

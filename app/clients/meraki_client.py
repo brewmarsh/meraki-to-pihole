@@ -55,7 +55,7 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
                     "meraki_client_id": client['mac'],
                     "type": "Fixed IP"
                 })
-                logging.info(f"Found relevant client with fixed IP: {client.get('description')} ({client['fixedIp']})")
+                logging.debug(f"Found relevant client with fixed IP: {client.get('description')} ({client['fixedIp']})")
 
     except meraki.exceptions.APIError as e:
         logging.error(f"Meraki API error while fetching clients for organization {org_id}: {e}")

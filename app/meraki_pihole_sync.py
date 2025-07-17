@@ -167,7 +167,7 @@ def main():
     if not meraki_clients:
         logging.info("No relevant Meraki clients with fixed IP assignments were found.")
         if logging.getLogger().getEffectiveLevel() > logging.DEBUG:
-            logging.info("Set LOG_LEVEL=DEBUG for detailed client processing info.")
+            logging.debug("Set LOG_LEVEL=DEBUG for detailed client processing info.")
     else:
         logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IPs to process.")
 
@@ -190,7 +190,7 @@ def main():
         domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
         ip_to_sync = client["ip"]
 
-        logging.info(
+        logging.debug(
             f"Processing Meraki client: Name='{client['name']}', IP='{ip_to_sync}', "
             f"Target DNS: {domain_to_sync} -> {ip_to_sync}"
         )
