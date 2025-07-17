@@ -145,6 +145,14 @@ def clear_log():
             return jsonify({"message": "Log file not found."}), 404
     return jsonify({"message": "Invalid log type."}), 400
 
+import markdown
+
+@app.route('/docs')
+def docs():
+    with open('/app/README.md', 'r') as f:
+        content = f.read()
+    return render_template('docs.html', content=markdown.markdown(content))
+
 @app.route('/health')
 def health_check():
     return jsonify({"status": "ok"}), 200
