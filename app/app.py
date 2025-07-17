@@ -36,50 +36,50 @@ def check_pihole_error():
 @app.route('/stream')
 def stream():
     def event_stream():
-        # Use a generator to stream data, which is more memory-efficient
-        # and avoids holding the worker for a long time.
         while True:
-            time.sleep(5)
-            with open('/app/logs/sync.log', 'r') as f:
-                log_content = f.read()
-            yield f"data: {json.dumps({'log': log_content})}\n\n"
+            try:
+                with open('/app/logs/sync.log', 'r') as f:
+                    log_content = f.read()
+                yield f"data: {json.dumps({'log': log_content})}\n\n"
 
-            mappings = get_mappings_data()
-            yield f"data: {json.dumps({'mappings': mappings})}\n\n"
+                mappings = get_mappings_data()
+                yield f"data: {json.dumps({'mappings': mappings})}\n\n"
+            except Exception as e:
+                logging.error(f"Error in event stream: {e}")
+                yield f"data: {json.dumps({'error': 'An error occurred in the stream.'})}\n\n"
+            finally:
+                time.sleep(5)
 
     return Response(event_stream(), mimetype='text/event-stream')
 
-def get_mappings_data():
-    pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_api_key = os.getenv("PIHOLE_API_KEY")
-
+def _get_pihole_data(pihole_url, pihole_api_key):
     from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
-    import meraki
-    from meraki_pihole_sync import load_app_config_from_env
-    from clients.meraki_client import get_all_relevant_meraki_clients
-
-    try:
-        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-    except Exception:
-        return {}
-
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
     if not sid or not csrf_token:
-        return {}
+        logging.error("Failed to authenticate to Pi-hole in _get_pihole_data.")
+        return None, None
 
     pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+    if pihole_records is None:
+        logging.error("Failed to get Pi-hole records in _get_pihole_data.")
+        return None, None
 
-    config = load_app_config_from_env()
+    return sid, pihole_records
+
+def _get_meraki_data(config):
+    import meraki
+    from clients.meraki_client import get_all_relevant_meraki_clients
     dashboard = meraki.DashboardAPI(
         api_key=config["meraki_api_key"],
         output_log=False,
         print_console=False,
         suppress_logging=True,
     )
-    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
+    return get_all_relevant_meraki_clients(dashboard, config)
 
+def _map_devices(meraki_clients, pihole_records):
     mapped_devices = []
     unmapped_meraki_devices = []
-
     meraki_ips = {client['ip'] for client in meraki_clients}
     pihole_ips = set(pihole_records.values())
 
@@ -95,7 +95,26 @@ def get_mappings_data():
         else:
             unmapped_meraki_devices.append(client)
 
-    return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+    return mapped_devices, unmapped_meraki_devices
+
+def get_mappings_data():
+    try:
+        from meraki_pihole_sync import load_app_config_from_env
+        config = load_app_config_from_env()
+        pihole_url = os.getenv("PIHOLE_API_URL")
+        pihole_api_key = os.getenv("PIHOLE_API_KEY")
+
+        sid, pihole_records = _get_pihole_data(pihole_url, pihole_api_key)
+        if not sid:
+            return {}
+
+        meraki_clients = _get_meraki_data(config)
+        mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
+
+        return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+    except Exception as e:
+        logging.error(f"Error in get_mappings_data: {e}")
+        return {}
 
 @app.route('/mappings')
 def get_mappings():
@@ -171,6 +190,10 @@ def clear_log():
         except FileNotFoundError:
             return jsonify({"message": "Log file not found."}), 404
     return jsonify({"message": "Invalid log type."}), 400
+
+@app.route('/health')
+def health_check():
+    return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=os.environ.get('FLASK_PORT', 24653))

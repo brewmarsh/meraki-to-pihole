@@ -28,39 +28,10 @@ from clients.pihole_client import (
 )
 
 # --- Logging Setup ---
-LOG_DIR = "/app/logs"
-# Ensure the directory exists. This should ideally be done in the Dockerfile,
-# but this provides a fallback if running outside Docker or if permissions are tricky.
-if not os.path.exists(LOG_DIR):
-    try:
-        os.makedirs(LOG_DIR, exist_ok=True)  # exist_ok=True handles race conditions
-    except OSError as e:
-        # Fallback to printing to stderr if log directory creation fails
-        print(f"CRITICAL: Could not create log directory {LOG_DIR}. Error: {e}", file=sys.stderr)
-        # Attempt to continue by logging to stdout only, though file logging will fail.
-        # This is better than crashing if the script is critical.
-        logging.basicConfig(
-            level=os.getenv("LOG_LEVEL", "INFO").upper(),
-            format="%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-            handlers=[logging.StreamHandler(sys.stdout)],
-        )
-        logging.error(f"Log directory {LOG_DIR} could not be created. Logging to stdout only.")
-
-LOG_FILE_PATH = os.path.join(LOG_DIR, "sync.log")
-
-# Configure root logger
-# Clear any existing handlers to prevent duplicate logs if this script/module is reloaded
-logger = logging.getLogger()
-if logger.hasHandlers():
-    logger.handlers.clear()
-
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO").upper(),
     format="%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-    handlers=[
-        logging.FileHandler(LOG_FILE_PATH, mode="a"),  # Append mode
-        logging.StreamHandler(sys.stdout),  # For `docker logs`
-    ],
+    stream=sys.stdout,
 )
 # --- End Logging Setup ---
 
