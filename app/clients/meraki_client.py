@@ -31,36 +31,35 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
     )
 
     relevant_clients = []
+    networks = specified_network_ids or [n['id'] for n in dashboard.organizations.getOrganizationNetworks(org_id)]
 
-    try:
-        logging.info(f"Fetching all clients for organization ID: {org_id}.")
-        all_org_clients = dashboard.organizations.getOrganizationClientsOverview(
-            organizationId=org_id, total_pages='all', timespan=timespan
-        )
+    for network_id in networks:
+        try:
+            logging.info(f"Fetching clients for network ID: {network_id}.")
+            network_clients = dashboard.networks.getNetworkClients(
+                networkId=network_id, total_pages='all', timespan=timespan
+            )
 
-        if not all_org_clients or not all_org_clients.get('counts', {}).get('total'):
-            logging.warning(f"No clients found in organization {org_id}. Cannot proceed.")
-            return []
-
-        for client in all_org_clients.get('clients', []):
-            if specified_network_ids and client.get('networkId') not in specified_network_ids:
+            if not network_clients:
+                logging.warning(f"No clients found in network {network_id}.")
                 continue
 
-            if client.get('fixedIp'):
-                relevant_clients.append({
-                    "name": client.get('description') or client.get('mac'),
-                    "ip": client['fixedIp'],
-                    "network_id": client.get('networkId'),
-                    "network_name": "N/A",  # Network name is not available in this endpoint
-                    "meraki_client_id": client['mac'],
-                    "type": "Fixed IP"
-                })
-                logging.debug(f"Found relevant client with fixed IP: {client.get('description')} ({client['fixedIp']})")
+            for client in network_clients:
+                if client.get('fixedIp'):
+                    relevant_clients.append({
+                        "name": client.get('description') or client.get('mac'),
+                        "ip": client['fixedIp'],
+                        "network_id": network_id,
+                        "network_name": "N/A",  # Network name is not available in this endpoint
+                        "meraki_client_id": client['mac'],
+                        "type": "Fixed IP"
+                    })
+                    logging.debug(f"Found relevant client with fixed IP: {client.get('description')} ({client['fixedIp']})")
 
-    except meraki.exceptions.APIError as e:
-        logging.error(f"Meraki API error while fetching clients for organization {org_id}: {e}")
-        return []
-    except Exception as e:
-        logging.error(f"An unexpected error occurred while processing clients for organization {org_id}: {e}")
+        except meraki.exceptions.APIError as e:
+            logging.error(f"Meraki API error while fetching clients for network {network_id}: {e}")
+            continue
+        except Exception as e:
+            logging.error(f"An unexpected error occurred while processing clients for network {network_id}: {e}")
 
     return relevant_clients
