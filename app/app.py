@@ -36,6 +36,7 @@ def check_pihole_error():
 @app.route('/stream')
 def stream():
     def event_stream():
+        from sync_runner import get_sync_interval
         while True:
             try:
                 with open('/app/logs/sync.log', 'r') as f:
@@ -48,7 +49,7 @@ def stream():
                 logging.error(f"Error in event stream: {e}")
                 yield f"data: {json.dumps({'error': 'An error occurred in the stream.'})}\n\n"
             finally:
-                time.sleep(5)
+                time.sleep(get_sync_interval())
 
     return Response(event_stream(), mimetype='text/event-stream')
 
@@ -118,54 +119,7 @@ def get_mappings_data():
 
 @app.route('/mappings')
 def get_mappings():
-    pihole_url = os.getenv("PIHOLE_API_URL")
-    pihole_api_key = os.getenv("PIHOLE_API_KEY")
-
-    # Import here to avoid circular dependency
-    from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
-    import meraki
-    from meraki_pihole_sync import load_app_config_from_env
-    from clients.meraki_client import get_all_relevant_meraki_clients
-
-    try:
-        sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-    except Exception as e:
-        logging.error(f"Error authenticating to Pi-hole: {e}")
-        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
-
-    if not sid or not csrf_token:
-        return jsonify({"error": "Failed to authenticate to Pi-hole."}), 500
-
-    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
-
-    config = load_app_config_from_env()
-    dashboard = meraki.DashboardAPI(
-        api_key=config["meraki_api_key"],
-        output_log=False,
-        print_console=False,
-        suppress_logging=True,
-    )
-    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
-
-    mapped_devices = []
-    unmapped_meraki_devices = []
-
-    meraki_ips = {client['ip'] for client in meraki_clients}
-    pihole_ips = set(pihole_records.values())
-
-    for client in meraki_clients:
-        if client['ip'] in pihole_ips:
-            for domain, ip in pihole_records.items():
-                if client['ip'] == ip:
-                    mapped_devices.append({
-                        "meraki_name": client['name'],
-                        "pihole_domain": domain,
-                        "ip": ip
-                    })
-        else:
-            unmapped_meraki_devices.append(client)
-
-    return jsonify({"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices})
+    return jsonify(get_mappings_data())
 
 @app.route('/update-interval', methods=['POST'])
 def update_interval():
