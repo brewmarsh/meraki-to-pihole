@@ -194,17 +194,8 @@ def main(update_type=None):
     commit_sha = os.getenv("COMMIT_SHA", "Not Set")
     logging.info(f"--- Starting Meraki Pi-hole Sync Script --- Version: {app_version}, Commit: {commit_sha}")
 
-    if update_type == "meraki":
-        logging.info("Updating Meraki data...")
-        update_meraki_data()
-    elif update_type == "pihole":
-        logging.info("Updating Pi-hole data...")
-        meraki_clients = update_meraki_data()
-        if meraki_clients:
-            update_pihole_data(meraki_clients)
-    else:
-        logging.info("Running full sync...")
-        meraki_clients = update_meraki_data()
+    meraki_clients = update_meraki_data()
+    if update_type is None or update_type == "pihole":
         if meraki_clients:
             update_pihole_data(meraki_clients)
 
