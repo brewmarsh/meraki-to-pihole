@@ -119,71 +119,48 @@ def load_app_config_from_env():
     return config
 
 
-def main():
+def update_meraki_data():
     """
-    Main function to run the Meraki to Pi-hole sync process.
-    Loads configuration, fetches Meraki clients, gets Pi-hole records,
-    and syncs them.
+    Fetches and returns relevant Meraki clients.
     """
-    # Log application version and commit SHA if available
-    app_version = os.getenv("APP_VERSION", "Not Set")
-    commit_sha = os.getenv("COMMIT_SHA", "Not Set")
-    logging.info(f"--- Starting Meraki Pi-hole Sync Script --- Version: {app_version}, Commit: {commit_sha}")
-
     config = load_app_config_from_env()
     meraki_api_key = config["meraki_api_key"]
-    pihole_url = config["pihole_api_url"]
-    pihole_api_key = config["pihole_api_key"]
-    hostname_suffix = config["hostname_suffix"]
-
-    # Initialize Meraki Dashboard API client
     dashboard = meraki.DashboardAPI(
         api_key=meraki_api_key,
         output_log=False,
         print_console=False,
         suppress_logging=True,
     )
+    return get_all_relevant_meraki_clients(dashboard, config)
 
-    # Authenticate to Pi-hole and get session details (will be cached by the client)
+def update_pihole_data(meraki_clients):
+    """
+    Updates Pi-hole with the given Meraki clients.
+    """
+    config = load_app_config_from_env()
+    pihole_url = config["pihole_api_url"]
+    pihole_api_key = config["pihole_api_key"]
+    hostname_suffix = config["hostname_suffix"]
+
     sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
     if not sid or not csrf_token:
         logging.error("Could not authenticate to Pi-hole. Halting sync.")
-        logging.info("--- Sync process failed (Pi-hole authentication error) ---")
         return
 
-    # Fetch relevant Meraki clients with fixed IP assignments
-    meraki_clients = get_all_relevant_meraki_clients(dashboard, config)
-
-    if not meraki_clients:
-        logging.info("No relevant Meraki clients with fixed IP assignments were found.")
-        if logging.getLogger().getEffectiveLevel() > logging.DEBUG:
-            logging.debug("Set LOG_LEVEL=DEBUG for detailed client processing info.")
-    else:
-        logging.info(f"Found {len(meraki_clients)} Meraki client(s) with fixed IPs to process.")
-
-    # Fetch existing Pi-hole DNS records to compare against
     existing_pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
     if existing_pihole_records is None:
         logging.error("Could not fetch Pi-hole DNS records. Halting to prevent errors.")
-        logging.info("--- Sync process failed (Pi-hole record fetch error) ---")
         return
 
     successful_syncs = 0
     failed_syncs = 0
-    # Sync each relevant Meraki client to Pi-hole
     for client in meraki_clients:
         if not client.get("name"):
             logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
             continue
-        # Sanitize client name for use as a hostname
         client_name_sanitized = client["name"].replace(" ", "-").lower()
         domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
         ip_to_sync = client["ip"]
-
-        logging.debug(
-            f"Processing Meraki client: Name='{client['name']}', IP='{ip_to_sync}', "
-            f"Target DNS: {domain_to_sync} -> {ip_to_sync}"
-        )
 
         if add_or_update_dns_record_in_pihole(
             pihole_url,
@@ -207,9 +184,31 @@ def main():
     logging.info(f"Total Meraki clients processed: {len(meraki_clients)}")
     logging.info("--- Sync process complete ---")
 
+def main(update_type=None):
+    """
+    Main function to run the Meraki to Pi-hole sync process.
+    Loads configuration, fetches Meraki clients, gets Pi-hole records,
+    and syncs them.
+    """
+    app_version = os.getenv("APP_VERSION", "Not Set")
+    commit_sha = os.getenv("COMMIT_SHA", "Not Set")
+    logging.info(f"--- Starting Meraki Pi-hole Sync Script --- Version: {app_version}, Commit: {commit_sha}")
+
+    if update_type == "meraki":
+        logging.info("Updating Meraki data...")
+        update_meraki_data()
+    elif update_type == "pihole":
+        logging.info("Updating Pi-hole data...")
+        meraki_clients = update_meraki_data()
+        if meraki_clients:
+            update_pihole_data(meraki_clients)
+    else:
+        logging.info("Running full sync...")
+        meraki_clients = update_meraki_data()
+        if meraki_clients:
+            update_pihole_data(meraki_clients)
 
 if __name__ == "__main__":
-    # This is the main entry point of the script
     try:
         main()
     except Exception as e:

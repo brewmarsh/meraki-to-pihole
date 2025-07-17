@@ -70,7 +70,10 @@
                     </div>
                     <div class="card-body">
                         <a href="/docs" class="btn btn-info w-100 mb-3">Documentation</a>
-                        <button id="force-sync" class="btn btn-primary w-100">Force Sync</button>
+                        <div class="btn-group w-100 mb-3" role="group">
+                            <button id="update-meraki" class="btn btn-primary">Update Meraki</button>
+                            <button id="update-pihole" class="btn btn-primary">Update Pi-hole</button>
+                        </div>
                         <hr>
                         <div class="mb-3">
                             <label for="sync-interval" class="form-label">Sync Interval (seconds)</label>
@@ -127,8 +130,16 @@
                 });
         }
 
-        document.getElementById('force-sync').addEventListener('click', () => {
-            fetch('/force-sync', { method: 'POST' })
+        document.getElementById('update-meraki').addEventListener('click', () => {
+            fetch('/update-meraki', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    showToast(data.message);
+                });
+        });
+
+        document.getElementById('update-pihole').addEventListener('click', () => {
+            fetch('/update-pihole', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     showToast(data.message);

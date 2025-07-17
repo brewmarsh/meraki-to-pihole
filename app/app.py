@@ -14,17 +14,29 @@ from sync_runner import get_sync_interval
 def index():
     return render_template('index.html', sync_interval=get_sync_interval())
 
-@app.route('/force-sync', methods=['POST'])
-def force_sync():
-    logging.info("Force sync requested via web UI.")
+@app.route('/update-meraki', methods=['POST'])
+def update_meraki():
+    logging.info("Meraki update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
-        sync_thread = threading.Thread(target=run_sync_main)
+        sync_thread = threading.Thread(target=run_sync_main, args=("meraki",))
         sync_thread.start()
-        return jsonify({"message": "Sync process started."})
+        return jsonify({"message": "Meraki update process started."})
     except Exception as e:
-        logging.error(f"Error starting forced sync: {e}")
-        return jsonify({"message": f"Sync failed to start: {e}"}), 500
+        logging.error(f"Error starting Meraki update: {e}")
+        return jsonify({"message": f"Meraki update failed to start: {e}"}), 500
+
+@app.route('/update-pihole', methods=['POST'])
+def update_pihole():
+    logging.info("Pi-hole update requested via web UI.")
+    try:
+        # Running the sync in a separate thread to avoid blocking the web server
+        sync_thread = threading.Thread(target=run_sync_main, args=("pihole",))
+        sync_thread.start()
+        return jsonify({"message": "Pi-hole update process started."})
+    except Exception as e:
+        logging.error(f"Error starting Pi-hole update: {e}")
+        return jsonify({"message": f"Pi-hole update failed to start: {e}"}), 500
 
 @app.route('/check-pihole-error', methods=['GET'])
 def check_pihole_error():

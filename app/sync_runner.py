@@ -50,7 +50,6 @@ def run_sync():
     )
     # --- End Logging Setup ---
     while True:
-        sync_interval = get_sync_interval()
         try:
             logging.info("Starting a new sync process...")
             main()
@@ -60,6 +59,7 @@ def run_sync():
         except Exception as e:
             logging.critical(f"An unhandled exception occurred during sync: {e}", exc_info=True)
 
+        sync_interval = get_sync_interval()
         logging.info(f"Sleeping for {sync_interval} seconds before next sync.")
         time.sleep(sync_interval)
 
