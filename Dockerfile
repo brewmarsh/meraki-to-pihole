@@ -25,6 +25,7 @@ RUN pip install --no-cache-dir -r requirements.txt # meraki SDK will be installe
 # Create directory for the application code
 WORKDIR /app
 COPY ./app /app
+COPY README.md /app/
 RUN chmod +x /app/meraki_pihole_sync.py # Make python script executable
 
 # Copy the entrypoint and cron wrapper scripts and make them executable

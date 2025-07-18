@@ -5,3 +5,4 @@ ruff
 Flask
 gunicorn
 gevent
+markdown

@@ -8,22 +8,35 @@ import time
 
 app = Flask(__name__)
 
+from sync_runner import get_sync_interval
+
 @app.route('/')
 def index():
-    sync_interval = os.getenv("SYNC_INTERVAL_SECONDS", 300)
-    return render_template('index.html', sync_interval=sync_interval)
+    return render_template('index.html', sync_interval=get_sync_interval())
 
-@app.route('/force-sync', methods=['POST'])
-def force_sync():
-    logging.info("Force sync requested via web UI.")
+@app.route('/update-meraki', methods=['POST'])
+def update_meraki():
+    logging.info("Meraki update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
-        sync_thread = threading.Thread(target=run_sync_main)
+        sync_thread = threading.Thread(target=run_sync_main, args=("meraki",))
         sync_thread.start()
-        return jsonify({"message": "Sync process started."})
+        return jsonify({"message": "Meraki update process started."})
     except Exception as e:
-        logging.error(f"Error starting forced sync: {e}")
-        return jsonify({"message": f"Sync failed to start: {e}"}), 500
+        logging.error(f"Error starting Meraki update: {e}")
+        return jsonify({"message": f"Meraki update failed to start: {e}"}), 500
+
+@app.route('/update-pihole', methods=['POST'])
+def update_pihole():
+    logging.info("Pi-hole update requested via web UI.")
+    try:
+        # Running the sync in a separate thread to avoid blocking the web server
+        sync_thread = threading.Thread(target=run_sync_main, args=("pihole",))
+        sync_thread.start()
+        return jsonify({"message": "Pi-hole update process started."})
+    except Exception as e:
+        logging.error(f"Error starting Pi-hole update: {e}")
+        return jsonify({"message": f"Pi-hole update failed to start: {e}"}), 500
 
 @app.route('/check-pihole-error', methods=['GET'])
 def check_pihole_error():
@@ -36,7 +49,6 @@ def check_pihole_error():
 @app.route('/stream')
 def stream():
     def event_stream():
-        from sync_runner import get_sync_interval
         while True:
             try:
                 with open('/app/logs/sync.log', 'r') as f:
@@ -145,9 +157,23 @@ def clear_log():
             return jsonify({"message": "Log file not found."}), 404
     return jsonify({"message": "Invalid log type."}), 400
 
+import markdown
+
+@app.route('/docs')
+def docs():
+    with open('/app/README.md', 'r') as f:
+        content = f.read()
+    return render_template('docs.html', content=markdown.markdown(content))
+
 @app.route('/health')
 def health_check():
     return jsonify({"status": "ok"}), 200
 
 if __name__ == '__main__':
+    # When running locally, start the sync runner in a background thread
+    if not os.environ.get("gunicorn"):
+        from sync_runner import run_sync
+        sync_thread = threading.Thread(target=run_sync)
+        sync_thread.daemon = True
+        sync_thread.start()
     app.run(host='0.0.0.0', port=os.environ.get('FLASK_PORT', 24653))

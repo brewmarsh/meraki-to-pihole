@@ -21,46 +21,36 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
               if there's an API error.
     """
     org_id = config["meraki_org_id"]
-    specified_network_ids = config.get("meraki_network_ids", [])
-    timespan = config.get("meraki_client_timespan_seconds", 86400)  # Default to 24 hours
-
-    logging.debug(
-        f"Starting Meraki client search. Org ID: {org_id}. "
-        f"Specified Network IDs: {specified_network_ids or 'All'}. "
-        f"Client Timespan: {timespan}s."
-    )
-
     relevant_clients = []
+    devices = dashboard.organizations.getOrganizationDevices(org_id)
 
-    try:
-        logging.info(f"Fetching all clients for organization ID: {org_id}.")
-        all_org_clients = dashboard.organizations.getOrganizationClients(
-            organizationId=org_id, total_pages='all', timespan=timespan
-        )
-
-        if not all_org_clients:
-            logging.warning(f"No clients found in organization {org_id}. Cannot proceed.")
-            return []
-
-        for client in all_org_clients:
-            if specified_network_ids and client.get('networkId') not in specified_network_ids:
-                continue
-
-            if client.get('fixedIp'):
-                relevant_clients.append({
-                    "name": client.get('description') or client.get('mac'),
-                    "ip": client['fixedIp'],
-                    "network_id": client.get('networkId'),
-                    "network_name": "N/A",  # Network name is not available in this endpoint
-                    "meraki_client_id": client['mac'],
-                    "type": "Fixed IP"
-                })
-                logging.debug(f"Found relevant client with fixed IP: {client.get('description')} ({client['fixedIp']})")
-
-    except meraki.exceptions.APIError as e:
-        logging.error(f"Meraki API error while fetching clients for organization {org_id}: {e}")
-        return []
-    except Exception as e:
-        logging.error(f"An unexpected error occurred while processing clients for organization {org_id}: {e}")
+    for device in devices:
+        if device['model'].startswith('MS'):
+            interfaces = dashboard.switch.getDeviceSwitchRoutingInterfaces(device['serial'])
+            for interface in interfaces:
+                dhcp = dashboard.switch.getDeviceSwitchRoutingInterfaceDhcp(device['serial'], interface['interfaceId'])
+                if dhcp.get('fixedIpAssignments'):
+                    for mac, client_data in dhcp['fixedIpAssignments'].items():
+                        relevant_clients.append({
+                            "name": client_data.get('name') or mac,
+                            "ip": client_data['ip'],
+                            "network_id": device['networkId'],
+                            "network_name": "N/A",
+                            "meraki_client_id": mac,
+                            "type": "Fixed IP"
+                        })
+        elif device['model'].startswith('MX'):
+            vlans = dashboard.appliance.getNetworkApplianceVlans(device['networkId'])
+            for vlan in vlans:
+                if vlan.get('fixedIpAssignments'):
+                    for mac, client_data in vlan['fixedIpAssignments'].items():
+                        relevant_clients.append({
+                            "name": client_data.get('name') or mac,
+                            "ip": client_data['ip'],
+                            "network_id": device['networkId'],
+                            "network_name": vlan['name'],
+                            "meraki_client_id": mac,
+                            "type": "Fixed IP"
+                        })
 
     return relevant_clients
