@@ -8,3 +8,15 @@
     border: 1px solid #dee2e6;
     border-radius: 5px;
 }
+
+.card-header {
+    cursor: move;
+    position: relative;
+}
+
+.card-header .caret {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
