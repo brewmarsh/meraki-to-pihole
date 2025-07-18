@@ -10,7 +10,7 @@
 }
 
 .card-header {
-    cursor: pointer;
+    cursor: move;
     position: relative;
 }
 
