@@ -1,6 +1,7 @@
 import logging
 import meraki
 
+
 def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict):
     """
     Fetches all Meraki clients that have a fixed IP assignment (DHCP reservation).

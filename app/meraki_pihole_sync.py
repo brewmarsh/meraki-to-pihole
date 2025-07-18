@@ -18,6 +18,7 @@ Configuration is managed entirely through environment variables.
 import logging
 import os
 import sys
+from datetime import datetime
 
 import meraki
 from clients.meraki_client import get_all_relevant_meraki_clients
@@ -121,21 +122,41 @@ def load_app_config_from_env():
 
 def update_meraki_data():
     """
-    Fetches and returns relevant Meraki clients.
+    Initializes the Meraki dashboard API and fetches all relevant clients.
+
+    This function loads the application configuration, sets up the Meraki
+    dashboard API client, and then calls the client function to retrieve
+    all devices with fixed IP assignments.
+
+    Returns:
+        list: A list of client dictionaries from Meraki, or an empty list
+              if no relevant clients are found or an error occurs.
     """
     config = load_app_config_from_env()
     meraki_api_key = config["meraki_api_key"]
     dashboard = meraki.DashboardAPI(
         api_key=meraki_api_key,
-        output_log=False,
+        output_log=False,  # Suppress SDK's own logging to stdout
         print_console=False,
-        suppress_logging=True,
+        suppress_logging=True,  # Suppress SDK's handler setup
     )
     return get_all_relevant_meraki_clients(dashboard, config)
 
+
 def update_pihole_data(meraki_clients):
     """
-    Updates Pi-hole with the given Meraki clients.
+    Synchronizes Meraki client data to Pi-hole's custom DNS records.
+
+    This function orchestrates the entire Pi-hole update process:
+    1. Loads configuration.
+    2. Authenticates to Pi-hole to get a session.
+    3. Fetches the current custom DNS records from Pi-hole.
+    4. Iterates through the provided Meraki clients.
+    5. For each client, it adds or updates the corresponding DNS record in Pi-hole.
+    6. Logs the outcome of the sync process.
+
+    Args:
+        meraki_clients (list): A list of client dictionaries fetched from Meraki.
     """
     config = load_app_config_from_env()
     pihole_url = config["pihole_api_url"]
@@ -154,28 +175,37 @@ def update_pihole_data(meraki_clients):
 
     successful_syncs = 0
     failed_syncs = 0
-    for client in meraki_clients:
-        if not client.get("name"):
-            logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
-            continue
-        client_name_sanitized = client["name"].replace(" ", "-").lower()
-        domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
-        ip_to_sync = client["ip"]
+    with open("app/changelog.log", "a+") as f:
+        f.seek(0)
+        previous_mappings = f.readlines()
+        f.seek(0)
+        f.truncate()
+        for client in meraki_clients:
+            if not client.get("name"):
+                logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
+                continue
+            client_name_sanitized = client["name"].replace(" ", "-").lower()
+            domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
+            ip_to_sync = client["ip"]
 
-        if add_or_update_dns_record_in_pihole(
-            pihole_url,
-            sid,
-            csrf_token,
-            domain_to_sync,
-            ip_to_sync,
-            existing_pihole_records,
-        ):
-            successful_syncs += 1
-        else:
-            failed_syncs += 1
-            logging.warning(
-                f"Failed to sync client '{client['name']}' (DNS: {domain_to_sync} -> {ip_to_sync}) to Pi-hole."
-            )
+            if add_or_update_dns_record_in_pihole(
+                pihole_url,
+                sid,
+                csrf_token,
+                domain_to_sync,
+                ip_to_sync,
+                existing_pihole_records,
+            ):
+                timestamp = datetime.now()
+                mapping_line = f"{timestamp}: Mapped {domain_to_sync} to {ip_to_sync}\n"
+                if mapping_line not in previous_mappings:
+                    f.write(mapping_line)
+                successful_syncs += 1
+            else:
+                failed_syncs += 1
+                logging.warning(
+                    f"Failed to sync client '{client['name']}' (DNS: {domain_to_sync} -> {ip_to_sync}) to Pi-hole."
+                )
 
     logging.info("--- Meraki to Pi-hole Sync Summary ---")
     logging.info(f"Successfully synced/verified {successful_syncs} client(s).")

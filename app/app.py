@@ -10,12 +10,16 @@ app = Flask(__name__)
 
 from sync_runner import get_sync_interval
 
+
 @app.route('/')
 def index():
+    """Renders the main HTML page."""
     return render_template('index.html', sync_interval=get_sync_interval())
+
 
 @app.route('/update-meraki', methods=['POST'])
 def update_meraki():
+    """Triggers a Meraki data fetch and sync."""
     logging.info("Meraki update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
@@ -54,6 +58,10 @@ def stream():
                 with open('/app/logs/sync.log', 'r') as f:
                     log_content = f.read()
                 yield f"data: {json.dumps({'log': log_content})}\n\n"
+
+                with open('/app/changelog.log', 'r') as f:
+                    changelog_content = f.read()
+                yield f"data: {json.dumps({'changelog': changelog_content})}\n\n"
 
                 mappings = get_mappings_data()
                 yield f"data: {json.dumps({'mappings': mappings})}\n\n"
