@@ -18,6 +18,7 @@
                 <div class="card mt-4" id="pihole-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#pihole-body">
                         Pi-hole DNS Records [<span id="pihole-count">0</span>]
+                        <span class="caret float-end">▼</span>
                     </div>
                     <div id="pihole-body" class="collapse">
                         <div class="card-body">
@@ -29,6 +30,7 @@
                 <div class="card mt-4" id="meraki-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#meraki-body">
                         Meraki IP Records [<span id="meraki-count">0</span>]
+                        <span class="caret float-end">▼</span>
                     </div>
                     <div id="meraki-body" class="collapse">
                         <div class="card-body">
@@ -40,6 +42,7 @@
                 <div class="card mt-4" id="mapped-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#mapped-body">
                         Mapped Devices [<span id="mapped-count">0</span>]
+                        <span class="caret float-end">▼</span>
                     </div>
                     <div id="mapped-body" class="collapse">
                         <div class="card-body">
@@ -51,6 +54,7 @@
                 <div class="card mt-4" id="unmapped-meraki-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#unmapped-meraki-body">
                         Unmapped Meraki Devices [<span id="unmapped-meraki-count">0</span>]
+                        <span class="caret float-end">▼</span>
                     </div>
                     <div id="unmapped-meraki-body" class="collapse">
                         <div class="card-body">
@@ -62,6 +66,7 @@
                 <div class="card mt-4" id="logs-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#logs-body">
                         Logs
+                        <span class="caret float-end">▼</span>
                     </div>
                     <div id="logs-body" class="collapse">
                         <div class="card-body">
@@ -74,6 +79,7 @@
                 <div class="card mt-4" id="changelog-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#changelog-body">
                         Changelog
+                        <span class="caret float-end">▼</span>
                     </div>
                     <div id="changelog-body" class="collapse">
                         <div class="card-body">
@@ -272,6 +278,17 @@
                     }
                 });
             }
+        });
+
+        document.querySelectorAll('.card-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const caret = header.querySelector('.caret');
+                if (caret.textContent === '▼') {
+                    caret.textContent = '▲';
+                } else {
+                    caret.textContent = '▼';
+                }
+            });
         });
     </script>
 </body>
