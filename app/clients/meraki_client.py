@@ -30,26 +30,26 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
             for interface in interfaces:
                 dhcp = dashboard.switch.getDeviceSwitchRoutingInterfaceDhcp(device['serial'], interface['interfaceId'])
                 if dhcp.get('fixedIpAssignments'):
-                    for client in dhcp['fixedIpAssignments']:
+                    for mac, client_data in dhcp['fixedIpAssignments'].items():
                         relevant_clients.append({
-                            "name": client.get('name') or client.get('mac'),
-                            "ip": client['ip'],
+                            "name": client_data.get('name') or mac,
+                            "ip": client_data['ip'],
                             "network_id": device['networkId'],
                             "network_name": "N/A",
-                            "meraki_client_id": client['mac'],
+                            "meraki_client_id": mac,
                             "type": "Fixed IP"
                         })
         elif device['model'].startswith('MX'):
             vlans = dashboard.appliance.getNetworkApplianceVlans(device['networkId'])
             for vlan in vlans:
                 if vlan.get('fixedIpAssignments'):
-                    for client in vlan['fixedIpAssignments']:
+                    for mac, client_data in vlan['fixedIpAssignments'].items():
                         relevant_clients.append({
-                            "name": client.get('name') or client.get('mac'),
-                            "ip": client['ip'],
+                            "name": client_data.get('name') or mac,
+                            "ip": client_data['ip'],
                             "network_id": device['networkId'],
                             "network_name": vlan['name'],
-                            "meraki_client_id": client['mac'],
+                            "meraki_client_id": mac,
                             "type": "Fixed IP"
                         })
 
