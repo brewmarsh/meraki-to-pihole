@@ -115,7 +115,19 @@ def _pihole_api_request(pihole_url, sid, csrf_token, method, path, data=None):
 
 
 def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
-    """Fetches and parses custom DNS records from Pi-hole."""
+    """
+    Fetches and parses all custom DNS records from the Pi-hole instance.
+
+    Args:
+        pihole_url (str): The base URL of the Pi-hole instance.
+        sid (str): The active session ID for authentication.
+        csrf_token (str): The CSRF token for the authenticated session.
+
+    Returns:
+        dict: A dictionary of existing custom DNS records, with the domain as the
+              key and the IP address as the value (e.g., {'my-device.lan': '192.168.1.10'}).
+              Returns None if the request fails or if the session is invalid.
+    """
     if not sid or not csrf_token:
         logging.error("Cannot fetch Pi-hole DNS records without a valid session.")
         return None

@@ -122,21 +122,41 @@ def load_app_config_from_env():
 
 def update_meraki_data():
     """
-    Fetches and returns relevant Meraki clients.
+    Initializes the Meraki dashboard API and fetches all relevant clients.
+
+    This function loads the application configuration, sets up the Meraki
+    dashboard API client, and then calls the client function to retrieve
+    all devices with fixed IP assignments.
+
+    Returns:
+        list: A list of client dictionaries from Meraki, or an empty list
+              if no relevant clients are found or an error occurs.
     """
     config = load_app_config_from_env()
     meraki_api_key = config["meraki_api_key"]
     dashboard = meraki.DashboardAPI(
         api_key=meraki_api_key,
-        output_log=False,
+        output_log=False,  # Suppress SDK's own logging to stdout
         print_console=False,
-        suppress_logging=True,
+        suppress_logging=True,  # Suppress SDK's handler setup
     )
     return get_all_relevant_meraki_clients(dashboard, config)
 
+
 def update_pihole_data(meraki_clients):
     """
-    Updates Pi-hole with the given Meraki clients.
+    Synchronizes Meraki client data to Pi-hole's custom DNS records.
+
+    This function orchestrates the entire Pi-hole update process:
+    1. Loads configuration.
+    2. Authenticates to Pi-hole to get a session.
+    3. Fetches the current custom DNS records from Pi-hole.
+    4. Iterates through the provided Meraki clients.
+    5. For each client, it adds or updates the corresponding DNS record in Pi-hole.
+    6. Logs the outcome of the sync process.
+
+    Args:
+        meraki_clients (list): A list of client dictionaries fetched from Meraki.
     """
     config = load_app_config_from_env()
     pihole_url = config["pihole_api_url"]
