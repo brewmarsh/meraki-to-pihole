@@ -15,58 +15,70 @@
     <div class="container">
         <div class="row mt-4">
             <div class="col-md-8">
-                <div class="card mt-4">
-                    <div class="card-header">
+                <div class="card mt-4" id="pihole-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#pihole-body">
                         Pi-hole DNS Records [<span id="pihole-count">0</span>]
                     </div>
-                    <div class="card-body">
-                        <pre id="pihole-mappings" class="log-box"></pre>
+                    <div id="pihole-body" class="collapse">
+                        <div class="card-body">
+                            <pre id="pihole-mappings" class="log-box"></pre>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mt-4">
-                    <div class="card-header">
+                <div class="card mt-4" id="meraki-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#meraki-body">
                         Meraki IP Records [<span id="meraki-count">0</span>]
                     </div>
-                    <div class="card-body">
-                        <pre id="meraki-mappings" class="log-box"></pre>
+                    <div id="meraki-body" class="collapse">
+                        <div class="card-body">
+                            <pre id="meraki-mappings" class="log-box"></pre>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mt-4">
-                    <div class="card-header">
+                <div class="card mt-4" id="mapped-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#mapped-body">
                         Mapped Devices [<span id="mapped-count">0</span>]
                     </div>
-                    <div class="card-body">
-                        <pre id="mapped-devices" class="log-box"></pre>
+                    <div id="mapped-body" class="collapse">
+                        <div class="card-body">
+                            <pre id="mapped-devices" class="log-box"></pre>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mt-4">
-                    <div class="card-header">
+                <div class="card mt-4" id="unmapped-meraki-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#unmapped-meraki-body">
                         Unmapped Meraki Devices [<span id="unmapped-meraki-count">0</span>]
                     </div>
-                    <div class="card-body">
-                        <pre id="unmapped-meraki-devices" class="log-box"></pre>
+                    <div id="unmapped-meraki-body" class="collapse">
+                        <div class="card-body">
+                            <pre id="unmapped-meraki-devices" class="log-box"></pre>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mt-4">
-                    <div class="card-header">
+                <div class="card mt-4" id="logs-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#logs-body">
                         Logs
                     </div>
-                    <div class="card-body">
-                        <pre id="sync-log" class="log-box"></pre>
-                        <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
-                        <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
+                    <div id="logs-body" class="collapse">
+                        <div class="card-body">
+                            <pre id="sync-log" class="log-box"></pre>
+                            <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
+                            <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
+                        </div>
                     </div>
                 </div>
-                <div class="card mt-4">
-                    <div class="card-header">
+                <div class="card mt-4" id="changelog-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#changelog-body">
                         Changelog
                     </div>
-                    <div class="card-body">
-                        <pre id="changelog" class="log-box"></pre>
+                    <div id="changelog-body" class="collapse">
+                        <div class="card-body">
+                            <pre id="changelog" class="log-box"></pre>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -109,6 +121,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
         const toastLiveExample = document.getElementById('liveToast')
         const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
@@ -234,6 +247,32 @@
             setInterval(getLogs, 5000);
             setInterval(getMappings, 5000);
         }
+
+        const cardContainer = document.querySelector('.col-md-8');
+        const sortable = new Sortable(cardContainer, {
+            animation: 150,
+            handle: '.card-header',
+            onEnd: function () {
+                const order = [];
+                cardContainer.querySelectorAll('.card').forEach(card => {
+                    order.push(card.id);
+                });
+                localStorage.setItem('cardOrder', JSON.stringify(order));
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedOrder = localStorage.getItem('cardOrder');
+            if (savedOrder) {
+                const order = JSON.parse(savedOrder);
+                order.forEach(cardId => {
+                    const card = document.getElementById(cardId);
+                    if (card) {
+                        cardContainer.appendChild(card);
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

@@ -175,11 +175,16 @@ def update_pihole_data(meraki_clients):
 
     successful_syncs = 0
     failed_syncs = 0
+    meraki_clients_by_ip = {client['ip']: client for client in meraki_clients}
+    meraki_clients_by_name = {client['name'].replace(" ", "-").lower(): client for client in meraki_clients if client.get('name')}
+
     with open("app/changelog.log", "a+") as f:
         f.seek(0)
         previous_mappings = f.readlines()
         f.seek(0)
         f.truncate()
+
+        # Process updates and additions from Meraki
         for client in meraki_clients:
             if not client.get("name"):
                 logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
@@ -206,6 +211,17 @@ def update_pihole_data(meraki_clients):
                 logging.warning(
                     f"Failed to sync client '{client['name']}' (DNS: {domain_to_sync} -> {ip_to_sync}) to Pi-hole."
                 )
+
+        # Process deletions
+        for domain, ip in existing_pihole_records.items():
+            pihole_hostname = domain.replace(hostname_suffix, "")
+            if ip not in meraki_clients_by_ip and pihole_hostname not in meraki_clients_by_name:
+                from clients.pihole_client import remove_dns_record_from_pihole
+                if remove_dns_record_from_pihole(pihole_url, sid, csrf_token, domain, ip):
+                    timestamp = datetime.now()
+                    f.write(f"{timestamp}: Removed {domain} -> {ip}\n")
+                else:
+                    logging.warning(f"Failed to remove stale DNS record {domain} -> {ip}")
 
     logging.info("--- Meraki to Pi-hole Sync Summary ---")
     logging.info(f"Successfully synced/verified {successful_syncs} client(s).")

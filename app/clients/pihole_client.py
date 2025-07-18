@@ -186,3 +186,24 @@ def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_
     else:
         logging.error(f"Failed to add/update DNS record {domain_cleaned} -> {new_ip_cleaned}. Response: {response}")
         return False
+
+def remove_dns_record_from_pihole(pihole_url, sid, csrf_token, domain, ip):
+    """
+    Removes a custom DNS record from Pi-hole.
+    """
+    domain_cleaned = domain.strip().lower()
+    ip_cleaned = ip.strip()
+
+    if not domain_cleaned or not ip_cleaned:
+        logging.warning(f"Skipping invalid record for removal: domain='{domain}', ip='{ip}'")
+        return False
+
+    path = f"/api/config/dns/hosts/{quote(ip_cleaned + ' ' + domain_cleaned)}"
+    response = _pihole_api_request(pihole_url, sid, csrf_token, "DELETE", path)
+
+    if response and response.get("success"):
+        logging.info(f"Successfully removed DNS record: {domain_cleaned} -> {ip_cleaned}.")
+        return True
+    else:
+        logging.error(f"Failed to remove DNS record {domain_cleaned} -> {ip_cleaned}. Response: {response}")
+        return False
