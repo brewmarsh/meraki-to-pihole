@@ -178,7 +178,7 @@ def update_pihole_data(meraki_clients):
     meraki_clients_by_ip = {client['ip']: client for client in meraki_clients}
     meraki_clients_by_name = {client['name'].replace(" ", "-").lower(): client for client in meraki_clients if client.get('name')}
 
-    changelog_path = "app/changelog.log"
+    changelog_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'changelog.log')
     if not os.path.exists(changelog_path):
         open(changelog_path, 'w').close()
 
