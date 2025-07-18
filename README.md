@@ -73,6 +73,7 @@ This application is designed to be run using Docker and Docker Compose.
 *   **Meraki API Key**: From your Meraki Dashboard with read access.
 *   **Pi-hole Instance**: A running Pi-hole with its IP/hostname.
 *   **Pi-hole API Token**: If your Pi-hole admin interface is password-protected (recommended), get the token from Pi-hole Settings -> API / Web interface.
+*   **Pi-hole v6 API**: This tool is built for the Pi-hole v6 API and will not work with the v5 API.
 
 ### ⚙️ Steps
 
