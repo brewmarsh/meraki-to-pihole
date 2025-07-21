@@ -53,6 +53,7 @@
 *   **Containerization:** The application shall be containerized using Docker.
 *   **Local Development:** The project shall provide a `docker-compose.yml` file for easy local development and testing.
 *   **Code Quality:** The project shall use pre-commit hooks to enforce code quality standards.
+*   **Linting and Static Analysis:** The project shall use `ruff` for linting and code formatting.
 
 ## 4. To-Do
 
