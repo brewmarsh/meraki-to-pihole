@@ -12,7 +12,7 @@ services:
     image: local/meraki-pihole-sync:latest # Explicit local image name
     restart: unless-stopped
     ports:
-      - "24653:24653"
+      - "${FLASK_PORT:-24653}:8000"
 
     environment:
       # MERAKI_API_KEY: "YOUR_MERAKI_API_KEY_HERE" # Option 1: Directly in compose (less secure)

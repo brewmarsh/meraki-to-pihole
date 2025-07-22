@@ -27,6 +27,7 @@
 *   **View Logs:** The Web UI shall display the application logs in real-time.
 *   **Update Sync Interval:** The Web UI shall allow updating the sync interval on the fly.
 *   **Clear Logs:** The Web UI shall provide a button to clear the log file.
+*   **Framework:** The Web UI shall be built with FastAPI.
 
 ## 2. Non-Functional Requirements
 
@@ -55,14 +56,11 @@
 *   **Code Quality:** The project shall use pre-commit hooks to enforce code quality standards.
 *   **Linting and Static Analysis:** The project shall use `ruff` for linting and code formatting.
 
-## 4. To-Do
+## 4. Completed
 
-*   **CI/CD Pipeline:** Implement a CI/CD pipeline (e.g., using GitHub Actions) to automate the following:
-    *   Running tests
-    *   Building and publishing Docker images
-    *   Deploying the application to a staging or production environment
-*   **Semantic Versioning:** Automate semantic versioning based on commit messages.
-*   **Dependency Management:** Use a dependency management tool like Poetry or Pipenv to lock dependencies and ensure reproducible builds.
-*   **Multi-stage Docker Builds:** Implement multi-stage Docker builds to reduce the size of the final image.
-*   **Security Scanning:** Integrate a security scanning tool (e.g., Trivy or Snyk) into the CI/CD pipeline to scan for vulnerabilities in the Docker image and dependencies.
-*   **Infrastructure as Code:** Use an Infrastructure as Code (IaC) tool like Terraform or Ansible to manage the deployment infrastructure.
+*   **CI/CD Pipeline:** Implemented a CI/CD pipeline using GitHub Actions to automate testing.
+*   **Semantic Versioning:** Automated semantic versioning based on commit messages using a GitHub Action.
+*   **Dependency Management:** Switched to Poetry for dependency management to ensure reproducible builds.
+*   **Multi-stage Docker Builds:** Implemented multi-stage Docker builds to reduce the size of the final image.
+*   **Security Scanning:** Integrated Trivy into the CI/CD pipeline to scan for vulnerabilities.
+*   **Infrastructure as Code:** Used Terraform to manage the deployment infrastructure.

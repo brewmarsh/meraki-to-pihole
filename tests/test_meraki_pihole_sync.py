@@ -3,15 +3,12 @@ import os
 import unittest
 from unittest.mock import patch, MagicMock
 
-# Add the app directory to the Python path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'app')))
-
-from meraki_pihole_sync import main
+from app.meraki_pihole_sync import main
 
 class TestMerakiPiholeSync(unittest.TestCase):
 
-    @patch('meraki_pihole_sync.update_meraki_data')
-    @patch('meraki_pihole_sync.update_pihole_data')
+    @patch('app.meraki_pihole_sync.update_meraki_data')
+    @patch('app.meraki_pihole_sync.update_pihole_data')
     def test_main_success_flow(self, mock_update_pihole_data, mock_update_meraki_data):
         # Arrange
         mock_update_meraki_data.return_value = [
@@ -27,11 +24,11 @@ class TestMerakiPiholeSync(unittest.TestCase):
             [{"name": "Test-Client-1", "ip": "192.168.1.10"}]
         )
 
-    @patch('meraki_pihole_sync.load_app_config_from_env')
-    @patch('meraki_pihole_sync.authenticate_to_pihole')
-    @patch('meraki_pihole_sync.get_all_relevant_meraki_clients')
-    @patch('meraki_pihole_sync.get_pihole_custom_dns_records')
-    @patch('meraki_pihole_sync.add_or_update_dns_record_in_pihole')
+    @patch('app.meraki_pihole_sync.load_app_config_from_env')
+    @patch('app.meraki_pihole_sync.authenticate_to_pihole')
+    @patch('app.meraki_pihole_sync.get_all_relevant_meraki_clients')
+    @patch('app.meraki_pihole_sync.get_pihole_custom_dns_records')
+    @patch('app.meraki_pihole_sync.add_or_update_dns_record_in_pihole')
     @patch('meraki.DashboardAPI')
     def test_main_handles_client_with_no_name(self, mock_dashboard_api, mock_add_or_update, mock_get_dns, mock_get_clients, mock_auth, mock_load_config):
         # Arrange
