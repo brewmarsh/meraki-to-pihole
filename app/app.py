@@ -8,7 +8,7 @@ import time
 
 app = Flask(__name__)
 
-from sync_runner import get_sync_interval
+from .sync_runner import get_sync_interval
 
 
 @app.route('/')
