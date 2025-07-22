@@ -1,5 +1,5 @@
 # build stage
-FROM python:3.9-slim-buster as builder
+FROM python:3.10-slim-buster as builder
 
 WORKDIR /app
 
@@ -10,13 +10,13 @@ COPY . .
 RUN poetry config virtualenvs.create false && poetry install --only main
 
 # final stage
-FROM python:3.9-slim-buster
+FROM python:3.10-slim-buster
 
 WORKDIR /app
 
 RUN pip install poetry
 
-COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
+COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root

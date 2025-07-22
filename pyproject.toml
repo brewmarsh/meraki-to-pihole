@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "app"}]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.10"
 meraki = "^1.6.2"
 requests = "^2.31.0"
 fastapi = "^0.116.1"
