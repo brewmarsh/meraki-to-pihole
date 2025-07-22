@@ -1,5 +1,5 @@
-from fastapi import FastAPI, Request, Response
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.templating import Jinja2Templates
 import os
 import logging
@@ -86,7 +86,7 @@ async def stream():
                 from .sync_runner import get_sync_interval
                 time.sleep(get_sync_interval())
 
-    return Response(event_stream(), media_type='text/event-stream')
+    return StreamingResponse(event_stream(), media_type='text/event-stream')
 
 def _get_pihole_data(pihole_url, pihole_api_key):
     from .clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
