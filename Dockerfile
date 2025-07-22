@@ -22,7 +22,7 @@ COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root
 COPY app/ /app/app/
 
-ARG FLASK_PORT=8000
-EXPOSE ${FLASK_PORT}
+ENV FLASK_PORT=8000
+EXPOSE $FLASK_PORT
 
-CMD ["poetry", "run", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "${FLASK_PORT}"]
+CMD exec poetry run uvicorn app.app:app --host 0.0.0.0 --port $FLASK_PORT
