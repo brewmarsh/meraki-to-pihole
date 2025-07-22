@@ -69,10 +69,16 @@ async def stream():
     def event_stream():
         while True:
             try:
+                if not os.path.exists('/app/logs/sync.log'):
+                    with open('/app/logs/sync.log', 'w') as f:
+                        f.write('')
                 with open('/app/logs/sync.log', 'r') as f:
                     log_content = f.read()
                 yield f"data: {json.dumps({'log': log_content})}\n\n"
 
+                if not os.path.exists('/app/changelog.log'):
+                    with open('/app/changelog.log', 'w') as f:
+                        f.write('')
                 with open('/app/changelog.log', 'r') as f:
                     changelog_content = f.read()
                 yield f"data: {json.dumps({'changelog': changelog_content})}\n\n"
