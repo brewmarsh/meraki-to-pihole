@@ -193,7 +193,14 @@ def update_pihole_data(meraki_clients):
             if not client.get("name"):
                 logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
                 continue
-            client_name_sanitized = client["name"].replace(" ", "-").lower()
+
+            # Basic validation for hostname compatibility
+            client_name = client["name"]
+            if ":" in client_name:
+                logging.warning(f"Skipping client with invalid characters in name: {client_name}")
+                continue
+
+            client_name_sanitized = client_name.replace(" ", "-").lower()
             domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
             ip_to_sync = client["ip"]
 
