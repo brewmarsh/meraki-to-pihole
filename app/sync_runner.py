@@ -2,7 +2,7 @@ import time
 import logging
 import os
 import sys
-from meraki_pihole_sync import main, load_app_config_from_env
+from .meraki_pihole_sync import main, load_app_config_from_env
 
 def get_sync_interval():
     """
