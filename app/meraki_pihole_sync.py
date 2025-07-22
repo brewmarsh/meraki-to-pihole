@@ -21,8 +21,8 @@ import sys
 from datetime import datetime
 
 import meraki
-from clients.meraki_client import get_all_relevant_meraki_clients
-from clients.pihole_client import (
+from .clients.meraki_client import get_all_relevant_meraki_clients
+from .clients.pihole_client import (
     add_or_update_dns_record_in_pihole,
     authenticate_to_pihole,
     get_pihole_custom_dns_records,
@@ -220,7 +220,7 @@ def update_pihole_data(meraki_clients):
         for domain, ip in existing_pihole_records.items():
             pihole_hostname = domain.replace(hostname_suffix, "")
             if ip not in meraki_clients_by_ip and pihole_hostname not in meraki_clients_by_name:
-                from clients.pihole_client import remove_dns_record_from_pihole
+                from .clients.pihole_client import remove_dns_record_from_pihole
                 if remove_dns_record_from_pihole(pihole_url, sid, csrf_token, domain, ip):
                     timestamp = datetime.now()
                     f.write(f"{timestamp}: Removed {domain} -> {ip}\n")
