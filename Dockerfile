@@ -19,6 +19,7 @@ RUN pip install poetry
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 
 COPY pyproject.toml poetry.lock ./
+RUN poetry install --only main
 COPY app/ /app/app/
 
 EXPOSE 8000
