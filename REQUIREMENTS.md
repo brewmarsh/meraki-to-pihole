@@ -27,6 +27,7 @@
 *   **View Logs:** The Web UI shall display the application logs in real-time.
 *   **Update Sync Interval:** The Web UI shall allow updating the sync interval on the fly.
 *   **Clear Logs:** The Web UI shall provide a button to clear the log file.
+*   **Framework:** The Web UI shall be built with FastAPI.
 
 ## 2. Non-Functional Requirements
 
