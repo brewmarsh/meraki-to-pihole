@@ -14,10 +14,12 @@ FROM python:3.9-slim-buster
 
 WORKDIR /app
 
+RUN pip install poetry
+
 COPY --from=builder /usr/local/lib/python3.9/site-packages /usr/local/lib/python3.9/site-packages
 
 COPY app/ /app/app/
 
 EXPOSE 8000
 
-CMD ["/root/.local/bin/poetry", "run", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["poetry", "run", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
