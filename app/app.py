@@ -1,57 +1,68 @@
-from flask import Flask, render_template, jsonify, request, Response
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
 import os
 import logging
 from .meraki_pihole_sync import main as run_sync_main
 import threading
 import json
 import time
+import markdown
+from contextlib import asynccontextmanager
 
-app = Flask(__name__)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Start the sync thread on application startup
+    sync_thread = threading.Thread(target=run_sync_main, daemon=True)
+    sync_thread.start()
+    yield
+    # No cleanup needed on shutdown
 
-from .sync_runner import get_sync_interval
+app = FastAPI(lifespan=lifespan)
+templates = Jinja2Templates(directory="app/templates")
 
 
-@app.route('/')
-def index():
-    """Renders the main HTML page."""
-    return render_template('index.html', sync_interval=get_sync_interval())
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    from .sync_runner import get_sync_interval
+    return templates.TemplateResponse("index.html", {"request": request, "sync_interval": get_sync_interval()})
 
 
-@app.route('/update-meraki', methods=['POST'])
-def update_meraki():
+@app.post("/update-meraki")
+async def update_meraki():
     """Triggers a Meraki data fetch and sync."""
     logging.info("Meraki update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
         sync_thread = threading.Thread(target=run_sync_main, args=("meraki",))
         sync_thread.start()
-        return jsonify({"message": "Meraki update process started."})
+        return JSONResponse(content={"message": "Meraki update process started."})
     except Exception as e:
         logging.error(f"Error starting Meraki update: {e}")
-        return jsonify({"message": f"Meraki update failed to start: {e}"}), 500
+        return JSONResponse(content={"message": f"Meraki update failed to start: {e}"}, status_code=500)
 
-@app.route('/update-pihole', methods=['POST'])
-def update_pihole():
+@app.post("/update-pihole")
+async def update_pihole():
     logging.info("Pi-hole update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
         sync_thread = threading.Thread(target=run_sync_main, args=("pihole",))
         sync_thread.start()
-        return jsonify({"message": "Pi-hole update process started."})
+        return JSONResponse(content={"message": "Pi-hole update process started."})
     except Exception as e:
         logging.error(f"Error starting Pi-hole update: {e}")
-        return jsonify({"message": f"Pi-hole update failed to start: {e}"}), 500
+        return JSONResponse(content={"message": f"Pi-hole update failed to start: {e}"}, status_code=500)
 
-@app.route('/check-pihole-error', methods=['GET'])
-def check_pihole_error():
+@app.get("/check-pihole-error")
+async def check_pihole_error():
     with open('/app/logs/sync.log', 'r') as f:
         log_content = f.read()
     if "Pi-hole API returned a 'forbidden' error" in log_content:
-        return jsonify({"error": "forbidden"})
-    return jsonify({})
+        return JSONResponse(content={"error": "forbidden"})
+    return JSONResponse(content={})
 
-@app.route('/stream')
-def stream():
+@app.get("/stream")
+async def stream():
     def event_stream():
         while True:
             try:
@@ -69,12 +80,13 @@ def stream():
                 logging.error(f"Error in event stream: {e}")
                 yield f"data: {json.dumps({'error': 'An error occurred in the stream.'})}\n\n"
             finally:
+                from .sync_runner import get_sync_interval
                 time.sleep(get_sync_interval())
 
-    return Response(event_stream(), mimetype='text/event-stream')
+    return Response(event_stream(), media_type='text/event-stream')
 
 def _get_pihole_data(pihole_url, pihole_api_key):
-    from clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
+    from .clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
     sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
     if not sid or not csrf_token:
         logging.error("Failed to authenticate to Pi-hole in _get_pihole_data.")
@@ -89,7 +101,7 @@ def _get_pihole_data(pihole_url, pihole_api_key):
 
 def _get_meraki_data(config):
     import meraki
-    from clients.meraki_client import get_all_relevant_meraki_clients
+    from .clients.meraki_client import get_all_relevant_meraki_clients
     dashboard = meraki.DashboardAPI(
         api_key=config["meraki_api_key"],
         output_log=False,
@@ -120,7 +132,7 @@ def _map_devices(meraki_clients, pihole_records):
 
 def get_mappings_data():
     try:
-        from meraki_pihole_sync import load_app_config_from_env
+        from .meraki_pihole_sync import load_app_config_from_env
         config = load_app_config_from_env()
         pihole_url = os.getenv("PIHOLE_API_URL")
         pihole_api_key = os.getenv("PIHOLE_API_KEY")
@@ -137,51 +149,40 @@ def get_mappings_data():
         logging.error(f"Error in get_mappings_data: {e}")
         return {}
 
-@app.route('/mappings')
-def get_mappings():
-    return jsonify(get_mappings_data())
+@app.get("/mappings")
+async def get_mappings():
+    return JSONResponse(content=get_mappings_data())
 
-@app.route('/update-interval', methods=['POST'])
-def update_interval():
-    data = request.get_json()
-    interval = data.get('interval')
+@app.post("/update-interval")
+async def update_interval(request: Request):
+    data = await request.json()
+    interval = data.get("interval")
     if interval and interval.isdigit():
         with open("/app/sync_interval.txt", "w") as f:
             f.write(interval)
         logging.info(f"Sync interval updated to {interval} seconds.")
-        return jsonify({"message": "Sync interval updated."})
-    return jsonify({"message": "Invalid interval."}), 400
+        return JSONResponse(content={"message": "Sync interval updated."})
+    return JSONResponse(content={"message": "Invalid interval."}, status_code=400)
 
-@app.route('/clear-log', methods=['POST'])
-def clear_log():
-    data = request.get_json()
-    log_type = data.get('log')
+@app.post("/clear-log")
+async def clear_log(request: Request):
+    data = await request.json()
+    log_type = data.get("log")
     if log_type == 'sync':
         try:
             with open('/app/logs/sync.log', 'w') as f:
                 f.write('')
-            return jsonify({"message": "Sync log cleared."})
+            return JSONResponse(content={"message": "Sync log cleared."})
         except FileNotFoundError:
-            return jsonify({"message": "Log file not found."}), 404
-    return jsonify({"message": "Invalid log type."}), 400
+            return JSONResponse(content={"message": "Log file not found."}, status_code=404)
+    return JSONResponse(content={"message": "Invalid log type."}, status_code=400)
 
-import markdown
-
-@app.route('/docs')
-def docs():
+@app.get("/docs", response_class=HTMLResponse)
+async def docs(request: Request):
     with open('/app/README.md', 'r') as f:
         content = f.read()
-    return render_template('docs.html', content=markdown.markdown(content))
+    return templates.TemplateResponse("docs.html", {"request": request, "content": markdown.markdown(content)})
 
-@app.route('/health')
-def health_check():
-    return jsonify({"status": "ok"}), 200
-
-if __name__ == '__main__':
-    # When running locally, start the sync runner in a background thread
-    if not os.environ.get("gunicorn"):
-        from sync_runner import run_sync
-        sync_thread = threading.Thread(target=run_sync)
-        sync_thread.daemon = True
-        sync_thread.start()
-    app.run(host='0.0.0.0', port=os.environ.get('FLASK_PORT', 24653))
+@app.get("/health")
+async def health_check():
+    return JSONResponse(content={"status": "ok"})
