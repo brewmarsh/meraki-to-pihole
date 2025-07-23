@@ -32,7 +32,11 @@
 }
 
 .dark-mode .card-header {
-    background-color: #444444;
+    background-color: #555555;
+}
+
+.dark-mode .card-title {
+    color: #ffffff;
 }
 
 .dark-mode .log-box {
@@ -49,6 +53,10 @@
 
 .dark-mode .form-check-label {
     color: #ffffff;
+}
+
+.form-check-label {
+    color: #212529;
 }
 
 .dark-mode .navbar {
