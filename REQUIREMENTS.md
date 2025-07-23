@@ -43,11 +43,19 @@
 *   **Testing:** The system shall have a comprehensive suite of unit tests to ensure correctness.
 *   **Logging:** The system shall provide detailed logs for debugging and monitoring purposes.
 *   **Security:** The system shall securely handle API keys and other sensitive information.
+*   **Code Style:** The codebase shall adhere to the PEP 8 style guide for Python code.
+*   **Static Analysis:** The CI/CD pipeline shall enforce code quality standards through automated linting and static analysis using tools like `ruff`, `bandit`, and `mypy`.
 
 ### 2.3. Performance
 
 *   **Efficient API Usage:** The system shall use the Meraki and Pi-hole APIs efficiently to minimize the number of requests.
 *   **Scalability:** The system shall be able to handle a large number of Meraki clients and networks.
+*   **Concurrency:** The application shall be able to handle a high volume of concurrent connections without significant degradation in performance.
+
+### 2.4. Usability and Look & Feel
+
+*   **Web UI Design:** The Web UI shall have a clean, modern, and intuitive design that is easy for users to navigate.
+*   **Clarity:** The Web UI shall provide a clear and concise overview of the system's status and data.
 
 ## 3. Build and CI/CD
 
