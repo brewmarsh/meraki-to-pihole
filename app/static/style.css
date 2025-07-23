@@ -55,8 +55,8 @@
     color: #ffffff;
 }
 
-.form-check-label {
-    color: #212529;
+.navbar-dark .form-check-label {
+    color: #ffffff;
 }
 
 .dark-mode .navbar {
