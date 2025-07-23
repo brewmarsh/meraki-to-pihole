@@ -295,10 +295,13 @@ def main(update_type=None):
                 mapped_devices = 0
                 unmapped_meraki_devices = []
                 for client in meraki_clients:
-                    client_name_sanitized = client["name"].replace(" ", "-").lower()
-                    domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
-                    if domain_to_sync in existing_pihole_records:
-                        mapped_devices += 1
+                    if client.get("name"):
+                        client_name_sanitized = client["name"].replace(" ", "-").lower()
+                        domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
+                        if domain_to_sync in existing_pihole_records:
+                            mapped_devices += 1
+                        else:
+                            unmapped_meraki_devices.append(client)
                     else:
                         unmapped_meraki_devices.append(client)
                 with open("/app/history.log", "a") as f:
