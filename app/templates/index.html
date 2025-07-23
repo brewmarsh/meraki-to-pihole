@@ -6,6 +6,11 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
+    <div id="loading-screen">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">Meraki Pi-hole Sync</a>
@@ -19,6 +24,24 @@
     <div class="container">
         <div class="row mt-4">
             <div class="col-md-8">
+                <div class="card mt-4" id="charts-card">
+                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#charts-body">
+                        Charts
+                        <span class="caret float-end">▼</span>
+                    </div>
+                    <div id="charts-body" class="collapse show">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <canvas id="device-chart"></canvas>
+                                </div>
+                                <div class="col-md-6">
+                                    <canvas id="record-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="card mt-4" id="pihole-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#pihole-body">
                         Pi-hole DNS Records [<span id="pihole-count">0</span>]
@@ -113,6 +136,8 @@
                             </div>
                             <div class="form-text">The interval between automatic syncs.</div>
                         </div>
+                        <hr>
+                        <button id="generate-test-data" class="btn btn-warning w-100">Generate Test Data</button>
                     </div>
                 </div>
             </div>
@@ -132,6 +157,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         const toastLiveExample = document.getElementById('liveToast')
         const toastBootstrap = bootstrap.Toast.getOrCreateInstance(toastLiveExample)
@@ -192,6 +218,14 @@
             });
         });
 
+        document.getElementById('generate-test-data').addEventListener('click', () => {
+            fetch('/generate-test-data', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    showToast(data.message);
+                });
+        });
+
         document.querySelectorAll('[data-log]').forEach(button => {
             button.addEventListener('click', () => {
                 const logType = button.dataset.log;
@@ -250,6 +284,12 @@
                     document.getElementById('meraki-count').textContent = data.mappings.meraki.length;
                     document.getElementById('mapped-count').textContent = data.mappings.mapped.length;
                     document.getElementById('unmapped-meraki-count').textContent = data.mappings.unmapped_meraki.length;
+
+                    deviceChart.data.datasets[0].data = [data.mappings.mapped.length, data.mappings.unmapped_meraki.length];
+                    deviceChart.update();
+
+                    recordChart.data.datasets[0].data = [Object.keys(data.mappings.pihole).length, data.mappings.meraki.length];
+                    recordChart.update();
                 }
             };
         } else {
@@ -314,10 +354,68 @@
             setDarkMode(darkModeSwitch.checked);
         });
 
+        let deviceChart;
+        let recordChart;
+
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('darkMode') !== 'disabled') {
                 setDarkMode(true);
             }
+            document.getElementById('loading-screen').style.display = 'none';
+
+            const deviceCtx = document.getElementById('device-chart').getContext('2d');
+            deviceChart = new Chart(deviceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mapped', 'Unmapped'],
+                    datasets: [{
+                        data: [0, 0],
+                        backgroundColor: ['#28a745', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Device Status'
+                        }
+                    }
+                }
+            });
+
+            const recordCtx = document.getElementById('record-chart').getContext('2d');
+            recordChart = new Chart(recordCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Pi-hole', 'Meraki'],
+                    datasets: [{
+                        label: 'Record Count',
+                        data: [0, 0],
+                        backgroundColor: ['#007bff', '#ffc107']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        title: {
+                            display: true,
+                            text: 'Record Counts'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
         });
     </script>
 </body>

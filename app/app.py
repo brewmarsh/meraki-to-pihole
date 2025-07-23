@@ -235,3 +235,16 @@ async def docs(request: Request):
 @limiter.limit(get_rate_limit)
 async def health_check(request: Request):
     return JSONResponse(content={"status": "ok"})
+
+@app.post("/generate-test-data")
+@limiter.limit(get_rate_limit)
+async def generate_test_data(request: Request):
+    """Generates some test data."""
+    log.info("Test data generation requested via web UI.")
+    try:
+        from .meraki_pihole_sync import generate_test_data as generate
+        generate()
+        return JSONResponse(content={"message": "Test data generated."})
+    except Exception as e:
+        log.error("Error generating test data", error=e)
+        return JSONResponse(content={"message": f"Test data generation failed: {e}"}, status_code=500)
