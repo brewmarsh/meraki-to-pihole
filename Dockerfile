@@ -13,7 +13,7 @@ RUN poetry config virtualenvs.create false && poetry install --only main
 FROM python:3.10-slim-buster
 
 # Create a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN addgroup -S appgroup && adduser --system --ingroup appgroup appuser
 
 WORKDIR /app
 
