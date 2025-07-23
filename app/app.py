@@ -65,8 +65,8 @@ templates = Jinja2Templates(directory="app/templates")
 
 
 @app.get("/", response_class=HTMLResponse)
+@limiter.limit(get_rate_limit)
 async def read_root(request: Request):
-    await limiter.check(get_rate_limit())
     return templates.TemplateResponse("index.html", {"request": request, "sync_interval": get_sync_interval()})
 
 
@@ -202,12 +202,11 @@ async def get_mappings(request: Request):
 class UpdateIntervalRequest(BaseModel):
     interval: int
 
-
 @app.post("/update-interval")
 @limiter.limit(get_rate_limit)
-async def update_interval(request: UpdateIntervalRequest):
-    Path("/app/sync_interval.txt").write_text(str(request.interval))
-    log.info("Sync interval updated", interval=request.interval)
+async def update_interval(request: Request, data: UpdateIntervalRequest):
+    Path("/app/sync_interval.txt").write_text(str(data.interval))
+    log.info("Sync interval updated", interval=data.interval)
     return JSONResponse(content={"message": "Sync interval updated."})
 
 
@@ -217,8 +216,8 @@ class ClearLogRequest(BaseModel):
 
 @app.post("/clear-log")
 @limiter.limit(get_rate_limit)
-async def clear_log(request: ClearLogRequest):
-    if request.log == 'sync':
+async def clear_log(request: Request, data: ClearLogRequest):
+    if data.log == 'sync':
         try:
             Path('/app/logs/sync.log').write_text('')
             return JSONResponse(content={"message": "Sync log cleared."})

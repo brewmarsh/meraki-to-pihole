@@ -21,15 +21,19 @@ def get_requests_session():
         return _session
 
     retry_strategy = Retry(
-        total=3,
+        total=4,
+        connect=4,
+        read=4,
+        redirect=4,
+        other=4,
         backoff_factor=1,
         status_forcelist=[429, 500, 502, 503, 504],
         allowed_methods=["HEAD", "GET", "OPTIONS", "PUT", "POST", "DELETE"]
     )
     adapter = HTTPAdapter(max_retries=retry_strategy)
     session = requests.Session()
-    session.mount("http://", adapter)
     session.mount("https://", adapter)
+    session.mount("http://", adapter)
     _session = session
     return _session
 

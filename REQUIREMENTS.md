@@ -113,6 +113,10 @@
 *   **Dark Mode:** Implement a dark mode option for the web UI. (Completed)
 *   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`). (Completed)
 
+### 5.1.2. Bugs
+
+*   **Retry Mechanism Test:** The `test_retry_mechanism` test in `tests/test_pihole_client.py` is failing. The retry mechanism is not working as expected in the test environment. This needs to be investigated and fixed.
+
 ### 5.2. Medium Priority
 
 *   **Generate Test Data:** Add a feature to the web UI to generate test data.
