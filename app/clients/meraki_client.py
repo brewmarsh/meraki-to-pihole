@@ -1,6 +1,7 @@
-import logging
 import meraki
+import structlog
 
+log = structlog.get_logger()
 
 def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict):
     """

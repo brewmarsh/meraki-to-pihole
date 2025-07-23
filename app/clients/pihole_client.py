@@ -1,13 +1,37 @@
-import logging
-import requests
 from urllib.parse import quote
 
+import requests
+import structlog
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
+
+log = structlog.get_logger()
+
 # --- Globals for Session Caching ---
-# These variables will hold the session ID and CSRF token to be reused across sync runs.
-# This avoids re-authenticating for every single sync operation if the session is still valid.
 _pihole_sid = None
 _pihole_csrf_token = None
+_session = None
 
+def get_requests_session():
+    """
+    Creates and configures a requests session with a retry mechanism.
+    """
+    global _session
+    if _session:
+        return _session
+
+    retry_strategy = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["HEAD", "GET", "OPTIONS", "PUT", "POST", "DELETE"]
+    )
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session = requests.Session()
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    _session = session
+    return _session
 
 def authenticate_to_pihole(pihole_url, pihole_api_key):
     """
@@ -24,6 +48,7 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
     """
     global _pihole_sid, _pihole_csrf_token
 
+    session = get_requests_session()
     base_url = pihole_url.rstrip("/")
     if base_url.endswith(("/admin", "/api.php")):
         base_url = base_url.rsplit("/", 1)[0]
@@ -31,59 +56,53 @@ def authenticate_to_pihole(pihole_url, pihole_api_key):
 
     # 1. If we have a cached session, check if it's still valid
     if _pihole_sid and _pihole_csrf_token:
-        logging.debug("Found cached Pi-hole session. Verifying...")
+        log.debug("Found cached Pi-hole session. Verifying...")
         try:
-            # A lightweight way to check session validity is to make a simple, authenticated API call.
-            # Fetching custom DNS hosts is a good candidate as it's a necessary part of the sync anyway.
-            # We pass the cached credentials to the request function.
             verification_response = _pihole_api_request(
                 pihole_url, _pihole_sid, _pihole_csrf_token, "GET", "/api/config/dns/hosts"
             )
-            # If the request was successful (i.e., didn't return None), the session is valid.
             if verification_response is not None:
-                logging.debug("Cached Pi-hole session is still valid.")
+                log.debug("Cached Pi-hole session is still valid.")
                 return _pihole_sid, _pihole_csrf_token
             else:
-                logging.warning("Cached Pi-hole session appears to be invalid/expired. Attempting to re-authenticate.")
+                log.warning("Cached Pi-hole session appears to be invalid/expired. Attempting to re-authenticate.")
         except requests.exceptions.RequestException as e:
-            logging.warning(f"Failed to verify Pi-hole session due to a network error: {e}. Re-authenticating.")
+            log.warning("Failed to verify Pi-hole session due to a network error.", error=e)
 
     # 2. If no cached session or if it was invalid, perform full authentication
-    logging.info(f"No valid cached session. Authenticating to Pi-hole at {auth_url}")
+    log.info("No valid cached session. Authenticating to Pi-hole.", auth_url=auth_url)
     try:
-        response = requests.post(auth_url, json={"password": pihole_api_key}, timeout=10)
-        response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+        response = session.post(auth_url, json={"password": pihole_api_key}, timeout=10)
+        response.raise_for_status()
         auth_data = response.json()
-        session = auth_data.get("session", {})
+        session_data = auth_data.get("session", {})
 
-        if session.get("valid"):
-            _pihole_sid = session.get("sid")
-            _pihole_csrf_token = session.get("csrf")
-            logging.info("Successfully authenticated to Pi-hole and cached new session.")
-            if session.get("totp"):
-                logging.warning("2FA is enabled on this Pi-hole; this script does not support it.")
+        if session_data.get("valid"):
+            _pihole_sid = session_data.get("sid")
+            _pihole_csrf_token = session_data.get("csrf")
+            log.info("Successfully authenticated to Pi-hole and cached new session.")
+            if session_data.get("totp"):
+                log.warning("2FA is enabled on this Pi-hole; this script does not support it.")
             return _pihole_sid, _pihole_csrf_token
         else:
-            # Clear any potentially stale credentials
             _pihole_sid, _pihole_csrf_token = None, None
-            logging.error(f"Failed to authenticate to Pi-hole: {session.get('message', 'No error message provided.')}")
+            log.error("Failed to authenticate to Pi-hole", message=session_data.get('message', 'No error message provided.'))
             return None, None
 
     except requests.exceptions.HTTPError as e:
-        # Handle specific HTTP errors if needed, e.g., 429 Too Many Requests
         if e.response and e.response.status_code == 429:
-            logging.warning("Pi-hole auth API returned HTTP 429 (Too Many Requests). Will retry on next sync cycle.")
+            log.warning("Pi-hole auth API returned HTTP 429 (Too Many Requests). Will retry on next sync cycle.")
         else:
-            logging.error(f"Authentication to Pi-hole failed with HTTP error: {e}")
+            log.error("Authentication to Pi-hole failed with HTTP error", error=e)
     except Exception as e:
-        logging.error(f"An unexpected error occurred during Pi-hole authentication: {e}")
+        log.error("An unexpected error occurred during Pi-hole authentication", error=e)
 
-    # Ensure globals are cleared on failure
     _pihole_sid, _pihole_csrf_token = None, None
     return None, None
 
 
 def _pihole_api_request(pihole_url, sid, csrf_token, method, path, data=None):
+    session = get_requests_session()
     base_url = pihole_url.rstrip("/")
     if base_url.endswith("/admin"):
         base_url = base_url.replace("/admin", "")
@@ -97,20 +116,19 @@ def _pihole_api_request(pihole_url, sid, csrf_token, method, path, data=None):
     cookies = {"SID": sid}
 
     try:
-        logging.debug(f"Pi-hole API Request: URL={url}, Method={method}, Headers={headers}, Data={data}")
-        response = requests.request(method, url, headers=headers, cookies=cookies, json=data, timeout=10)
-        logging.debug(f"Pi-hole API Request URL: {response.url}")
-        logging.debug(f"Pi-hole API Request Headers: {response.request.headers}")
-        logging.debug(f"Pi-hole API Response Status Code: {response.status_code}")
-        logging.debug(f"Pi-hole API Response Text: {response.text}")
+        log.debug("Pi-hole API Request", url=url, method=method, headers=headers, data=data)
+        response = session.request(method, url, headers=headers, cookies=cookies, json=data, timeout=10)
+        log.debug("Pi-hole API Response", url=response.url, headers=response.request.headers, status_code=response.status_code, text=response.text)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.HTTPError as e:
-        logging.error(
-            f"Pi-hole API HTTP error: {e} - Response: {e.response.text[:200] if e.response and e.response.text else 'No response text'}"
+        log.error(
+            "Pi-hole API HTTP error",
+            error=e,
+            response=e.response.text[:200] if e.response and e.response.text else 'No response text'
         )
     except requests.exceptions.RequestException as e:
-        logging.error(f"Pi-hole API request failed due to network or request issue: {e}")
+        log.error("Pi-hole API request failed due to network or request issue", error=e)
     return None
 
 
@@ -129,10 +147,10 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
               Returns None if the request fails or if the session is invalid.
     """
     if not sid or not csrf_token:
-        logging.error("Cannot fetch Pi-hole DNS records without a valid session.")
+        log.error("Cannot fetch Pi-hole DNS records without a valid session.")
         return None
 
-    logging.debug("Fetching existing custom DNS records from Pi-hole...")
+    log.debug("Fetching existing custom DNS records from Pi-hole...")
     response_data = _pihole_api_request(pihole_url, sid, csrf_token, "GET", "/api/config/dns/hosts")
 
     records = {}  # Store as {domain: ip}
@@ -142,11 +160,9 @@ def get_pihole_custom_dns_records(pihole_url, sid, csrf_token):
             if len(parts) == 2:
                 ip_address, domain = parts
                 records[domain.strip().lower()] = ip_address.strip()
-        logging.debug(
-            f"Found {len(records)} custom DNS IP mappings in Pi-hole."
-        )
+        log.debug("Found custom DNS IP mappings in Pi-hole", count=len(records))
     else:
-        logging.error("Failed to fetch custom DNS records from Pi-hole (API request failed or returned None).")
+        log.error("Failed to fetch custom DNS records from Pi-hole (API request failed or returned None).")
         return None
     return records
 
@@ -160,16 +176,16 @@ def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_
     new_ip_cleaned = new_ip.strip()
 
     if not domain_cleaned or not new_ip_cleaned:  # Basic validation
-        logging.warning(f"Skipping invalid record: domain='{domain}', ip='{new_ip}'")
+        log.warning("Skipping invalid record", domain=domain, ip=new_ip)
         return False
 
     if existing_records_cache is None:  # Should have been checked by caller, but defensive
-        logging.error("Cannot add or update DNS record: existing Pi-hole records cache is None.")
+        log.error("Cannot add or update DNS record: existing Pi-hole records cache is None.")
         return False
 
     # Check if the exact domain-ip pair already exists
     if existing_records_cache.get(domain_cleaned) == new_ip_cleaned:
-        logging.debug(f"DNS record {domain_cleaned} -> {new_ip_cleaned} already exists in Pi-hole. No action needed.")
+        log.debug("DNS record already exists in Pi-hole. No action needed.", domain=domain_cleaned, ip=new_ip_cleaned)
         return True
 
     # Add or update the record
@@ -177,14 +193,14 @@ def add_or_update_dns_record_in_pihole(pihole_url, sid, csrf_token, domain, new_
     response = _pihole_api_request(pihole_url, sid, csrf_token, "PUT", path)
 
     if response and response.get("success"):
-        logging.info(f"Successfully added/updated DNS record: {domain_cleaned} -> {new_ip_cleaned}.")
+        log.info("Successfully added/updated DNS record", domain=domain_cleaned, ip=new_ip_cleaned)
         existing_records_cache[domain_cleaned] = new_ip_cleaned
         return True
     elif response and response.get("error", {}).get("key") == "forbidden":
-        logging.error("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.")
+        log.error("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.")
         return False
     else:
-        logging.error(f"Failed to add/update DNS record {domain_cleaned} -> {new_ip_cleaned}. Response: {response}")
+        log.error("Failed to add/update DNS record", domain=domain_cleaned, ip=new_ip_cleaned, response=response)
         return False
 
 def remove_dns_record_from_pihole(pihole_url, sid, csrf_token, domain, ip):
@@ -195,15 +211,15 @@ def remove_dns_record_from_pihole(pihole_url, sid, csrf_token, domain, ip):
     ip_cleaned = ip.strip()
 
     if not domain_cleaned or not ip_cleaned:
-        logging.warning(f"Skipping invalid record for removal: domain='{domain}', ip='{ip}'")
+        log.warning("Skipping invalid record for removal", domain=domain, ip=ip)
         return False
 
     path = f"/api/config/dns/hosts/{quote(ip_cleaned + ' ' + domain_cleaned)}"
     response = _pihole_api_request(pihole_url, sid, csrf_token, "DELETE", path)
 
     if response and response.get("success"):
-        logging.info(f"Successfully removed DNS record: {domain_cleaned} -> {ip_cleaned}.")
+        log.info("Successfully removed DNS record", domain=domain_cleaned, ip=ip_cleaned)
         return True
     else:
-        logging.error(f"Failed to remove DNS record {domain_cleaned} -> {ip_cleaned}. Response: {response}")
+        log.error("Failed to remove DNS record", domain=domain_cleaned, ip=ip_cleaned, response=response)
         return False

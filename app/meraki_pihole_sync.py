@@ -19,8 +19,13 @@ import logging
 import os
 import sys
 from datetime import datetime
+from pathlib import Path
 
 import meraki
+
+# --- Logging Setup ---
+import structlog
+
 from .clients.meraki_client import get_all_relevant_meraki_clients
 from .clients.pihole_client import (
     add_or_update_dns_record_in_pihole,
@@ -28,12 +33,31 @@ from .clients.pihole_client import (
     get_pihole_custom_dns_records,
 )
 
-# --- Logging Setup ---
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO").upper(),
-    format="%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
+    format="%(message)s",
     stream=sys.stdout,
 )
+
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer(),
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+log = structlog.get_logger()
 # --- End Logging Setup ---
 
 # --- Constants ---
@@ -78,14 +102,14 @@ def load_app_config_from_env():
         config[var_name.lower()] = value  # Store keys in lowercase for consistent access
 
     if missing_vars_messages:
-        logging.error(
-            f"Missing mandatory environment variables: {', '.join(missing_vars_messages)}. Please set them and try again."
+        log.error(
+            "Missing mandatory environment variables", missing_vars=missing_vars_messages
         )
         sys.exit(1)
 
     # Optional environment variables
     config["pihole_api_key"] = os.getenv(ENV_PIHOLE_API_KEY)
-    logging.debug(f"Pi-hole API Key loaded from environment: {config['pihole_api_key']}")
+    log.debug(f"Pi-hole API Key loaded from environment: {config['pihole_api_key']}")
 
     meraki_network_ids_str = os.getenv(ENV_MERAKI_NETWORK_IDS, "")  # Default to empty string
     config["meraki_network_ids"] = [nid.strip() for nid in meraki_network_ids_str.split(",") if nid.strip()]
@@ -94,29 +118,32 @@ def load_app_config_from_env():
         default_timespan = "86400"  # 24 hours in seconds
         config["meraki_client_timespan_seconds"] = int(os.getenv(ENV_CLIENT_TIMESPAN, default_timespan))
     except ValueError:
-        logging.warning(
-            f"Invalid value for {ENV_CLIENT_TIMESPAN}: '{os.getenv(ENV_CLIENT_TIMESPAN)}'. Using default {default_timespan} seconds (24 hours)."
+        log.warning(
+            "Invalid value for MERAKI_CLIENT_TIMESPAN_SECONDS, using default",
+            invalid_value=os.getenv(ENV_CLIENT_TIMESPAN),
+            default_value=default_timespan,
         )
         config["meraki_client_timespan_seconds"] = int(default_timespan)
 
     # Sanity checks for placeholder values
     if config["meraki_org_id"].upper() == "YOUR_MERAKI_ORGANIZATION_ID":
-        logging.error(f"Placeholder value detected for {ENV_MERAKI_ORG_ID}. Please set a valid Organization ID.")
+        log.error("Placeholder value detected for MERAKI_ORG_ID")
         sys.exit(1)
     if (
         config["pihole_api_url"].upper() == "YOUR_PIHOLE_API_URL"
         or "YOUR_PIHOLE_IP_OR_HOSTNAME" in config["pihole_api_url"].upper()
     ):
-        logging.error(f"Placeholder value detected for {ENV_PIHOLE_API_URL}. Please set a valid Pi-hole API URL.")
+        log.error("Placeholder value detected for PIHOLE_API_URL")
         sys.exit(1)
     # Check for common example/placeholder suffixes to warn the user
     example_suffixes = [".LOCAL", ".YOURDOMAIN.LOCAL", ".YOURCUSTOMDOMAIN.LOCAL", "YOUR_HOSTNAME_SUFFIX"]
     if config["hostname_suffix"].upper() in example_suffixes:
-        logging.warning(
-            f"Possible example/placeholder value detected for {ENV_HOSTNAME_SUFFIX} ('{config['hostname_suffix']}'). Ensure this is your intended suffix."
+        log.warning(
+            "Possible example/placeholder value detected for HOSTNAME_SUFFIX",
+            hostname_suffix=config["hostname_suffix"],
         )
 
-    logging.info("Successfully loaded configuration from environment variables.")
+    log.info("Successfully loaded configuration from environment variables.")
     return config
 
 
@@ -165,12 +192,12 @@ def update_pihole_data(meraki_clients):
 
     sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
     if not sid or not csrf_token:
-        logging.error("Could not authenticate to Pi-hole. Halting sync.")
+        log.error("Could not authenticate to Pi-hole. Halting sync.")
         return
 
     existing_pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
     if existing_pihole_records is None:
-        logging.error("Could not fetch Pi-hole DNS records. Halting to prevent errors.")
+        log.error("Could not fetch Pi-hole DNS records. Halting to prevent errors.")
         return
 
     successful_syncs = 0
@@ -178,11 +205,11 @@ def update_pihole_data(meraki_clients):
     meraki_clients_by_ip = {client['ip']: client for client in meraki_clients}
     meraki_clients_by_name = {client['name'].replace(" ", "-").lower(): client for client in meraki_clients if client.get('name')}
 
-    changelog_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'changelog.log')
-    if not os.path.exists(changelog_path):
-        open(changelog_path, 'w').close()
+    changelog_path = Path(__file__).parent / 'changelog.log'
+    if not changelog_path.exists():
+        changelog_path.touch()
 
-    with open(changelog_path, "a+") as f:
+    with changelog_path.open("a+") as f:
         f.seek(0)
         previous_mappings = f.readlines()
         f.seek(0)
@@ -191,13 +218,13 @@ def update_pihole_data(meraki_clients):
         # Process updates and additions from Meraki
         for client in meraki_clients:
             if not client.get("name"):
-                logging.warning(f"Skipping client with no name and IP {client.get('ip')}")
+                log.warning("Skipping client with no name", client_ip=client.get("ip"))
                 continue
 
             # Basic validation for hostname compatibility
             client_name = client["name"]
             if ":" in client_name:
-                logging.warning(f"Skipping client with invalid characters in name: {client_name}")
+                log.warning("Skipping client with invalid characters in name", client_name=client_name)
                 continue
 
             client_name_sanitized = client_name.replace(" ", "-").lower()
@@ -219,8 +246,11 @@ def update_pihole_data(meraki_clients):
                 successful_syncs += 1
             else:
                 failed_syncs += 1
-                logging.warning(
-                    f"Failed to sync client '{client['name']}' (DNS: {domain_to_sync} -> {ip_to_sync}) to Pi-hole."
+                log.warning(
+                    "Failed to sync client to Pi-hole",
+                    client_name=client["name"],
+                    domain=domain_to_sync,
+                    ip=ip_to_sync,
                 )
 
         # Process deletions
@@ -232,14 +262,14 @@ def update_pihole_data(meraki_clients):
                     timestamp = datetime.now()
                     f.write(f"{timestamp}: Removed {domain} -> {ip}\n")
                 else:
-                    logging.warning(f"Failed to remove stale DNS record {domain} -> {ip}")
+                    log.warning("Failed to remove stale DNS record", domain=domain, ip=ip)
 
-    logging.info("--- Meraki to Pi-hole Sync Summary ---")
-    logging.info(f"Successfully synced/verified {successful_syncs} client(s).")
-    if failed_syncs > 0:
-        logging.warning(f"Failed to sync {failed_syncs} client(s). Check logs for details.")
-    logging.info(f"Total Meraki clients processed: {len(meraki_clients)}")
-    logging.info("--- Sync process complete ---")
+    log.info(
+        "Meraki to Pi-hole Sync Summary",
+        successful_syncs=successful_syncs,
+        failed_syncs=failed_syncs,
+        total_clients=len(meraki_clients),
+    )
 
 def main(update_type=None):
     """
@@ -249,16 +279,15 @@ def main(update_type=None):
     """
     app_version = os.getenv("APP_VERSION", "Not Set")
     commit_sha = os.getenv("COMMIT_SHA", "Not Set")
-    logging.info(f"--- Starting Meraki Pi-hole Sync Script --- Version: {app_version}, Commit: {commit_sha}")
+    log.info("Starting Meraki Pi-hole Sync Script", version=app_version, commit=commit_sha)
 
     meraki_clients = update_meraki_data()
-    if update_type is None or update_type == "pihole":
-        if meraki_clients:
-            update_pihole_data(meraki_clients)
+    if (update_type is None or update_type == "pihole") and meraki_clients:
+        update_pihole_data(meraki_clients)
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception as e:
-        logging.critical(f"An unhandled exception occurred in main: {e}", exc_info=True)
+    except Exception:
+        log.critical("An unhandled exception occurred in main", exc_info=True)
         sys.exit(1)

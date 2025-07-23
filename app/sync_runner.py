@@ -1,8 +1,13 @@
-import time
-import logging
 import os
-import sys
-from .meraki_pihole_sync import main, load_app_config_from_env
+import time
+from pathlib import Path
+
+import structlog
+
+from .meraki_pihole_sync import main
+
+log = structlog.get_logger()
+
 
 def get_sync_interval():
     """
@@ -16,18 +21,19 @@ def get_sync_interval():
     """
     # Check for the UI-generated file first
     try:
-        with open("/app/sync_interval.txt", "r") as f:
-            interval = int(f.read().strip())
-            logging.debug(f"Using sync interval from file: {interval} seconds.")
+        interval_file = Path("/app/sync_interval.txt")
+        if interval_file.exists():
+            interval = int(interval_file.read_text().strip())
+            log.debug("Using sync interval from file", interval=interval)
             return interval
-    except (IOError, ValueError):
+    except (OSError, ValueError):
         # File not found or contains invalid data, proceed to the next source
         pass
 
     # Check for the environment variable next
     try:
         interval = int(os.getenv("SYNC_INTERVAL_SECONDS"))
-        logging.debug(f"Using sync interval from environment variable: {interval} seconds.")
+        log.debug("Using sync interval from environment variable", interval=interval)
         return interval
     except (TypeError, ValueError):
         # Env var is not set or is not a valid integer, proceed to default
@@ -35,32 +41,25 @@ def get_sync_interval():
 
     # Use the default value as a final fallback
     default_interval = 300  # 5 minutes
-    logging.debug(f"Using default sync interval: {default_interval} seconds.")
+    log.debug("Using default sync interval", interval=default_interval)
     return default_interval
 
 def run_sync():
     """
     Runs the main sync script in a loop with a configurable sleep interval.
     """
-    # --- Logging Setup ---
-    logging.basicConfig(
-        level=os.getenv("LOG_LEVEL", "INFO").upper(),
-        format="%(asctime)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s",
-        stream=sys.stdout,
-    )
-    # --- End Logging Setup ---
     while True:
         try:
-            logging.info("Starting a new sync process...")
+            log.info("Starting a new sync process...")
             main()
-            logging.info("Sync process completed successfully.")
+            log.info("Sync process completed successfully.")
         except SystemExit as e:
-            logging.warning(f"Sync script exited with code {e.code}.")
-        except Exception as e:
-            logging.critical(f"An unhandled exception occurred during sync: {e}", exc_info=True)
+            log.warning("Sync script exited", exit_code=e.code)
+        except Exception:
+            log.critical("An unhandled exception occurred during sync", exc_info=True)
 
         sync_interval = get_sync_interval()
-        logging.info(f"Sleeping for {sync_interval} seconds before next sync.")
+        log.info("Sleeping before next sync", sleep_interval=sync_interval)
         time.sleep(sync_interval)
 
 if __name__ == "__main__":
