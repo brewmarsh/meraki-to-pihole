@@ -6,10 +6,20 @@ from app.meraki_pihole_sync import main
 
 class TestMerakiPiholeSync(unittest.TestCase):
 
+    @patch('app.meraki_pihole_sync.load_app_config_from_env')
     @patch('app.meraki_pihole_sync.update_meraki_data')
     @patch('app.meraki_pihole_sync.update_pihole_data')
-    def test_main_success_flow(self, mock_update_pihole_data, mock_update_meraki_data):
+    def test_main_success_flow(self, mock_update_pihole_data, mock_update_meraki_data, mock_load_config):
         # Arrange
+        mock_load_config.return_value = {
+            "meraki_api_key": "fake_meraki_key",
+            "pihole_api_url": "http://fake-pihole.local",
+            "pihole_api_key": "fake_pihole_key",
+            "hostname_suffix": ".lan",
+            "meraki_org_id": "fake_org_id",
+            "meraki_network_ids": [],
+            "meraki_client_timespan_seconds": 86400,
+        }
         mock_update_meraki_data.return_value = [
             {"name": "Test-Client-1", "ip": "192.168.1.10"}
         ]
