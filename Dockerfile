@@ -4,11 +4,11 @@ WORKDIR /app
 
 RUN pip install poetry
 
-COPY pyproject.toml poetry.lock* ./
+COPY pyproject.toml poetry.lock* README.md ./
 
-RUN poetry install --only main
+RUN poetry install --only main --no-root
 
-COPY . .
+COPY app ./app
 
 EXPOSE 8000
 
