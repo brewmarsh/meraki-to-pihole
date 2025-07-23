@@ -136,8 +136,6 @@
                             </div>
                             <div class="form-text">The interval between automatic syncs.</div>
                         </div>
-                        <hr>
-                        <button id="generate-test-data" class="btn btn-warning w-100">Generate Test Data</button>
                     </div>
                 </div>
             </div>
@@ -218,13 +216,6 @@
             });
         });
 
-        document.getElementById('generate-test-data').addEventListener('click', () => {
-            fetch('/generate-test-data', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    showToast(data.message);
-                });
-        });
 
         document.querySelectorAll('[data-log]').forEach(button => {
             button.addEventListener('click', () => {

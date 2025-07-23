@@ -271,26 +271,6 @@ def update_pihole_data(meraki_clients):
         total_clients=len(meraki_clients),
     )
 
-def generate_test_data():
-    """
-    Generates some test data.
-    """
-    config = load_app_config_from_env()
-    dashboard = meraki.DashboardAPI(
-        api_key=config["meraki_api_key"],
-        output_log=False,
-        print_console=False,
-        suppress_logging=True,
-    )
-    for i in range(10):
-        dashboard.devices.create_device(
-            serial=f"Q234-ABCD-000{i}",
-            name=f"test-device-{i}",
-            mac=f"00:11:22:33:44:5{i}",
-            lanIp=f"192.168.1.{100 + i}",
-            networkId=config["meraki_network_ids"][0],
-        )
-
 def main(update_type=None):
     """
     Main function to run the Meraki to Pi-hole sync process.

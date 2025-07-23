@@ -119,7 +119,6 @@
 
 ### 5.2. Medium Priority
 
-*   **Generate Test Data:** Add a feature to the web UI to generate test data.
 *   **Dashboard Enhancements:** Add charts and graphs to the web UI to visualize the synchronization data.
 *   **Loading Screen:** Display a loading screen while the page is initializing to improve the user experience.
 *   **Developer Documentation:** Create a `DEVELOPERS.md` file with instructions for setting up a development environment.
