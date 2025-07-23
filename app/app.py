@@ -67,7 +67,12 @@ templates = Jinja2Templates(directory="app/templates")
 @app.get("/", response_class=HTMLResponse)
 @limiter.limit(get_rate_limit)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "sync_interval": get_sync_interval()})
+    return templates.TemplateResponse("index.html", {
+        "request": request,
+        "sync_interval": get_sync_interval(),
+        "app_logo_url": os.getenv("APP_LOGO_URL"),
+        "app_color_scheme": os.getenv("APP_COLOR_SCHEME"),
+    })
 
 
 @app.post("/update-meraki")
