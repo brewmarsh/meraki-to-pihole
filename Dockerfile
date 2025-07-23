@@ -24,6 +24,7 @@ RUN chown -R appuser:appgroup /home/appuser/app
 
 USER appuser
 
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 ENV FLASK_PORT=8000
 EXPOSE 8000
 
