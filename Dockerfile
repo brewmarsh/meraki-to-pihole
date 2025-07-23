@@ -22,7 +22,8 @@ RUN pip install poetry
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 
 COPY pyproject.toml poetry.lock ./
-RUN poetry config virtualenvs.in-project false && poetry install --only main --no-root
+ENV POETRY_VIRTUALENVS_CREATE=false
+RUN poetry install --only main --no-root
 COPY app/ /app/app/
 
 RUN chown -R appuser:appgroup /app
