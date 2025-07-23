@@ -98,3 +98,26 @@
 *   **Architectural Overview:** Create a document that provides a high-level overview of the application's architecture.
 *   **Deployment Guide:** Write a comprehensive guide that details the steps for deploying the application to a production environment.
 *   **Contribution Guidelines:** Establish clear guidelines for contributing to the project, including code style, commit message formats, and the pull request process.
+
+## 5. Future Enhancements
+
+### 5.1. High Priority
+
+*   **Restrict Dashboard Access:** Restrict access to the web UI to a configurable IP subnet.
+*   **Input Validation:** Implement robust input validation on all user-supplied data to prevent common vulnerabilities such as XSS and SQL injection.
+*   **Rate Limiting:** Apply rate limiting to API endpoints to prevent abuse and denial-of-service attacks.
+*   **Dark Mode:** Implement a dark mode option for the web UI.
+*   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`).
+
+### 5.2. Medium Priority
+
+*   **Generate Test Data:** Add a feature to the web UI to generate test data.
+*   **Dashboard Enhancements:** Add charts and graphs to the web UI to visualize the synchronization data.
+*   **Loading Screen:** Display a loading screen while the page is initializing to improve the user experience.
+*   **Developer Documentation:** Create a `DEVELOPERS.md` file with instructions for setting up a development environment.
+*   **Dependency Documentation:** Create a `DEPENDENCIES.md` file that lists all the project's dependencies.
+
+### 5.3. Low Priority
+
+*   **Customizable Branding:** Allow the user to customize the logo and color scheme of the web UI.
+*   **Welcome Screen:** Add a welcome screen that explains the application and how to configure it.
