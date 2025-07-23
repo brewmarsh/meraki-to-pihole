@@ -1,15 +1,19 @@
 import sys
-import os
 import unittest
-from unittest.mock import patch, MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import requests
 
 from app.clients.pihole_client import (
+    add_or_update_dns_record_in_pihole,
     authenticate_to_pihole,
     get_pihole_custom_dns_records,
-    add_or_update_dns_record_in_pihole,
+    get_requests_session,
 )
+
+sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
+
 
 class TestPiholeClient(unittest.TestCase):
 
@@ -23,11 +27,13 @@ class TestPiholeClient(unittest.TestCase):
         self.addCleanup(patcher.stop)
         patcher.start()
 
-    @patch('requests.post')
-    @patch('app.clients.pihole_client._pihole_api_request')
-    def test_authenticate_to_pihole_new_authentication(self, mock_api_request, mock_post):
+        patcher = patch('app.clients.pihole_client._session', None)
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
+    @patch('requests.Session.post')
+    def test_authenticate_to_pihole_new_authentication(self, mock_post):
         # Arrange
-        mock_api_request.return_value = None  # Simulate no valid cached session
         mock_post.return_value.json.return_value = {"session": {"valid": True, "sid": "456", "csrf": "def"}}
         mock_post.return_value.raise_for_status = MagicMock()
 
@@ -72,6 +78,21 @@ class TestPiholeClient(unittest.TestCase):
         # Assert
         self.assertTrue(result)
         self.assertEqual(existing_records, {"new.com": "9.9.9.9"})
+
+    @patch('requests.adapters.HTTPAdapter.send')
+    def test_retry_mechanism(self, mock_send):
+        # Arrange
+        mock_send.side_effect = requests.exceptions.ConnectionError()
+
+        session = get_requests_session()
+        session.keep_alive = False
+
+        # Act
+        with self.assertRaises(requests.exceptions.ConnectionError):
+            session.get("http://test.com")
+
+        # Assert
+        self.assertEqual(mock_send.call_count, 4)
 
     @patch('app.clients.pihole_client._pihole_api_request')
     def test_add_or_update_dns_record_in_pihole_update(self, mock_request):

@@ -12,6 +12,9 @@ RUN poetry config virtualenvs.create false && poetry install --only main
 # final stage
 FROM python:3.10-slim-buster
 
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 WORKDIR /app
 
 RUN pip install poetry
@@ -21,6 +24,10 @@ COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/pytho
 COPY pyproject.toml poetry.lock ./
 RUN poetry install --only main --no-root
 COPY app/ /app/app/
+
+RUN chown -R appuser:appgroup /app
+
+USER appuser
 
 ENV FLASK_PORT=8000
 EXPOSE 8000

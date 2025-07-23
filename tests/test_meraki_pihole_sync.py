@@ -1,9 +1,8 @@
-import sys
-import os
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from app.meraki_pihole_sync import main
+
 
 class TestMerakiPiholeSync(unittest.TestCase):
 

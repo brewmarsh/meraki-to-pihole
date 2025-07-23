@@ -1,11 +1,12 @@
 import sys
-import os
 import unittest
-from unittest.mock import MagicMock, patch
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from pathlib import Path
+from unittest.mock import patch
 
 from app.clients.meraki_client import get_all_relevant_meraki_clients
+
+sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
+
 
 class TestMerakiClient(unittest.TestCase):
 
