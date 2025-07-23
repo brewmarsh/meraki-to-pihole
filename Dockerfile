@@ -15,22 +15,16 @@ FROM python:3.10-slim-buster
 # Create a non-root user
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 
-WORKDIR /app
-
-RUN pip install poetry
+WORKDIR /home/appuser/app
 
 COPY --from=builder /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
+COPY --from=builder /app /home/appuser/app
 
-COPY pyproject.toml poetry.lock ./
-ENV POETRY_VIRTUALENVS_CREATE=false
-RUN poetry install --only main --no-root
-COPY app/ /app/app/
-
-RUN chown -R appuser:appgroup /app
+RUN chown -R appuser:appgroup /home/appuser/app
 
 USER appuser
 
 ENV FLASK_PORT=8000
 EXPOSE 8000
 
-CMD ["poetry", "run", "uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app.app:app", "--host", "0.0.0.0", "--port", "8000"]
