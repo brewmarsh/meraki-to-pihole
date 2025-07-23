@@ -79,6 +79,10 @@
 *   **Containerization:** The application shall be containerized using Docker. (Completed)
 *   **Multi-stage Docker Builds:** Implemented multi-stage Docker builds to reduce the size of the final image. (Completed)
 *   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`).
+
+### 5.1.1. Bugs
+
+*   **Rate Limiting Tests:** The rate limiting tests are failing. The `@limiter.limit` decorator is not being re-evaluated with the patched value in the tests. This needs to be investigated and fixed.
 *   **Local Development:** The project shall provide a `docker-compose.yml` file for easy local development and testing. (Completed)
 *   **Dependency Management:** Switched to Poetry for dependency management to ensure reproducible builds. (Completed)
 *   **Code Quality:** The project shall use pre-commit hooks to enforce code quality standards.
@@ -103,11 +107,11 @@
 
 ### 5.1. High Priority
 
-*   **Restrict Dashboard Access:** Restrict access to the web UI to a configurable IP subnet.
-*   **Input Validation:** Implement robust input validation on all user-supplied data to prevent common vulnerabilities such as XSS and SQL injection.
-*   **Rate Limiting:** Apply rate limiting to API endpoints to prevent abuse and denial-of-service attacks.
-*   **Dark Mode:** Implement a dark mode option for the web UI.
-*   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`).
+*   **Restrict Dashboard Access:** Restrict access to the web UI to a configurable IP subnet. (Completed)
+*   **Input Validation:** Implement robust input validation on all user-supplied data to prevent common vulnerabilities such as XSS and SQL injection. (Completed)
+*   **Rate Limiting:** Apply rate limiting to API endpoints to prevent abuse and denial-of-service attacks. (Completed)
+*   **Dark Mode:** Implement a dark mode option for the web UI. (Completed)
+*   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`). (Completed)
 
 ### 5.2. Medium Priority
 

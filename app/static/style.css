@@ -20,3 +20,37 @@
     top: 50%;
     transform: translateY(-50%);
 }
+
+.dark-mode {
+    background-color: #212529;
+    color: #f8f9fa;
+}
+
+.dark-mode .card {
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+.dark-mode .card-header {
+    background-color: #495057;
+}
+
+.dark-mode .log-box {
+    background-color: #2c3034;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+.dark-mode .form-control {
+    background-color: #495057;
+    border-color: #6c757d;
+    color: #f8f9fa;
+}
+
+.dark-mode .form-check-label {
+    color: #f8f9fa;
+}
+
+.dark-mode .navbar {
+    background-color: #343a40 !important;
+}
