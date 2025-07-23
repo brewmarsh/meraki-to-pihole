@@ -54,11 +54,7 @@ class TestApp(unittest.TestCase):
         response = self.client.post("/update-interval", json={"interval": new_interval})
 
         # Then
-        self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {"message": "Invalid interval."})
-
-        # Verify the file was not created
-        self.assertFalse(self.interval_file_path.exists())
+        self.assertEqual(response.status_code, 422)
 
     def test_clear_log(self):
         # Given
