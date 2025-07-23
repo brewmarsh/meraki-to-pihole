@@ -360,6 +360,29 @@
             }
             document.getElementById('loading-screen').style.display = 'none';
 
+            fetch('/cache')
+                .then(response => response.json())
+                .then(data => {
+                    const cache = data.cache;
+                    if (cache) {
+                        document.getElementById('pihole-mappings').textContent = JSON.stringify(cache.pihole, null, 2);
+                        document.getElementById('meraki-mappings').textContent = JSON.stringify(cache.meraki, null, 2);
+                        document.getElementById('mapped-devices').textContent = JSON.stringify(cache.mapped, null, 2);
+                        document.getElementById('unmapped-meraki-devices').textContent = JSON.stringify(cache.unmapped_meraki, null, 2);
+
+                        document.getElementById('pihole-count').textContent = Object.keys(cache.pihole).length;
+                        document.getElementById('meraki-count').textContent = cache.meraki.length;
+                        document.getElementById('mapped-count').textContent = cache.mapped;
+                        document.getElementById('unmapped-meraki-count').textContent = cache.unmapped_meraki.length;
+
+                        deviceChart.data.datasets[0].data = [cache.mapped, cache.unmapped_meraki.length];
+                        deviceChart.update();
+
+                        recordChart.data.datasets[0].data = [Object.keys(cache.pihole).length, cache.meraki.length];
+                        recordChart.update();
+                    }
+                });
+
             fetch('/history')
                 .then(response => response.json())
                 .then(data => {

@@ -293,13 +293,25 @@ def main(update_type=None):
             existing_pihole_records = get_pihole_custom_dns_records(config["pihole_api_url"], sid, csrf_token)
             if existing_pihole_records is not None:
                 mapped_devices = 0
+                unmapped_meraki_devices = []
                 for client in meraki_clients:
                     client_name_sanitized = client["name"].replace(" ", "-").lower()
                     domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
                     if domain_to_sync in existing_pihole_records:
                         mapped_devices += 1
+                    else:
+                        unmapped_meraki_devices.append(client)
                 with open("/app/history.log", "a") as f:
                     f.write(f"{int(time.time())},{mapped_devices}\n")
+
+                with open("/app/cache.json", "w") as f:
+                    import json
+                    json.dump({
+                        "pihole": existing_pihole_records,
+                        "meraki": meraki_clients,
+                        "mapped": mapped_devices,
+                        "unmapped_meraki": unmapped_meraki_devices,
+                    }, f)
 
 if __name__ == "__main__":
     try:

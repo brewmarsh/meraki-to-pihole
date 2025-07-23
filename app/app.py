@@ -246,3 +246,14 @@ async def get_history(request: Request):
         return JSONResponse(content={"history": history})
     except FileNotFoundError:
         return JSONResponse(content={"history": []})
+
+@app.get("/cache")
+@limiter.limit(get_rate_limit)
+async def get_cache(request: Request):
+    """Returns the cached results."""
+    try:
+        with open("/app/cache.json", "r") as f:
+            cache = json.load(f)
+        return JSONResponse(content={"cache": cache})
+    except FileNotFoundError:
+        return JSONResponse(content={"cache": {}})
