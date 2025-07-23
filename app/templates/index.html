@@ -39,6 +39,11 @@
                                     <canvas id="record-chart"></canvas>
                                 </div>
                             </div>
+                            <div class="row mt-4">
+                                <div class="col-md-12">
+                                    <canvas id="history-chart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -347,12 +352,24 @@
 
         let deviceChart;
         let recordChart;
+        let historyChart;
 
         document.addEventListener('DOMContentLoaded', () => {
             if (localStorage.getItem('darkMode') !== 'disabled') {
                 setDarkMode(true);
             }
             document.getElementById('loading-screen').style.display = 'none';
+
+            fetch('/history')
+                .then(response => response.json())
+                .then(data => {
+                    const history = data.history.map(line => {
+                        const [timestamp, count] = line.split(',');
+                        return { x: new Date(timestamp * 1000), y: parseInt(count) };
+                    });
+                    historyChart.data.datasets[0].data = history;
+                    historyChart.update();
+                });
 
             const deviceCtx = document.getElementById('device-chart').getContext('2d');
             deviceChart = new Chart(deviceCtx, {
@@ -403,6 +420,44 @@
                         }
                     },
                     scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const historyCtx = document.getElementById('history-chart').getContext('2d');
+            historyChart = new Chart(historyCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Mapped Devices',
+                        data: [],
+                        borderColor: '#28a745',
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        title: {
+                            display: true,
+                            text: 'Mapped Devices History',
+                            color: '#ffffff'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: 'hour'
+                            }
+                        },
                         y: {
                             beginAtZero: true
                         }

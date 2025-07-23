@@ -235,3 +235,14 @@ async def docs(request: Request):
 @limiter.limit(get_rate_limit)
 async def health_check(request: Request):
     return JSONResponse(content={"status": "ok"})
+
+@app.get("/history")
+@limiter.limit(get_rate_limit)
+async def get_history(request: Request):
+    """Returns the history of the number of mapped devices."""
+    try:
+        with open("/app/history.log", "r") as f:
+            history = f.readlines()
+        return JSONResponse(content={"history": history})
+    except FileNotFoundError:
+        return JSONResponse(content={"history": []})
