@@ -7,19 +7,24 @@ from ipaddress import ip_address, ip_network
 from pathlib import Path
 
 import markdown
+import meraki
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from .sync_logic import get_mappings_data, sync_pihole_dns, get_sync_interval
+from .clients.meraki_client import get_all_relevant_meraki_clients
+from .clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
+from .meraki_pihole_sync import load_app_config_from_env
+from .meraki_pihole_sync import main as run_sync_main
+from .sync_runner import get_sync_interval
 
 log = structlog.get_logger()
 
@@ -31,7 +36,7 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start the sync thread on application startup
-    sync_thread = threading.Thread(target=sync_pihole_dns, daemon=True)
+    sync_thread = threading.Thread(target=run_sync_main, daemon=True)
     sync_thread.start()
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -55,11 +60,11 @@ app.add_middleware(SecurityHeadersMiddleware)
 
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc: Exception):
-    return templates.TemplateResponse(request, "404.html", status_code=404)
+    return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
 
 @app.exception_handler(500)
 async def internal_server_error_exception_handler(request: Request, exc: Exception):
-    return templates.TemplateResponse(request, "500.html", status_code=500)
+    return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
@@ -83,7 +88,8 @@ templates = Jinja2Templates(directory="app/templates")
 @app.get("/", response_class=HTMLResponse)
 @limiter.limit(get_rate_limit)
 async def read_root(request: Request):
-    return templates.TemplateResponse(request, "index.html", {
+    return templates.TemplateResponse("index.html", {
+        "request": request,
         "sync_interval": get_sync_interval(),
         "app_logo_url": os.getenv("APP_LOGO_URL"),
         "app_color_scheme": os.getenv("APP_COLOR_SCHEME"),
@@ -97,7 +103,7 @@ async def update_meraki(request: Request):
     log.info("Meraki update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
-        sync_thread = threading.Thread(target=sync_pihole_dns, args=("meraki",))
+        sync_thread = threading.Thread(target=run_sync_main, args=("meraki",))
         sync_thread.start()
         return JSONResponse(content={"message": "Meraki update process started."})
     except Exception as e:
@@ -110,7 +116,7 @@ async def update_pihole(request: Request):
     log.info("Pi-hole update requested via web UI.")
     try:
         # Running the sync in a separate thread to avoid blocking the web server
-        sync_thread = threading.Thread(target=sync_pihole_dns, args=("pihole",))
+        sync_thread = threading.Thread(target=run_sync_main, args=("pihole",))
         sync_thread.start()
         return JSONResponse(content={"message": "Pi-hole update process started."})
     except Exception as e:
@@ -155,6 +161,65 @@ async def stream(request: Request):
 
     return StreamingResponse(event_stream(), media_type='text/event-stream')
 
+def _get_pihole_data(pihole_url, pihole_api_key):
+    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
+    if not sid or not csrf_token:
+        log.error("Failed to authenticate to Pi-hole in _get_pihole_data.")
+        return None, None
+
+    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+    if pihole_records is None:
+        log.error("Failed to get Pi-hole records in _get_pihole_data.")
+        return None, None
+
+    return sid, pihole_records
+
+def _get_meraki_data(config):
+    dashboard = meraki.DashboardAPI(
+        api_key=config["meraki_api_key"],
+        output_log=False,
+        print_console=False,
+        suppress_logging=True,
+    )
+    return get_all_relevant_meraki_clients(dashboard, config)
+
+def _map_devices(meraki_clients, pihole_records):
+    mapped_devices = []
+    unmapped_meraki_devices = []
+    pihole_ips = set(pihole_records.values())
+
+    for client in meraki_clients:
+        if client['ip'] in pihole_ips:
+            for domain, ip in pihole_records.items():
+                if client['ip'] == ip:
+                    mapped_devices.append({
+                        "meraki_name": client['name'],
+                        "pihole_domain": domain,
+                        "ip": ip
+                    })
+        else:
+            unmapped_meraki_devices.append(client)
+
+    return mapped_devices, unmapped_meraki_devices
+
+def get_mappings_data():
+    try:
+        config = load_app_config_from_env()
+        pihole_url = os.getenv("PIHOLE_API_URL")
+        pihole_api_key = os.getenv("PIHOLE_API_KEY")
+
+        sid, pihole_records = _get_pihole_data(pihole_url, pihole_api_key)
+        if not sid:
+            return {}
+
+        meraki_clients = _get_meraki_data(config)
+        mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
+
+        return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+    except Exception as e:
+        log.error("Error in get_mappings_data", error=e)
+        return {}
+
 @app.get("/mappings")
 @limiter.limit(get_rate_limit)
 async def get_mappings(request: Request):
@@ -190,7 +255,7 @@ async def clear_log(request: Request, data: ClearLogRequest):
 @limiter.limit(get_rate_limit)
 async def docs(request: Request):
     content = Path('/app/README.md').read_text()
-    return templates.TemplateResponse(request, "docs.html", {"content": markdown.markdown(content)})
+    return templates.TemplateResponse("docs.html", {"request": request, "content": markdown.markdown(content)})
 
 @app.get("/health")
 @limiter.limit(get_rate_limit)
@@ -202,7 +267,7 @@ async def health_check(request: Request):
 async def get_history(request: Request):
     """Returns the history of the number of mapped devices."""
     try:
-        with Path("/app/history.log").open() as f:
+        with open("/app/history.log", "r") as f:
             history = f.readlines()
         return JSONResponse(content={"history": history})
     except FileNotFoundError:
@@ -213,7 +278,7 @@ async def get_history(request: Request):
 async def get_cache(request: Request):
     """Returns the cached results."""
     try:
-        with Path("/app/cache.json").open() as f:
+        with open("/app/cache.json", "r") as f:
             cache = json.load(f)
         return JSONResponse(content={"cache": cache})
     except FileNotFoundError:

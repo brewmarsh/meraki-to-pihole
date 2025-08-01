@@ -19,6 +19,11 @@ ENV_PIHOLE_API_URL = "PIHOLE_API_URL"
 ENV_PIHOLE_API_KEY = "PIHOLE_API_KEY"
 ENV_HOSTNAME_SUFFIX = "HOSTNAME_SUFFIX"
 ENV_CLIENT_TIMESPAN = "MERAKI_CLIENT_TIMESPAN_SECONDS"
+ENV_LOG_FILE_PATH = "LOG_FILE_PATH"
+ENV_CACHE_FILE_PATH = "CACHE_FILE_PATH"
+ENV_HISTORY_FILE_PATH = "HISTORY_FILE_PATH"
+ENV_CHANGELOG_FILE_PATH = "CHANGELOG_FILE_PATH"
+ENV_SYNC_INTERVAL_FILE_PATH = "SYNC_INTERVAL_FILE_PATH"
 
 
 def load_app_config_from_env():
@@ -83,11 +88,20 @@ def load_app_config_from_env():
             hostname_suffix=config["hostname_suffix"],
         )
 
+    config["log_file_path"] = os.getenv(ENV_LOG_FILE_PATH, "/app/logs/sync.log")
+    config["cache_file_path"] = os.getenv(ENV_CACHE_FILE_PATH, "/app/cache.json")
+    config["history_file_path"] = os.getenv(ENV_HISTORY_FILE_PATH, "/app/history.log")
+    config["changelog_file_path"] = os.getenv(ENV_CHANGELOG_FILE_PATH, "/app/changelog.log")
+    config["sync_interval_file_path"] = os.getenv(ENV_SYNC_INTERVAL_FILE_PATH, "/app/sync_interval.txt")
+
     log.info("Successfully loaded configuration from environment variables.")
     return config
 
 
 def get_meraki_data(config):
+    """
+    Initializes the Meraki dashboard API and fetches all relevant clients.
+    """
     dashboard = meraki.DashboardAPI(
         api_key=config["meraki_api_key"],
         output_log=False,
@@ -98,6 +112,9 @@ def get_meraki_data(config):
 
 
 def get_mappings_data():
+    """
+    Gets the data for the mappings page.
+    """
     try:
         config = load_app_config_from_env()
         pihole_client = PiholeClient(config["pihole_api_url"], config["pihole_api_key"])
@@ -114,6 +131,9 @@ def get_mappings_data():
         return {}
 
 def map_devices(meraki_clients, pihole_records):
+    """
+    Maps Meraki clients to Pi-hole records.
+    """
     mapped_devices = []
     unmapped_meraki_devices = []
     pihole_ips = set(pihole_records.values())
@@ -142,8 +162,9 @@ def get_sync_interval():
     Returns:
         int: The sync interval in seconds.
     """
+    config = load_app_config_from_env()
     try:
-        interval_file = Path("/app/sync_interval.txt")
+        interval_file = Path(config["sync_interval_file_path"])
         if interval_file.exists():
             interval = int(interval_file.read_text().strip())
             log.debug("Using sync interval from file", interval=interval)
@@ -184,7 +205,7 @@ def sync_pihole_dns(update_type=None):
             meraki_clients_by_ip = {client['ip']: client for client in meraki_clients}
             meraki_clients_by_name = {client['name'].replace(" ", "-").lower(): client for client in meraki_clients if client.get('name')}
 
-            changelog_path = Path(__file__).parent / 'changelog.log'
+            changelog_path = Path(config["changelog_file_path"])
             if not changelog_path.exists():
                 changelog_path.touch()
 
@@ -251,10 +272,10 @@ def sync_pihole_dns(update_type=None):
                         unmapped_meraki_devices.append(client)
                 else:
                     unmapped_meraki_devices.append(client)
-            with Path("/app/history.log").open("a") as f:
+            with Path(config["history_file_path"]).open("a") as f:
                 f.write(f"{int(time.time())},{mapped_devices}\n")
 
-            with Path("/app/cache.json").open("w") as f:
+            with Path(config["cache_file_path"]).open("w") as f:
                 import json
                 json.dump({
                     "pihole": existing_pihole_records,
