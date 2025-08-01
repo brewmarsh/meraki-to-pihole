@@ -28,7 +28,7 @@
 *   **View Logs:** The Web UI shall display the application logs in real-time.
 *   **Update Sync Interval:** The Web UI shall allow updating the sync interval on the fly.
 *   **Clear Logs:** The Web UI shall provide a button to clear the log file.
-*   **Framework:** The Web UI shall be built with FastAPI. (Completed)
+*   **Framework:** The Web UI is built with FastAPI.
 
 ### 1.4. API
 
@@ -76,51 +76,47 @@
 
 ## 3. Build, CI/CD, and Deployment
 
-*   **Containerization:** The application shall be containerized using Docker. (Completed)
-*   **Multi-stage Docker Builds:** Implemented multi-stage Docker builds to reduce the size of the final image. (Completed)
+*   **Containerization:** The application is containerized using Docker.
+*   **Multi-stage Docker Builds:** Implemented multi-stage Docker builds to reduce the size of the final image.
 *   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`).
-
-### 5.1.1. Bugs
-
-*   **Rate Limiting Tests:** The rate limiting tests are failing. The `@limiter.limit` decorator is not being re-evaluated with the patched value in the tests. This needs to be investigated and fixed.
-*   **Local Development:** The project shall provide a `docker-compose.yml` file for easy local development and testing. (Completed)
-*   **Dependency Management:** Switched to Poetry for dependency management to ensure reproducible builds. (Completed)
-*   **Code Quality:** The project shall use pre-commit hooks to enforce code quality standards.
-*   **Linting and Static Analysis:** The project shall use `ruff` for linting and code formatting.
-*   **CI/CD Pipeline:** Implemented a CI/CD pipeline using GitHub Actions to automate testing. (Completed)
-*   **Semantic Versioning:** Automated semantic versioning based on commit messages using a GitHub Action. (Completed)
+*   **Local Development:** The project provides a `docker-compose.yml` file for easy local development and testing.
+*   **Dependency Management:** Switched to Poetry for dependency management to ensure reproducible builds.
+*   **Code Quality:** The project uses pre-commit hooks to enforce code quality standards.
+*   **Linting and Static Analysis:** The project uses `ruff` for linting and code formatting.
+*   **CI/CD Pipeline:** Implemented a CI/CD pipeline using GitHub Actions to automate testing.
+*   **Semantic Versioning:** Automated semantic versioning based on commit messages using a GitHub Action.
 *   **Automated Releases:** Set up an automated release process to publish new versions to a package repository (e.g., PyPI) and/or a container registry (e.g., Docker Hub).
 *   **Release Notes Generation:** Automate the generation of release notes from commit messages.
-*   **Security Scanning:** Integrated Trivy into the CI/CD pipeline to scan for vulnerabilities. (Completed)
+*   **Security Scanning:** Integrated Trivy into the CI/CD pipeline to scan for vulnerabilities.
 *   **Dependency Vulnerability Scanning:** Automatically scan dependencies for known vulnerabilities (e.g., using `pip-audit` or GitHub's Dependabot).
 *   **Test Coverage Reporting:** Integrate a tool like `codecov` or `coveralls` to track test coverage over time and enforce a minimum coverage threshold.
-*   **Infrastructure as Code:** Used Terraform to manage the deployment infrastructure. (Completed)
+*   **Infrastructure as Code:** Used Terraform to manage the deployment infrastructure.
 
 ## 4. Documentation
 
 *   **API Documentation:** Automatically generate interactive API documentation using FastAPI's built-in support for OpenAPI (Swagger UI and ReDoc).
 *   **Architectural Overview:** Create a document that provides a high-level overview of the application's architecture.
-*   **Deployment Guide:** Write a comprehensive guide that details the steps for deploying the application to a production environment.
+*   **Deployment Guide:** Write a comprehensive guide that details the a a production environment.
 *   **Contribution Guidelines:** Establish clear guidelines for contributing to the project, including code style, commit message formats, and the pull request process.
 
 ## 5. Future Enhancements
 
 ### 5.1. High Priority
 
-*   **Restrict Dashboard Access:** Restrict access to the web UI to a configurable IP subnet. (Completed)
-*   **Input Validation:** Implement robust input validation on all user-supplied data to prevent common vulnerabilities such as XSS and SQL injection. (Completed)
-*   **Rate Limiting:** Apply rate limiting to API endpoints to prevent abuse and denial-of-service attacks. (Completed)
-*   **Dark Mode:** Implement a dark mode option for the web UI. (Completed)
-*   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`). (Completed)
+*   **Restrict Dashboard Access:** Restrict access to the web UI to a configurable IP subnet.
+*   **Input Validation:** Implement robust input validation on all user-supplied data to prevent common vulnerabilities such as XSS and SQL injection.
+*   **Rate Limiting:** Apply rate limiting to API endpoints to prevent abuse and denial-of-service attacks.
+*   **Dark Mode:** Implement a dark mode option for the web UI.
+*   **Dockerfile Linting:** Add a step to the CI/CD pipeline to lint the `Dockerfile` for best practices and potential security issues (e.g., using `hadolint`).
 
 ### 5.1.2. Bugs
 
-*   **Retry Mechanism Test:** The `test_retry_mechanism` test in `tests/test_pihole_client.py` is failing. The retry mechanism is not working as expected in the test environment. This needs to be investigated and fixed.
+*   **Retry Mechanism Test:** The `test_retry_mechanism` test in `tests/test_pihole_client.py` is currently skipped because it is failing. The retry mechanism is not working as expected in the test environment. This needs to be investigated and fixed.
 
 ### 5.2. Medium Priority
 
-*   **Dashboard Enhancements:** Add charts and graphs to the web UI to visualize the synchronization data. (Completed)
-*   **Loading Screen:** Display a loading screen while the page is initializing to improve the user experience. (Completed)
+*   **Dashboard Enhancements:** Add charts and graphs to the web UI to visualize the synchronization data.
+*   **Loading Screen:** Display a loading screen while the page is initializing to improve the user experience.
 *   **Cache Results:** Cache the most recent set of results to avoid refreshing the data every time the page is refreshed.
 *   **Developer Documentation:** Create a `DEVELOPERS.md` file with instructions for setting up a development environment.
 *   **Dependency Documentation:** Create a `DEPENDENCIES.md` file that lists all the project's dependencies.
