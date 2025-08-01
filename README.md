@@ -47,7 +47,7 @@ The script runs on a configurable interval, and all configurations are managed v
 To run the unit tests, run the following command from the root of the project:
 
 ```bash
-python3 -m unittest discover tests
+poetry run pytest
 ```
 
 ## 🚀 How it Works
@@ -165,7 +165,7 @@ docker-compose exec meraki-pihole-sync python3 /app/meraki_pihole_sync.py
 | `SYNC_INTERVAL_SECONDS` | No        | The interval, in seconds, at which to sync the clients. Defaults to `300`. This can also be set from the web UI. | `600` (10 minutes)                                                   |
 | `LOG_LEVEL`             | No        | Logging level for the Python script. Options: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. Defaults to `INFO`. | `DEBUG`                                                              |
 | `TZ`                    | No        | Timezone for the container (e.g., `America/New_York`). Affects log timestamps. Defaults to UTC. | `Europe/London`                                                      |
-| `FLASK_PORT`            | No        | Port to run the web interface on. Defaults to `24653`.                                          | `8080`                                                               |
+| `APP_PORT`            | No        | Port to run the web interface on. Defaults to `24653`.                                          | `8080`                                                               |
 
 ## 🤔 Troubleshooting
 

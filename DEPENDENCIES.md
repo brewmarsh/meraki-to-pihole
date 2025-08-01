@@ -10,12 +10,9 @@ This document lists the project's dependencies.
 *   **fastapi**: ^0.116.1
 *   **uvicorn**: ^0.35.0
 *   **python-dotenv**: ^1.1.1
-*   **flask**: ^3.1.1
 *   **markdown**: ^3.8.2
 *   **httpx**: ^0.27.0
 *   **structlog**: ^24.1.0
-*   **types-requests**: ^2.32.4.20250611
-*   **types-markdown**: ^3.8.0.20250708
 *   **slowapi**: ^0.1.9
 
 ## Development Dependencies
