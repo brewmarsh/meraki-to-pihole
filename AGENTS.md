@@ -45,6 +45,7 @@ This project is a Flask application that syncs Meraki clients to a Pi-hole insta
 *   This project uses `ruff` for linting and formatting to ensure code quality and consistency. `ruff` is configured to replace the functionality of tools like `flake8` and `black`.
 *   All code should be checked with `ruff` before committing.
 *   The easiest way to ensure compliance is to use the pre-commit hooks provided in this repository. The hooks will automatically run `ruff` on any changed files before a commit is made.
+*   Avoid using magic strings or numbers in the code. Define constants where appropriate.
 
 ### Pre-commit Hooks Setup
 1.  Install `pre-commit` if you haven't already:
@@ -65,15 +66,25 @@ pre-commit run --all-files
 ### Docstrings
 *   All public functions and classes must have comprehensive docstrings using the Google Python Style Guide format.
 
-## 7. Environment Variables
+## 7. Logging
+
+*   The application uses the `logging` module to log messages.
+*   Logging messages should be informative and include context, such as the function name and relevant variables.
+
+## 8. Environment Variables
 
 *   The application requires several environment variables to be set. These are defined in `.env.example`. Copy this file to `.env` and fill in the required values.
 
-## 8. Input/Output Conventions
+## 9. Input/Output Conventions
 
 *   **API Responses:** API responses should be in JSON format.
 *   **Commit Messages:** Commit messages should follow the conventional commit format.
 
-## 9. Closed Loop Documentation
+## 10. Closed Loop Documentation
 
 *   Agents must update any documentation as they make changes to code. This includes updating this `AGENTS.md` file when a new development or debugging technique is found, updating `REQUIREMENTS.md` when requirements are implemented, new bugs are found or new features are identified, and updating `README.md` when something from the design is updated.
+
+## 11. Dependency Management
+
+*   This project uses `poetry` to manage dependencies. The dependencies are listed in `pyproject.toml`.
+*   Keep dependencies up-to-date. Consider using a tool like `dependabot` to automate this process.
