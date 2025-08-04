@@ -21,10 +21,10 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.responses import Response
 
 from .clients.meraki_client import get_all_relevant_meraki_clients
-from .clients.pihole_client import authenticate_to_pihole, get_pihole_custom_dns_records
-from .meraki_pihole_sync import load_app_config_from_env
-from .meraki_pihole_sync import main as run_sync_main
-from .sync_runner import get_sync_interval
+from .clients.pihole_client import PiholeClient
+from .sync_logic import load_app_config_from_env
+from .sync_logic import sync_pihole_dns as run_sync_main
+from .sync_logic import get_sync_interval
 
 log = structlog.get_logger()
 
@@ -36,8 +36,9 @@ limiter = Limiter(key_func=get_remote_address)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Start the sync thread on application startup
-    sync_thread = threading.Thread(target=run_sync_main, daemon=True)
-    sync_thread.start()
+    if os.getenv("TESTING") != "true":
+        sync_thread = threading.Thread(target=run_sync_main, daemon=True)
+        sync_thread.start()
     app.state.limiter = limiter
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
     yield
@@ -162,17 +163,17 @@ async def stream(request: Request):
     return StreamingResponse(event_stream(), media_type='text/event-stream')
 
 def _get_pihole_data(pihole_url, pihole_api_key):
-    sid, csrf_token = authenticate_to_pihole(pihole_url, pihole_api_key)
-    if not sid or not csrf_token:
+    client = PiholeClient(pihole_url, pihole_api_key)
+    if not client.sid:
         log.error("Failed to authenticate to Pi-hole in _get_pihole_data.")
         return None, None
 
-    pihole_records = get_pihole_custom_dns_records(pihole_url, sid, csrf_token)
+    pihole_records = client.get_custom_dns_records()
     if pihole_records is None:
         log.error("Failed to get Pi-hole records in _get_pihole_data.")
         return None, None
 
-    return sid, pihole_records
+    return client.sid, pihole_records
 
 def _get_meraki_data(config):
     dashboard = meraki.DashboardAPI(
