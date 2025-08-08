@@ -43,7 +43,28 @@ async def lifespan(app: FastAPI):
     yield
     # No cleanup needed on shutdown
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url="/api/docs", redoc_url="/api/redoc")
+
+
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net"
+        return response
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+
+@app.exception_handler(404)
+async def not_found_exception_handler(request: Request, exc: Exception):
+    return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
+@app.exception_handler(500)
+async def internal_server_error_exception_handler(request: Request, exc: Exception):
+    return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
