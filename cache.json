@@ -1,1 +1,1 @@
-{"pihole": {}, "meraki": [{"name": null, "ip": "192.168.1.11"}], "mapped": 0, "unmapped_meraki": [{"name": null, "ip": "192.168.1.11"}]}
+{"pihole": {}, "meraki": [{"name": "Test-Client-1", "ip": "192.168.1.10"}], "mapped": 0, "unmapped_meraki": [{"name": "Test-Client-1", "ip": "192.168.1.10"}]}

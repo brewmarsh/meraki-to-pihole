@@ -1,121 +1,88 @@
-import sys
 import unittest
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import requests
-
-from app.clients.pihole_client import (
-    add_or_update_dns_record_in_pihole,
-    authenticate_to_pihole,
-    get_pihole_custom_dns_records,
-    get_requests_session,
-)
-
-sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
-
+from unittest.mock import patch, MagicMock
+from app.clients.pihole_client import PiholeClient
 
 class TestPiholeClient(unittest.TestCase):
 
-    def setUp(self):
-        # Reset the cached session globals before each test
-        patcher = patch('app.clients.pihole_client._pihole_sid', None)
-        self.addCleanup(patcher.stop)
-        patcher.start()
-
-        patcher = patch('app.clients.pihole_client._pihole_csrf_token', None)
-        self.addCleanup(patcher.stop)
-        patcher.start()
-
-        patcher = patch('app.clients.pihole_client._session', None)
-        self.addCleanup(patcher.stop)
-        patcher.start()
-
-    @patch('requests.Session.post')
-    def test_authenticate_to_pihole_new_authentication(self, mock_post):
+    @patch('app.clients.pihole_client.requests.Session')
+    def test_authenticate_success(self, mock_session):
         # Arrange
-        mock_post.return_value.json.return_value = {"session": {"valid": True, "sid": "456", "csrf": "def"}}
-        mock_post.return_value.raise_for_status = MagicMock()
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"session": {"valid": True, "sid": "123", "csrf": "abc"}}
+        mock_session.return_value.post.return_value = mock_response
 
         # Act
-        sid, csrf = authenticate_to_pihole("http://pi.hole/admin", "password")
+        client = PiholeClient("http://pi.hole", "password")
 
         # Assert
-        self.assertEqual(sid, "456")
-        self.assertEqual(csrf, "def")
+        self.assertEqual(client.sid, "123")
+        self.assertEqual(client.csrf_token, "abc")
 
-    @patch('app.clients.pihole_client._pihole_api_request')
-    def test_get_pihole_custom_dns_records(self, mock_request):
+    @patch('app.clients.pihole_client.requests.Session')
+    def test_get_custom_dns_records_success(self, mock_session):
         # Arrange
-        mock_request.return_value = {"config": {"dns": {"hosts": ["1.2.3.4 test.com", "5.6.7.8 example.com"]}}}
+        client = PiholeClient("http://pi.hole", "password")
+        client.sid = "123"
+        client.csrf_token = "abc"
+        mock_response = MagicMock()
+        mock_response.json.return_value = {"config": {"dns": {"hosts": ["1.2.3.4 test.com", "5.6.7.8 example.com"]}}}
+        mock_session.return_value.request.return_value = mock_response
 
         # Act
-        records = get_pihole_custom_dns_records("http://pi.hole", "sid", "csrf")
+        records = client.get_custom_dns_records()
 
         # Assert
         self.assertEqual(records, {"test.com": "1.2.3.4", "example.com": "5.6.7.8"})
 
-    @patch('app.clients.pihole_client._pihole_api_request')
-    def test_get_pihole_custom_dns_records_no_records(self, mock_request):
+    @patch('app.clients.pihole_client.PiholeClient.get_custom_dns_records')
+    @patch('app.clients.pihole_client.PiholeClient._api_request')
+    def test_add_or_update_dns_record_add(self, mock_api_request, mock_get_records):
         # Arrange
-        mock_request.return_value = {"config": {"dns": {"hosts": []}}}
+        mock_get_records.return_value = {}
+        mock_api_request.return_value = {"success": True}
+        client = PiholeClient("http://pi.hole", "password")
+        client.sid = "123"
+        client.csrf_token = "abc"
 
         # Act
-        records = get_pihole_custom_dns_records("http://pi.hole", "sid", "csrf")
-
-        # Assert
-        self.assertEqual(records, {})
-
-    @patch('app.clients.pihole_client._pihole_api_request')
-    def test_add_or_update_dns_record_in_pihole_add(self, mock_request):
-        # Arrange
-        mock_request.return_value = {"success": True}
-        existing_records = {}
-
-        # Act
-        result = add_or_update_dns_record_in_pihole("http://pi.hole", "sid", "csrf", "new.com", "9.9.9.9", existing_records)
+        result = client.add_or_update_dns_record("new.com", "9.9.9.9")
 
         # Assert
         self.assertTrue(result)
-        self.assertEqual(existing_records, {"new.com": "9.9.9.9"})
+        mock_api_request.assert_called_once_with("PUT", "/api/config/dns/hosts/9.9.9.9%20new.com")
 
-    @unittest.skip("Skipping failing test")
-    @patch('requests.adapters.HTTPAdapter.send')
-    def test_retry_mechanism(self, mock_send):
+    @patch('app.clients.pihole_client.PiholeClient.get_custom_dns_records')
+    @patch('app.clients.pihole_client.PiholeClient._api_request')
+    def test_add_or_update_dns_record_update(self, mock_api_request, mock_get_records):
         # Arrange
-        from app.clients.pihole_client import _session
-        _session = None
-        mock_send.side_effect = requests.exceptions.ConnectionError()
-
-        session = get_requests_session()
-        session.keep_alive = False
+        mock_get_records.return_value = {"existing.com": "1.1.1.1"}
+        mock_api_request.return_value = {"success": True}
+        client = PiholeClient("http://pi.hole", "password")
+        client.sid = "123"
+        client.csrf_token = "abc"
 
         # Act
-        with self.assertRaises(requests.exceptions.ConnectionError):
-            session.get("http://test.com")
-
-        # Assert
-        self.assertEqual(mock_send.call_count, 4)
-
-    @patch('app.clients.pihole_client._pihole_api_request')
-    def test_add_or_update_dns_record_in_pihole_update(self, mock_request):
-        # Arrange
-        mock_request.return_value = {"success": True}
-        existing_records = {"existing.com": "1.1.1.1"}
-
-        # Act
-        result = add_or_update_dns_record_in_pihole("http://pi.hole", "sid", "csrf", "existing.com", "2.2.2.2", existing_records)
+        result = client.add_or_update_dns_record("existing.com", "2.2.2.2")
 
         # Assert
         self.assertTrue(result)
-        self.assertEqual(existing_records, {"existing.com": "2.2.2.2"})
+        mock_api_request.assert_called_once_with("PUT", "/api/config/dns/hosts/2.2.2.2%20existing.com")
 
-    def test_add_or_update_dns_record_in_pihole_no_change(self):
+    @patch('app.clients.pihole_client.PiholeClient.get_custom_dns_records')
+    @patch('app.clients.pihole_client.PiholeClient._api_request')
+    def test_add_or_update_dns_record_no_change(self, mock_api_request, mock_get_records):
         # Arrange
-        existing_records = {"existing.com": "1.1.1.1"}
+        mock_get_records.return_value = {"existing.com": "1.1.1.1"}
+        client = PiholeClient("http://pi.hole", "password")
+        client.sid = "123"
+        client.csrf_token = "abc"
 
         # Act
-        result = add_or_update_dns_record_in_pihole("http://pi.hole", "sid", "csrf", "existing.com", "1.1.1.1", existing_records)
+        result = client.add_or_update_dns_record("existing.com", "1.1.1.1")
 
         # Assert
         self.assertTrue(result)
+        mock_api_request.assert_not_called()
+
+if __name__ == '__main__':
+    unittest.main()

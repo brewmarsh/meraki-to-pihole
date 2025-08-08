@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from app.app import app
@@ -14,9 +16,6 @@ def test_update_interval_valid():
 def test_update_interval_invalid():
     response = client.post("/update-interval", json={"interval": "abc"})
     assert response.status_code == 422  # Unprocessable Entity
-
-
-from pathlib import Path
 
 
 def test_clear_log_valid():
