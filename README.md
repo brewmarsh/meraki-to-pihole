@@ -1,240 +1,145 @@
-# Meraki Pi-hole DNS Sync 🔄
+# Meraki to Pi-hole Client Sync
 
-## 📝 Project Overview
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Python Version](https://img.shields.io/badge/python-3-blue.svg)]()
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This project provides a Docker container that syncs client information from the Meraki API to a Pi-hole instance. Specifically, it identifies Meraki clients with **Fixed IP Assignments (DHCP Reservations)** and creates corresponding custom DNS records in Pi-hole. This ensures reliable local DNS resolution for these statically assigned devices.
+This script is a simple Python application designed to run as a service, either in a Docker container or directly on a host. Its primary function is to synchronize client information from your Meraki network dashboard to your Pi-hole instance.
 
-The script runs on a configurable interval, and all configurations are managed via environment variables. Logs are written to a file within the container and can be accessed via a mounted volume on the host or the web UI.
+This solves the problem of having only IP addresses in your Pi-hole logs. With this script, your Pi-hole query logs and dashboards will show the actual device hostnames (e.g., `david-iphone`, `living-room-tv`) as they are known by your Meraki network, making it much easier to identify network activity.
 
-## ✨ Features
+## Features
 
-*   Fetches client IP information specifically for devices with **Fixed IP Assignments** from specified Meraki networks (or all networks in an organization).
-*   Uses the client's description or DHCP hostname from Meraki as the basis for the DNS record.
-*   Adds/updates custom DNS records in Pi-hole for these fixed IP clients.
-*   **Runs on a configurable interval.**
-*   **All configuration is managed via environment variables.**
-*   Securely handles Meraki & Pi-hole API keys.
-*   Easy deployment using Docker and `docker-compose.yml`.
-*   **Logs script activity to `/app/logs/sync.log` inside the container, accessible via a host-mounted volume or the web UI.**
-*   **Web UI for monitoring and interaction.**
+-   Fetches all clients from your Meraki organization.
+-   Connects to your Pi-hole's database (`gravity.db`) via SQLite.
+-   Adds or updates the Pi-hole `client` table with the client's IP address, Meraki-known hostname, and a comment.
+-   Runs on a continuous loop, re-syncing every `X` minutes (configurable).
+-   Packaged as a lightweight Docker container.
 
-## Directory Structure
+## How It Works
 
-```
-.
-├── app/
-│   ├── clients/
-│   │   ├── __init__.py
-│   │   ├── meraki_client.py
-│   │   └── pihole_client.py
-│   ├── meraki_pihole_sync.py  # Main Python script
-│   └── VERSION.txt            # Contains the current application version
-├── scripts/
-│   └── docker-entrypoint.sh   # Docker entrypoint script for cron setup & initial run
-├── tests/
-│   ├── __init__.py
-│   ├── test_meraki_client.py
-│   └── test_pihole_client.py
-├── .env.example               # Example environment file for docker-compose
-├── Dockerfile
-├── docker-compose.yml         # Docker Compose file for easy deployment
-├── LICENSE                    # MIT License file
-└── README.md                  # This file
-```
+1.  **Meraki API:** The script uses the Meraki Dashboard API to fetch a list of all clients across your organization.
+2.  **Pi-hole Database:** It opens a direct connection to the Pi-hole `gravity.db` SQLite database.
+3.  **Sync Logic:**
+    -   It iterates through all Meraki clients.
+    -   For each client, it checks if a client with that IP address already exists in the Pi-hole database.
+    -   If **yes**, it updates the `name` and `comment` fields with the Meraki data.
+    -   If **no**, it inserts a new row with the IP, name, and a comment (e.g., "Added by Meraki-Pihole Sync").
+4.  **Loop:** The script then sleeps for a configurable interval before running the sync again.
 
-## Running Tests
+## Requirements
 
-To run the unit tests, run the following command from the root of the project:
+-   Python 3
+-   Meraki Dashboard API Key
+-   Your Meraki Organization ID
+-   Network access from the script's host to your Pi-hole instance (specifically to the `gravity.db` file).
 
-```bash
-poetry run pytest
-```
+## Installation & Setup
 
-## 🚀 How it Works
+### Option 1: Docker (Recommended)
 
-1.  The Docker container starts, launching the Gunicorn web server and the `sync_runner.py` script.
-2.  The `sync_runner.py` script runs the `meraki_pihole_sync.py` script on a loop, with a configurable sleep interval between each run.
-3.  The Python script (`meraki_pihole_sync.py`) reads its configuration from environment variables.
-4.  It connects to the Meraki API and fetches a list of all clients in the organization.
-5.  It connects to the Pi-hole API and retrieves the current list of custom DNS records.
-6.  For each relevant Meraki client (with a valid Fixed IP Assignment):
-    *   Constructs a hostname using the client's Meraki description or MAC address, sanitizes it, and appends the `HOSTNAME_SUFFIX`.
-    *   Adds or updates the DNS record in Pi-hole for this hostname and its fixed IP.
-7.  The Python script logs its detailed actions to a log file, which is visible in the web UI and optionally on the host.
+This is the easiest way to run the script as a persistent service.
 
-## 🛠️ Installation
+1.  **Pi-hole `gravity.db` Location:** You *must* make your Pi-hole's `gravity.db` file available to this container. The most common way is to mount the Pi-hole configuration directory as a volume.
+    -   If your Pi-hole is also running in Docker, you can use the same volume you mapped for its `/etc/pihole/` directory.
+    -   If Pi-hole is running on a bare-metal host, you'll need to mount its directory, e.g., `-v /etc/pihole/:/pihole-db/`.
 
-This application is designed to be run using Docker and Docker Compose.
+2.  **Run the container:**
+    Use the following Docker run command, replacing the placeholders with your values.
 
-### ✅ Prerequisites
-
-*   **Docker and Docker Compose**: Ensure they are installed.
-*   **Git**: For cloning this repository.
-*   **Meraki API Key**: From your Meraki Dashboard with read access.
-*   **Pi-hole Instance**: A running Pi-hole with its IP/hostname.
-*   **Pi-hole API Token**: If your Pi-hole admin interface is password-protected (recommended), get the token from Pi-hole Settings -> API / Web interface.
-*   **Pi-hole v6 API**: This tool is built for the Pi-hole v6 API and will not work with the v5 API.
-
-### ⚙️ Steps
-
-1.  **Clone the Repository:**
     ```bash
-    git clone <repository_url> # Replace <repository_url>
-    cd <repository_name>     # Replace <repository_name>
+    docker run -d \
+      --name meraki-pihole-sync \
+      -e MERAKI_API_KEY="YOUR_API_KEY" \
+      -e MERAKI_ORG_ID="YOUR_ORG_ID" \
+      -e PIHOLE_DB_PATH="/pihole-db/gravity.db" \
+      -e SYNC_INTERVAL_MINUTES="15" \
+      -v /path/to/your/pihole/config:/pihole-db \
+      --restart always \
+      brewmarsh/meraki-to-pihole:latest
     ```
 
-2.  **Configure Environment Variables:**
-    All configuration is now done via a `.env` file. Copy the example:
-    ```bash
-    cp .env.example .env
-    ```
-    Edit the `.env` file with your specific details. See the Configuration Summary section for more details.
+### Option 2: Docker Compose
 
-3.  **Prepare Log Directory (Optional but Recommended):**
-    The `docker-compose.yml` is configured to mount `./logs` on your host to `/app/logs` in the container. Create this directory on your host if you want persistent logs:
-    ```bash
-    mkdir ./logs
-    ```
-    You can change this path in `docker-compose.yml` if desired.
+If you manage your Pi-hole with `docker-compose.yml`, you can simply add this as another service.
 
-4.  **Build and Run the Docker Container:**
-    ```bash
-    docker-compose build
-    docker-compose up -d
-    ```
-    This builds the image and starts the container. The sync script will start running immediately.
+1.  **Add to `docker-compose.yml`:**
+    Add this service definition to your existing `docker-compose.yml` file.
 
-    To pass specific version information during the build (e.g., in a CI environment or scripted build):
-    ```bash
-    # Example: Read version from app/VERSION.txt and get current git commit
-    APP_VERSION=$(cat app/VERSION.txt)
-    COMMIT_SHA=$(git rev-parse --short HEAD)
-
-    docker-compose build --build-arg APP_VERSION=${APP_VERSION} --build-arg COMMIT_SHA=${COMMIT_SHA}
-    docker-compose up -d
-    ```
-
-## 🖥️ Usage
-
-### Web UI
-
-The application includes a web UI for monitoring and interacting with the sync process. The web UI is available on port `24653` by default.
-
-#### Features
-
-*   **📊 View Mappings:** See the custom DNS mappings currently loaded in Pi-hole.
-*   **🔄 Force Sync:** Manually trigger a sync process.
-*   **📝 View Logs:** View the `sync.log` file in real-time.
-*   **⚙️ Update Sync Interval:** Change the sync interval on the fly.
-*   **🗑️ Clear Logs:** Clear the log file.
-
-### Viewing Logs
-
-Logs are available in the web UI, or you can access them directly:
-
-*   **Live script output:**
-    ```bash
-    docker-compose logs -f meraki-pihole-sync
-    ```
-*   **Persistent application log file:**
-    Check the file `./logs/sync.log` on your host (or the directory you configured for the volume mount).
-
-### Stopping the Container
-```bash
-docker-compose down
-```
-
-### Forcing a Sync
-
-You can force a sync using the web UI, or by running the following command:
-```bash
-docker-compose exec meraki-pihole-sync python3 /app/meraki_pihole_sync.py
-```
-
-## 📋 Configuration Summary (Environment Variables in `.env` file)
-
-| Environment Variable    | Required? | Description                                                                                                | Example                                                              |
-|-------------------------|-----------|------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------|
-| `MERAKI_API_KEY`        | Yes       | Your Cisco Meraki Dashboard API key.                                                                         | `YOUR_MERAKI_API_KEY`                                                |
-| `MERAKI_ORG_ID`         | Yes       | Your Meraki Organization ID.                                                                               | `YOUR_MERAKI_ORGANIZATION_ID`                                        |
-| `MERAKI_NETWORK_IDS`    | No        | Comma-separated list of Meraki Network IDs to sync. If blank or not set, all networks in the organization will be queried. | `L_123,L_456`                                                        |
-| `PIHOLE_API_URL`        | Yes       | Full URL to your Pi-hole API endpoint.                                                                     | `http://192.168.1.10/admin` or `http://pi.hole/admin` (script appends `/api.php`) |
-| `PIHOLE_API_KEY`        | No        | Your Pi-hole API token (Webpassword/API Token). Required if Pi-hole admin interface is password-protected.   | `YOUR_PIHOLE_API_TOKEN`                                              |
-| `HOSTNAME_SUFFIX`       | Yes       | Domain suffix for DNS records (e.g., `.lan`, `.home.arpa`). Ensure it starts with a `.` if intended.          | `.example.local`                                                     |
-| `MERAKI_CLIENT_TIMESPAN_SECONDS` | No | Optional. Timespan in seconds for fetching Meraki clients (e.g., clients seen in the last X seconds). Defaults to `86400` (24 hours). | `259200` (72 hours)                                                 |
-| `SYNC_INTERVAL_SECONDS` | No        | The interval, in seconds, at which to sync the clients. Defaults to `300`. This can also be set from the web UI. | `600` (10 minutes)                                                   |
-| `LOG_LEVEL`             | No        | Logging level for the Python script. Options: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. Defaults to `INFO`. | `DEBUG`                                                              |
-| `TZ`                    | No        | Timezone for the container (e.g., `America/New_York`). Affects log timestamps. Defaults to UTC. | `Europe/London`                                                      |
-| `APP_PORT`            | No        | Port to run the web interface on. Defaults to `24653`.                                          | `8080`                                                               |
-
-## 🤔 Troubleshooting
-
-*   **"python: not found" or "python3: not found" in logs:**
-    *   This should be resolved with the latest updates to `Dockerfile` and `docker-entrypoint.sh` which explicitly use `python3` and make the script executable. Ensure you have pulled the latest changes and rebuilt your Docker image (`docker-compose build`).
-*   **"No relevant Meraki clients found" but you expect clients:**
-    *   **Verify Meraki Configuration:** The most common reason is that clients in your Meraki network do not meet the script's criteria:
-        *   They MUST have a **Fixed IP assignment** (DHCP reservation) configured in the Meraki dashboard.
-        *   Their **current, active IP address** on the network MUST match this Fixed IP assignment. If a client is configured for a fixed IP but is currently offline or has a different IP, it won't be synced.
-    *   **Check API Key and IDs:** Double-check `MERAKI_API_KEY`, `MERAKI_ORG_ID`, and `MERAKI_NETWORK_IDS` (if used) in your `.env` file for typos or incorrect values.
-    *   **Client Activity Timespan:** Consider increasing `MERAKI_CLIENT_TIMESPAN_SECONDS` (e.g., to `259200` for 3 days) if your clients might not have been seen by Meraki within the default 24-hour window.
-    *   **Enable DEBUG Logging:** This is crucial for diagnosing this issue.
-        1.  Set `LOG_LEVEL=DEBUG` in your `.env` file.
-        2.  Restart the container: `docker-compose up -d --force-recreate meraki-pihole-sync`.
-        3.  Check the script log in the web UI or by running: `docker-compose logs meraki-pihole-sync` or look in `./logs/sync.log`.
-        4.  With DEBUG logging, the script will output messages for each client it processes, indicating why it might be skipping them (e.g., "does not have a fixed IP assignment," "fixed IP assignment (...) but current IP (...) differs," "Skipping client ... due to missing name, current IP, or client ID"). The script will also explicitly state if it suggests enabling DEBUG logging if it's not already on.
-*   **Environment Variable Issues (e.g., "Missing mandatory environment variables"):**
-    *   Ensure your `.env` file is in the same directory as `docker-compose.yml` and is named exactly `.env`.
-    *   Verify all required variables (see table above) are present and correctly spelled in your `.env` file with non-empty values where required (e.g., `HOSTNAME_SUFFIX` cannot be blank).
-    *   If you updated `.env` after the container was started, you must restart the container for changes to take effect: `docker-compose restart meraki-pihole-sync` or `docker-compose up -d --force-recreate`. A full rebuild (`docker-compose build`) is only needed if you change `Dockerfile` or files copied into the image.
-    *   The `docker-compose.yml` file explicitly includes `env_file: - .env`. If issues persist, ensure no other mechanism (like shell-exported variables of the same name with empty values) is overriding the `.env` file content for the `docker-compose` execution environment.
-*   **Log File Issues:**
-    *   If `./logs` (or your custom host path) is not showing logs, check permissions on the host directory. The `docker-entrypoint.sh` now attempts to `chmod 0666` the log files inside the container, which should help with most permission issues.
-    *   Ensure the volume mount in `docker-compose.yml` is correct: `- ./logs:/app/logs`.
-*   **Pi-hole API Errors / Records Not Updating** (Check the web UI log viewer or `/app/logs/sync.log`):
-    *   **URL:** Double-check `PIHOLE_API_URL`. It should point to the admin directory (e.g., `http://pi.hole/admin` or `http://192.168.1.10/admin`). The script automatically appends `/api.php`.
-    *   **API Key:** Ensure `PIHOLE_API_KEY` (your Pi-hole Webpassword/API Token) is correct if your Pi-hole admin interface is password-protected. If it's not password-protected, you can leave `PIHOLE_API_KEY` blank.
-    *   **Connectivity:** Confirm the container can reach Pi-hole. Use `docker-compose exec meraki-pihole-sync curl -v <PIHOLE_API_URL>` (e.g. `http://pi.hole/admin/api.php`) to test.
-*   **Meraki API Errors** (Check logs, set `LOG_LEVEL=DEBUG` for more details):
-    *   **API Key/Org ID:** Verify `MERAKI_API_KEY` has necessary read permissions and `MERAKI_ORG_ID` is correct.
-    *   **Network IDs:** If `MERAKI_NETWORK_IDS` is used, ensure IDs are valid and exist in your organization.
-    *   **Rate Limits:** For very large setups with many networks/clients, Meraki API rate limits (HTTP 429 errors) could be a factor. The script has a basic retry mechanism.
-
-## 📦 Versioning
-
-This project uses a manual versioning approach for simplicity, with infrastructure to support build-time version and commit tracking.
-
-*   **`app/VERSION.txt`**: This file, located in the `app` directory, should contain the current semantic version of the application (e.g., `0.1.0`). It should be updated manually when a new version is being prepared.
-*   **Build Arguments:** The `Dockerfile` accepts two build arguments:
-    *   `APP_VERSION`: The application version (intended to be sourced from `app/VERSION.txt`).
-    *   `COMMIT_SHA`: The short Git commit SHA.
-*   **Environment Variables:** These build arguments are baked into the Docker image as environment variables `APP_VERSION` and `COMMIT_SHA`.
-*   **Logging:** The Python script reads these environment variables on startup and includes them in its initial log message, e.g., "Starting Meraki Pi-hole Sync Script - Version: 0.1.0, Commit: abc1234".
-*   **`docker-compose.yml`:** The `docker-compose.yml` file includes an `args` section under `build` to demonstrate how these can be passed. For local development, it uses placeholder values.
     ```yaml
-    # In docker-compose.yml
-    build:
-      context: .
-      args:
-        - APP_VERSION=0.1.0_manual # Should match app/VERSION.txt
-        - COMMIT_SHA=dev_build     # 'dev_build' or similar for local
+    services:
+      pihole:
+        # ... your existing pihole configuration ...
+        container_name: pihole
+        volumes:
+          - './pihole-config/etc-pihole:/etc/pihole'
+          - './pihole-config/etc-dnsmasq.d:/etc/dnsmasq.d'
+        # ... rest of your config ...
+
+      meraki-sync:
+        container_name: meraki-sync
+        image: brewmarsh/meraki-to-pihole:latest
+        restart: always
+        depends_on:
+          - pihole
+        environment:
+          - MERAKI_API_KEY=YOUR_API_KEY
+          - MERAKI_ORG_ID=YOUR_ORG_ID
+          - PIHOLE_DB_PATH=/pihole-db/gravity.db
+          - SYNC_INTERVAL_MINUTES=15
+        volumes:
+          # This MUST match the volume used by your pihole service for /etc/pihole
+          - './pihole-config/etc-pihole:/pihole-db'
     ```
-*   **Building with Specific Version Info:**
-    When creating an official build (e.g., via a script or CI/CD pipeline), you should pass these arguments dynamically:
+    *Note: The key is that the `volumes` path for `meraki-sync`'s `/pihole-db` points to the *same host directory* as `pihole`'s `/etc/pihole`.*
+
+2.  **Start:**
     ```bash
-    APP_VERSION=$(cat app/VERSION.txt)
-    COMMIT_SHA=$(git rev-parse --short HEAD) # Gets the current short commit SHA
-    docker-compose build \
-      --build-arg APP_VERSION=${APP_VERSION} \
-      --build-arg COMMIT_SHA=${COMMIT_SHA}
-    # Followed by docker-compose up -d
+    docker-compose up -d
     ```
 
-This setup allows the running application and its logs to be clearly associated with a specific version and code commit, aiding in debugging and release management. Automation of `app/VERSION.txt` updates and build argument injection can be achieved with CI/CD pipelines.
+### Option 3: Manual Python Setup
 
-## 🤝 Contributing
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/brewmarsh/meraki-to-pihole.git](https://github.com/brewmarsh/meraki-to-pihole.git)
+    cd meraki-to-pihole
+    ```
 
-Contributions are welcome! Please fork, branch, commit, and open a pull request. For issues or suggestions, please open an issue on the project's tracker.
+2.  **Install dependencies:**
+    This project uses Poetry for dependency management.
+    ```bash
+    pip install poetry
+    poetry install --no-dev
+    ```
 
-## 📜 License
+3.  **Set Environment Variables:**
+    ```bash
+    export MERAKI_API_KEY="YOUR_API_KEY"
+    export MERAKI_ORG_ID="YOUR_ORG_ID"
+    export PIHOLE_DB_PATH="/etc/pihole/gravity.db" # Or wherever your DB is
+    export SYNC_INTERVAL_MINUTES="15"
+    ```
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+4.  **Run the script:**
+    ```bash
+    poetry run python app/main.py
+    ```
+
+## Environment Variables
+
+| Variable | Required | Description | Default |
+| :--- | :--- | :--- | :--- |
+| `MERAKI_API_KEY` | **Yes** | Your Meraki Dashboard API key. | `None` |
+| `MERAKI_ORG_ID` | **Yes** | Your Meraki Organization ID. | `None` |
+| `PIHOLE_DB_PATH` | **Yes** | Full path to the `gravity.db` file. e.g., `/pihole-db/gravity.db` | `None` |
+| `SYNC_INTERVAL_MINUTES` | No | The time (in minutes) to wait between syncs. | `15` |
+| `LOG_LEVEL` | No | Set the logging level. | `INFO` |
+
+## How to Contribute
+
+We welcome contributions! Please see our [**CONTRIBUTING.md**](CONTRIBUTING.md) file for development guidelines and setup instructions.
+
+## License
+
+MIT
