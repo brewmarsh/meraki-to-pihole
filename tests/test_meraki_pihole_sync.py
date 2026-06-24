@@ -19,6 +19,9 @@ class TestMerakiPiholeSync(unittest.TestCase):
             "meraki_org_id": "fake_org_id",
             "meraki_network_ids": [],
             "meraki_client_timespan_seconds": 86400,
+            "changelog_file_path": "/tmp/changelog.log",
+            "history_file_path": "/tmp/history.log",
+            "cache_file_path": "/tmp/cache.json",
         }
         mock_get_meraki_data.return_value = [
             {"name": "Test-Client-1", "ip": "192.168.1.10"}
@@ -48,6 +51,9 @@ class TestMerakiPiholeSync(unittest.TestCase):
             "meraki_org_id": "fake_org_id",
             "meraki_network_ids": [],
             "meraki_client_timespan_seconds": 86400,
+            "changelog_file_path": "/tmp/changelog.log",
+            "history_file_path": "/tmp/history.log",
+            "cache_file_path": "/tmp/cache.json",
         }
         mock_get_meraki_data.return_value = [
             {"name": None, "ip": "192.168.1.11"}
