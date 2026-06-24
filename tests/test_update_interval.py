@@ -23,9 +23,10 @@ class TestUpdateInterval(unittest.TestCase):
         new_interval = "600"
 
         # When
-        from app.app import update_interval
         from fastapi import Request
         from pydantic import BaseModel
+
+        from app.app import update_interval
         class UpdateIntervalRequest(BaseModel):
             interval: int
         request = Request({"type": "http", "method": "POST", "path": "/update-interval"})
