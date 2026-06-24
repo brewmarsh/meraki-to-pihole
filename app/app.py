@@ -11,20 +11,19 @@ import meraki
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
 from .clients.meraki_client import get_all_relevant_meraki_clients
 from .clients.pihole_client import PiholeClient
-from .sync_logic import load_app_config_from_env
+from .sync_logic import get_sync_interval, load_app_config_from_env
 from .sync_logic import sync_pihole_dns as run_sync_main
-from .sync_logic import get_sync_interval
 
 log = structlog.get_logger()
 
@@ -268,7 +267,7 @@ async def health_check(request: Request):
 async def get_history(request: Request):
     """Returns the history of the number of mapped devices."""
     try:
-        with open("/app/history.log", "r") as f:
+        with open("/app/history.log") as f:
             history = f.readlines()
         return JSONResponse(content={"history": history})
     except FileNotFoundError:
@@ -279,7 +278,7 @@ async def get_history(request: Request):
 async def get_cache(request: Request):
     """Returns the cached results."""
     try:
-        with open("/app/cache.json", "r") as f:
+        with open("/app/cache.json") as f:
             cache = json.load(f)
         return JSONResponse(content={"cache": cache})
     except FileNotFoundError:

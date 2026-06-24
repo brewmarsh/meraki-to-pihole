@@ -1,6 +1,8 @@
 import time
+
 import structlog
-from .sync_logic import sync_pihole_dns, get_sync_interval
+
+from .sync_logic import get_sync_interval, sync_pihole_dns
 
 log = structlog.get_logger()
 

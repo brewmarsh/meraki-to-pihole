@@ -217,23 +217,46 @@
                 });
         }
 
-        document.getElementById('update-meraki').addEventListener('click', () => {
+        document.getElementById('update-meraki').addEventListener('click', (event) => {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+
             fetch('/update-meraki', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     showToast(data.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
                 });
         });
 
-        document.getElementById('update-pihole').addEventListener('click', () => {
+        document.getElementById('update-pihole').addEventListener('click', (event) => {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+
             fetch('/update-pihole', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
                     showToast(data.message);
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
                 });
         });
 
-        document.getElementById('update-interval').addEventListener('click', () => {
+        document.getElementById('update-interval').addEventListener('click', (event) => {
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+
             const interval = document.getElementById('sync-interval').value;
             fetch('/update-interval', {
                 method: 'POST',
@@ -245,6 +268,10 @@
             .then(response => response.json())
             .then(data => {
                 showToast(data.message);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
             });
         });
 

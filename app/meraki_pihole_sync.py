@@ -16,7 +16,9 @@ Configuration is managed entirely through environment variables.
 """
 
 import sys
+
 import structlog
+
 from .sync_logic import sync_pihole_dns
 
 log = structlog.get_logger()
