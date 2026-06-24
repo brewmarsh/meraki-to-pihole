@@ -136,17 +136,23 @@ def map_devices(meraki_clients, pihole_records):
     """
     mapped_devices = []
     unmapped_meraki_devices = []
-    pihole_ips = set(pihole_records.values())
+
+    # Pre-compute a mapping of IP to list of domains for O(1) lookups
+    ip_to_domains = {}
+    for domain, ip in pihole_records.items():
+        if ip not in ip_to_domains:
+            ip_to_domains[ip] = []
+        ip_to_domains[ip].append(domain)
 
     for client in meraki_clients:
-        if client['ip'] in pihole_ips:
-            for domain, ip in pihole_records.items():
-                if client['ip'] == ip:
-                    mapped_devices.append({
-                        "meraki_name": client['name'],
-                        "pihole_domain": domain,
-                        "ip": ip
-                    })
+        client_ip = client['ip']
+        if client_ip in ip_to_domains:
+            for domain in ip_to_domains[client_ip]:
+                mapped_devices.append({
+                    "meraki_name": client['name'],
+                    "pihole_domain": domain,
+                    "ip": client_ip
+                })
         else:
             unmapped_meraki_devices.append(client)
 
