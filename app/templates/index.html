@@ -282,17 +282,28 @@
                 const action = button.dataset.action;
 
                 if (action === 'clear') {
-                    fetch('/clear-log', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ log: logType })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            getLogs();
-                        });
+                    if (confirm(`Are you sure you want to clear the ${logType} log? This cannot be undone.`)) {
+                        const originalHTML = button.innerHTML;
+                        button.disabled = true;
+                        button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Clearing...';
+
+                        fetch('/clear-log', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ log: logType })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                getLogs();
+                                showToast(`${logType} log cleared.`);
+                            })
+                            .finally(() => {
+                                button.disabled = false;
+                                button.innerHTML = originalHTML;
+                            });
+                    }
                 } else if (action === 'copy') {
                     const logContent = document.getElementById(`${logType}-log`);
                     const range = document.createRange();
@@ -375,12 +386,34 @@
         });
 
         document.querySelectorAll('.card-header').forEach(header => {
+            header.setAttribute('tabindex', '0');
+            header.setAttribute('role', 'button');
+            const targetId = header.getAttribute('data-bs-target')?.substring(1);
+            if (targetId) {
+                header.setAttribute('aria-controls', targetId);
+                const targetEl = document.getElementById(targetId);
+                if (targetEl && targetEl.classList.contains('show')) {
+                    header.setAttribute('aria-expanded', 'true');
+                } else {
+                    header.setAttribute('aria-expanded', 'false');
+                }
+            }
+
             header.addEventListener('click', () => {
                 const caret = header.querySelector('.caret');
                 if (caret.textContent === '▼') {
                     caret.textContent = '▲';
+                    header.setAttribute('aria-expanded', 'false');
                 } else {
                     caret.textContent = '▼';
+                    header.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            header.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    header.click();
                 }
             });
         });
