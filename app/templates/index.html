@@ -53,7 +53,7 @@
                 <div class="card mt-4" id="charts-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#charts-body">
                         Charts
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="charts-body" class="collapse show">
                         <div class="card-body">
@@ -76,7 +76,7 @@
                 <div class="card mt-4" id="pihole-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#pihole-body">
                         Pi-hole DNS Records [<span id="pihole-count">0</span>]
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="pihole-body" class="collapse">
                         <div class="card-body">
@@ -88,7 +88,7 @@
                 <div class="card mt-4" id="meraki-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#meraki-body">
                         Meraki IP Records [<span id="meraki-count">0</span>]
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="meraki-body" class="collapse">
                         <div class="card-body">
@@ -100,7 +100,7 @@
                 <div class="card mt-4" id="mapped-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#mapped-body">
                         Mapped Devices [<span id="mapped-count">0</span>]
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="mapped-body" class="collapse">
                         <div class="card-body">
@@ -112,7 +112,7 @@
                 <div class="card mt-4" id="unmapped-meraki-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#unmapped-meraki-body">
                         Unmapped Meraki Devices [<span id="unmapped-meraki-count">0</span>]
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="unmapped-meraki-body" class="collapse">
                         <div class="card-body">
@@ -124,20 +124,20 @@
                 <div class="card mt-4" id="logs-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#logs-body">
                         Logs
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="logs-body" class="collapse">
                         <div class="card-body">
                             <pre id="sync-log" class="log-box"></pre>
-                            <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy">Copy</button>
-                            <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear">Clear</button>
+                            <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy" aria-label="Copy sync logs to clipboard" title="Copy sync logs to clipboard">Copy</button>
+                            <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear" aria-label="Clear sync logs" title="Clear sync logs">Clear</button>
                         </div>
                     </div>
                 </div>
                 <div class="card mt-4" id="changelog-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#changelog-body">
                         Changelog
-                        <span class="caret float-end">▼</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="changelog-body" class="collapse">
                         <div class="card-body">
@@ -163,10 +163,10 @@
                         <div class="mb-3">
                             <label for="sync-interval" class="form-label">Sync Interval (seconds)</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="sync-interval" value="{{ sync_interval }}">
+                                <input type="number" class="form-control" id="sync-interval" value="{{ sync_interval }}" aria-describedby="sync-interval-help">
                                 <button class="btn btn-outline-secondary" id="update-interval">Update</button>
                             </div>
-                            <div class="form-text">The interval between automatic syncs.</div>
+                            <div id="sync-interval-help" class="form-text">The interval between automatic syncs.</div>
                         </div>
                     </div>
                 </div>
