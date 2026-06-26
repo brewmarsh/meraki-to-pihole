@@ -5,3 +5,6 @@
 ## 2025-02-13 - O(N*M) nested loop found in `_map_devices` endpoint
 **Learning:** Found an O(N*M) nested loop in `_map_devices` (`app/app.py`) that maps Meraki clients to Pi-hole records. This caused slow API responses for endpoints like `/mappings` and `/stream`.
 **Action:** Replaced the inner loop with an O(1) dictionary lookup by pre-computing `ip_to_domains`. This brought a synthetic test of 5000 clients and 2000 records from ~0.624s down to ~0.016s.
+## 2025-01-26 - Prevent N+1 queries in loop
+**Learning:** Found an N+1 query problem in loop fetching Pi-hole custom DNS records when processing each Meraki client.
+**Action:** When working with API or DB clients, verify if functions fetching records inside loops can accept a pre-fetched records dict as an optional arg.
