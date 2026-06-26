@@ -72,8 +72,8 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         allowed_subnets_str = os.getenv("ALLOWED_SUBNETS")
         if allowed_subnets_str:
             allowed_subnets = [ip_network(subnet.strip()) for subnet in allowed_subnets_str.split(",")]
-            client_ip_str = request.headers.get("X-Forwarded-For", request.client.host)
-            client_ip = ip_address(client_ip_str.split(",")[0].strip())
+            client_ip_str = request.client.host if request.client else "127.0.0.1"
+            client_ip = ip_address(client_ip_str)
             if not any(client_ip in subnet for subnet in allowed_subnets):
                 return JSONResponse(status_code=403, content={"detail": "Forbidden"})
         response = await call_next(request)

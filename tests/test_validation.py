@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.app import app
 
-client = TestClient(app)
+client = TestClient(app, client=("127.0.0.1", 12345))
 
 
 def test_update_interval_valid():

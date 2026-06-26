@@ -8,8 +8,8 @@ from app.app import app
 
 class TestUpdateInterval(unittest.TestCase):
     def setUp(self):
-        print("Setting up TestUpdateInterval")
-        self.client = TestClient(app)
+
+        self.client = TestClient(app, client=("127.0.0.1", 12345))
         self.interval_file_path = Path("/app/sync_interval.txt")
         if self.interval_file_path.exists():
             self.interval_file_path.unlink()
@@ -20,24 +20,16 @@ class TestUpdateInterval(unittest.TestCase):
 
     def test_update_interval(self):
         # Given
-        new_interval = "600"
+        new_interval = 600
 
         # When
-        from fastapi import Request
-        from pydantic import BaseModel
-
-        from app.app import update_interval
-        class UpdateIntervalRequest(BaseModel):
-            interval: int
-        request = Request({"type": "http", "method": "POST", "path": "/update-interval"})
-        data = UpdateIntervalRequest(interval=new_interval)
-        response = update_interval(request, data)
+        response = self.client.post("/update-interval", json={"interval": new_interval})
 
         # Then
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.body, b'{"message":"Sync interval updated."}')
+        self.assertEqual(response.json(), {"message": "Sync interval updated."})
         content = self.interval_file_path.read_text().strip()
-        self.assertEqual(content, new_interval)
+        self.assertEqual(content, str(new_interval))
 
     def test_update_interval_invalid(self):
         # Given
