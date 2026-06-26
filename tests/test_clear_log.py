@@ -8,7 +8,7 @@ from app.app import app
 
 class TestClearLog(unittest.TestCase):
     def setUp(self):
-        self.client = TestClient(app)
+        self.client = TestClient(app, client=("127.0.0.1", 12345))
         self.log_file_path = Path("/app/logs/sync.log")
         self.log_file_path.parent.mkdir(exist_ok=True)
         self.log_file_path.write_text("test log entry")
