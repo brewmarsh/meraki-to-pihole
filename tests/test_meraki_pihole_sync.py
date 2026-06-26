@@ -35,7 +35,7 @@ class TestMerakiPiholeSync(unittest.TestCase):
         # Assert
         self.assertEqual(mock_get_meraki_data.call_count, 1)
         mock_pihole_client.return_value.add_or_update_dns_record.assert_called_once_with(
-            "test-client-1.lan", "192.168.1.10"
+            "test-client-1.lan", "192.168.1.10", existing_records={}
         )
 
     @patch('app.sync_logic.load_app_config_from_env')

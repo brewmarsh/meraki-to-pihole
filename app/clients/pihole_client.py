@@ -121,7 +121,7 @@ class PiholeClient:
             return None
         return records
 
-    def add_or_update_dns_record(self, domain, new_ip):
+    def add_or_update_dns_record(self, domain, new_ip, existing_records=None):
         domain_cleaned = domain.strip().lower()
         new_ip_cleaned = new_ip.strip()
 
@@ -129,7 +129,9 @@ class PiholeClient:
             log.warning("Skipping invalid record", domain=domain, ip=new_ip)
             return False
 
-        existing_records = self.get_custom_dns_records()
+        # Bolt: Avoid N+1 requests by accepting existing_records as an argument
+        if existing_records is None:
+            existing_records = self.get_custom_dns_records()
         if existing_records is None:
             log.error("Cannot add or update DNS record: existing Pi-hole records cache is None.")
             return False

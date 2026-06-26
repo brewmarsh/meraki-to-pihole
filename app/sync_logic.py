@@ -235,7 +235,8 @@ def sync_pihole_dns(update_type=None):
                     domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
                     ip_to_sync = client["ip"]
 
-                    if pihole_client.add_or_update_dns_record(domain_to_sync, ip_to_sync):
+                    # Bolt: Pass existing_pihole_records to avoid an API call (N+1 query problem) on every client
+                    if pihole_client.add_or_update_dns_record(domain_to_sync, ip_to_sync, existing_records=existing_pihole_records):
                         timestamp = datetime.now()
                         mapping_line = f"{timestamp}: Mapped {domain_to_sync} to {ip_to_sync}\n"
                         if mapping_line not in previous_mappings:
