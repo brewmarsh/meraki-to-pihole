@@ -8,3 +8,6 @@
 ## 2025-01-26 - Prevent N+1 queries in loop
 **Learning:** Found an N+1 query problem in loop fetching Pi-hole custom DNS records when processing each Meraki client.
 **Action:** When working with API or DB clients, verify if functions fetching records inside loops can accept a pre-fetched records dict as an optional arg.
+## 2025-06-27 - Repeated overhead per request in Middleware
+**Learning:** Middleware functions that execute on every request can introduce significant latency overhead if they repeatedly parse unchanging strings or configurations (e.g., parsing an environment variable into `ip_network` objects for every single HTTP request). Also learned that Starlette's `TestClient` defaults `request.client.host` to `"testclient"`, which throws a `ValueError` if passed to `ip_address()`.
+**Action:** When working on middleware, check if any variables are static across the app's lifecycle and pre-compute/cache them within the class instance. Use checks on the raw string before re-parsing, and gracefully handle `TestClient` exceptions when reading host IPs.

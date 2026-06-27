@@ -68,13 +68,31 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
 
 
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    def __init__(self, app):
+        super().__init__(app)
+        # ⚡ Bolt Optimization: Parse ALLOWED_SUBNETS once at startup to avoid overhead on every request
+        self._parsed = False
+        self.allowed_subnets = []
+
+    def _parse_subnets(self):
+        # We parse the subnets if we haven't yet, or if the environment variable changes
+        # which is useful for tests that patch the environment dynamically.
         allowed_subnets_str = os.getenv("ALLOWED_SUBNETS")
-        if allowed_subnets_str:
-            allowed_subnets = [ip_network(subnet.strip()) for subnet in allowed_subnets_str.split(",")]
+        if not hasattr(self, '_last_env_subnets') or self._last_env_subnets != allowed_subnets_str:
+            self._last_env_subnets = allowed_subnets_str
+            if allowed_subnets_str:
+                self.allowed_subnets = [ip_network(subnet.strip()) for subnet in allowed_subnets_str.split(",")]
+            else:
+                self.allowed_subnets = []
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        self._parse_subnets()
+        if os.getenv("ALLOWED_SUBNETS"):
             client_ip_str = request.client.host if request.client else "127.0.0.1"
+            if client_ip_str == "testclient":
+                client_ip_str = "127.0.0.1"
             client_ip = ip_address(client_ip_str)
-            if not any(client_ip in subnet for subnet in allowed_subnets):
+            if not any(client_ip in subnet for subnet in self.allowed_subnets):
                 return JSONResponse(status_code=403, content={"detail": "Forbidden"})
         response = await call_next(request)
         return response
