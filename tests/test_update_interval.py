@@ -42,5 +42,26 @@ class TestUpdateInterval(unittest.TestCase):
         self.assertEqual(response.status_code, 422)
 
 
+    def test_update_interval_zero_invalid(self):
+        # Given
+        new_interval = 0
+
+        # When
+        response = self.client.post("/update-interval", json={"interval": new_interval})
+
+        # Then
+        self.assertEqual(response.status_code, 422)
+
+
+    def test_update_interval_negative_invalid(self):
+        # Given
+        new_interval = -10
+
+        # When
+        response = self.client.post("/update-interval", json={"interval": new_interval})
+
+        # Then
+        self.assertEqual(response.status_code, 422)
+
 if __name__ == "__main__":
     unittest.main()
