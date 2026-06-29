@@ -1,4 +1,4 @@
-## 2024-06-26 - IP Whitelist Middleware IP Spoofing
-**Vulnerability:** The application was manually parsing the `X-Forwarded-For` header to determine client IP in `IPWhitelistMiddleware`.
-**Learning:** This is a dangerous pattern, as an attacker can easily inject arbitrary spoofed IP addresses into this HTTP header. A single spoofed header like `X-Forwarded-For: 127.0.0.1` completely bypassed IP whitelist restrictions.
-**Prevention:** Always rely on the ASGI/WSGI web server (e.g. uvicorn with `--proxy-headers` flag enabled) to safely handle and parse incoming proxy forwarded-for headers instead of writing application logic.
+## 2026-06-29 - Prevent Information Leakage in API Endpoints and DoS via Zero/Negative Intervals
+**Vulnerability:** The `/update-meraki` and `/update-pihole` endpoints were exposing unhandled exception details (`e`) directly to the user in a JSON response payload, risking information disclosure of internal logic or stack traces. Furthermore, the `interval` field in `UpdateIntervalRequest` lacked validation constraints, risking infinite loops and DoS in the streaming service if `0` or negative values were passed.
+**Learning:** Exception details must be scrubbed from HTTP responses before hitting the client, even in internal apps. Input bounds for variables that map to sleep durations must be strictly constrained to positive logical values.
+**Prevention:** Catch raw exceptions at the endpoint boundary, log the raw exception internally, and return generic error messages to the client. Validate all input variables specifying durations using `Pydantic` `Field` validations with `ge=1` constraints.

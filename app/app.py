@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -126,7 +126,7 @@ async def update_meraki(request: Request):
         return JSONResponse(content={"message": "Meraki update process started."})
     except Exception as e:
         log.error("Error starting Meraki update", error=e)
-        return JSONResponse(content={"message": f"Meraki update failed to start: {e}"}, status_code=500)
+        return JSONResponse(content={"message": "Meraki update failed to start."}, status_code=500)
 
 @app.post("/update-pihole")
 @limiter.limit(get_rate_limit)
@@ -139,7 +139,7 @@ async def update_pihole(request: Request):
         return JSONResponse(content={"message": "Pi-hole update process started."})
     except Exception as e:
         log.error("Error starting Pi-hole update", error=e)
-        return JSONResponse(content={"message": f"Pi-hole update failed to start: {e}"}, status_code=500)
+        return JSONResponse(content={"message": "Pi-hole update failed to start."}, status_code=500)
 
 @app.get("/check-pihole-error")
 @limiter.limit(get_rate_limit)
@@ -250,7 +250,7 @@ async def get_mappings(request: Request):
     return JSONResponse(content=get_mappings_data())
 
 class UpdateIntervalRequest(BaseModel):
-    interval: int
+    interval: int = Field(ge=1, le=86400)
 
 @app.post("/update-interval")
 @limiter.limit(get_rate_limit)
