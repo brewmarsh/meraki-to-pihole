@@ -454,6 +454,7 @@
 
             if (!localStorage.getItem('welcomeScreenSeen')) {
                 document.getElementById('welcome-screen').style.display = 'flex';
+                document.getElementById('close-welcome-screen').focus();
             }
 
             document.getElementById('close-welcome-screen').addEventListener('click', () => {
