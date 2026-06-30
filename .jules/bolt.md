@@ -11,3 +11,6 @@
 ## 2025-06-27 - Repeated overhead per request in Middleware
 **Learning:** Middleware functions that execute on every request can introduce significant latency overhead if they repeatedly parse unchanging strings or configurations (e.g., parsing an environment variable into `ip_network` objects for every single HTTP request). Also learned that Starlette's `TestClient` defaults `request.client.host` to `"testclient"`, which throws a `ValueError` if passed to `ip_address()`.
 **Action:** When working on middleware, check if any variables are static across the app's lifecycle and pre-compute/cache them within the class instance. Use checks on the raw string before re-parsing, and gracefully handle `TestClient` exceptions when reading host IPs.
+## 2025-08-16 - Synchronous API fetching in loop replaced by Multithreading
+**Learning:** Found an N+1 query problem where the list of relevant Meraki devices is looped over to fetch fixed IP assignments sequentially. Since each fetch involves a slow HTTP API call to the Meraki Dashboard, processing many devices took a significantly long time.
+**Action:** Replaced the sequential looping over devices with a `concurrent.futures.ThreadPoolExecutor` to execute the HTTP requests concurrently. For large sets of devices, fetching in parallel drastically reduces synchronization wait time and overall latency.

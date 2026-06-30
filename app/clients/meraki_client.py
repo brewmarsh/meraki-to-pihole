@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 import meraki
 import structlog
 
@@ -58,6 +60,11 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
     3. For each device, fetches the fixed IP assignments.
     4. Return a list of these clients with the necessary information for DNS syncing.
 
+    ⚡ Bolt Optimization: Uses ThreadPoolExecutor to concurrently fetch fixed IP
+    assignments from multiple devices. This prevents the N+1 API call problem from
+    being completely synchronous, dramatically reducing the time to fetch all
+    clients for large organizations.
+
     Args:
         dashboard (meraki.DashboardAPI): Initialized Meraki Dashboard API client.
         config (dict): The application configuration dictionary.
@@ -75,10 +82,17 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         log.error("Meraki API error while fetching organization devices", error=e, org_id=org_id)
         return []
 
-    for device in devices:
+    def fetch_for_device(device):
         if device['model'].startswith('MS'):
-            relevant_clients.extend(_get_fixed_ip_assignments_from_switch(dashboard, device))
+            return _get_fixed_ip_assignments_from_switch(dashboard, device)
         elif device['model'].startswith('MX'):
-            relevant_clients.extend(_get_fixed_ip_assignments_from_appliance(dashboard, device))
+            return _get_fixed_ip_assignments_from_appliance(dashboard, device)
+        return []
+
+    # Use a ThreadPoolExecutor to fetch device data in parallel
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(fetch_for_device, device) for device in devices]
+        for future in as_completed(futures):
+            relevant_clients.extend(future.result())
 
     return relevant_clients
