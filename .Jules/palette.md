@@ -8,3 +8,7 @@
 ## 2023-10-27 - Accordion ARIA & Caret Synchronization
 **Learning:** Manual `click` event listeners to toggle `aria-expanded` and caret states (`▲`/`▼`) on Bootstrap accordions can easily fall out of sync or be implemented backwards. In this case, the ARIA state was reversed, and the initial caret state in the HTML contradicted the actual expanded DOM state.
 **Action:** Always prefer hooking into the UI framework's native lifecycle events (e.g., Bootstrap's `show.bs.collapse` and `hide.bs.collapse`) for visual and ARIA toggles rather than brittle manual DOM event listeners. Ensure initial HTML markup matches the default state of components.
+
+## 2026-06-30 - Accessible Focus on Custom Overlays
+**Learning:** When displaying custom overlay modals or screens (like `#welcome-screen`), keyboard users may not immediately understand context because focus remains on the underlying content behind the modal. The browser doesn't automatically move focus to dynamically shown elements unless they are native dialogs.
+**Action:** Always ensure that when displaying custom overlays, the active focus is explicitly set via `.focus()` to the primary action or close button within the overlay.
