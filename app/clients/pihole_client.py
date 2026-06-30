@@ -85,9 +85,14 @@ class PiholeClient:
         cookies = {"SID": self.sid}
 
         try:
-            log.debug("Pi-hole API Request", url=url, method=method, headers=headers, data=data)
+            # 🛡️ Sentinel: Sanitize sensitive headers (CSRF Token, Session ID) from logs
+            safe_req_headers = {k: ("***" if k.lower() in ["x-csrf-token", "cookie"] else v) for k, v in headers.items()}
+            log.debug("Pi-hole API Request", url=url, method=method, headers=safe_req_headers, data=data)
+
             response = self.session.request(method, url, headers=headers, cookies=cookies, json=data, timeout=10)
-            log.debug("Pi-hole API Response", url=response.url, headers=response.request.headers, status_code=response.status_code, text=response.text)
+
+            safe_resp_req_headers = {k: ("***" if k.lower() in ["x-csrf-token", "cookie"] else v) for k, v in response.request.headers.items()}
+            log.debug("Pi-hole API Response", url=response.url, headers=safe_resp_req_headers, status_code=response.status_code, text=response.text)
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
