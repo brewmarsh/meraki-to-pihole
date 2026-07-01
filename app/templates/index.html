@@ -163,8 +163,8 @@
                         <div class="mb-3">
                             <label for="sync-interval" class="form-label">Sync Interval (seconds)</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" id="sync-interval" value="{{ sync_interval }}" aria-describedby="sync-interval-help">
-                                <button class="btn btn-outline-secondary" id="update-interval">Update</button>
+                                <input type="number" class="form-control" id="sync-interval" min="1" max="86400" value="{{ sync_interval }}" aria-describedby="sync-interval-help">
+                                <button class="btn btn-outline-secondary" id="update-interval" aria-label="Update sync interval">Update</button>
                             </div>
                             <div id="sync-interval-help" class="form-text">The interval between automatic syncs.</div>
                         </div>
@@ -252,12 +252,15 @@
         });
 
         document.getElementById('update-interval').addEventListener('click', (event) => {
+            const intervalInput = document.getElementById('sync-interval');
+            if (!intervalInput.reportValidity()) return;
+
             const btn = event.currentTarget;
             const originalHTML = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
 
-            const interval = document.getElementById('sync-interval').value;
+            const interval = intervalInput.value;
             fetch('/update-interval', {
                 method: 'POST',
                 headers: {

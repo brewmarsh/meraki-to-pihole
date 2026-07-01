@@ -12,3 +12,7 @@
 ## 2026-06-30 - Accessible Focus on Custom Overlays
 **Learning:** When displaying custom overlay modals or screens (like `#welcome-screen`), keyboard users may not immediately understand context because focus remains on the underlying content behind the modal. The browser doesn't automatically move focus to dynamically shown elements unless they are native dialogs.
 **Action:** Always ensure that when displaying custom overlays, the active focus is explicitly set via `.focus()` to the primary action or close button within the overlay.
+
+## 2026-07-02 - Inline validation for non-form inputs
+**Learning:** Native HTML5 validation attributes (like `min` and `max`) do not automatically prevent action when an input is used outside of a `<form>` submission context. In standalone inputs, JavaScript must explicitly check `.reportValidity()` before executing logic or making API calls, otherwise the browser allows invalid states to silently pass.
+**Action:** Whenever using standalone inputs linked to buttons (e.g., input groups), always use `.reportValidity()` in the button click handler to trigger native browser validation tooltips and block invalid actions.
