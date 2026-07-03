@@ -14,3 +14,7 @@
 ## 2025-08-16 - Synchronous API fetching in loop replaced by Multithreading
 **Learning:** Found an N+1 query problem where the list of relevant Meraki devices is looped over to fetch fixed IP assignments sequentially. Since each fetch involves a slow HTTP API call to the Meraki Dashboard, processing many devices took a significantly long time.
 **Action:** Replaced the sequential looping over devices with a `concurrent.futures.ThreadPoolExecutor` to execute the HTTP requests concurrently. For large sets of devices, fetching in parallel drastically reduces synchronization wait time and overall latency.
+
+## 2026-07-03 - FastAPI Thread Pool Starvation from Blocking SSE
+**Learning:** Using synchronous `time.sleep()` and blocking I/O calls (like file reads or sync API requests) within FastAPI's async generator functions for Server-Sent Events (SSE) will quickly starve the ASGI worker thread pool. Each active stream connection consumes a thread, preventing new requests (even simple health checks) from being processed.
+**Action:** Always use `asyncio.sleep()` instead of `time.sleep()` in async generator loops. Offload blocking, non-async I/O functions to thread pools using `await asyncio.to_thread()`, and properly handle connection disconnects (via `request.is_disconnected()`) to free up resources.

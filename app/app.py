@@ -1,7 +1,7 @@
+import asyncio
 import json
 import os
 import threading
-import time
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
 from pathlib import Path
@@ -154,28 +154,33 @@ async def check_pihole_error(request: Request):
 @app.get("/stream")
 @limiter.limit(get_rate_limit)
 async def stream(request: Request):
-    def event_stream():
+    async def event_stream():
         while True:
+            if await request.is_disconnected():
+                break
             try:
                 log_file = Path('/app/logs/sync.log')
                 if not log_file.exists():
                     log_file.touch()
-                log_content = log_file.read_text()
+                log_content = await asyncio.to_thread(log_file.read_text)
                 yield f"data: {json.dumps({'log': log_content})}\n\n"
 
                 changelog_file = Path('/app/changelog.log')
                 if not changelog_file.exists():
                     changelog_file.touch()
-                changelog_content = changelog_file.read_text()
+                changelog_content = await asyncio.to_thread(changelog_file.read_text)
                 yield f"data: {json.dumps({'changelog': changelog_content})}\n\n"
 
-                mappings = get_mappings_data()
+                mappings = await asyncio.to_thread(get_mappings_data)
                 yield f"data: {json.dumps({'mappings': mappings})}\n\n"
+            except asyncio.CancelledError:
+                break
             except Exception as e:
                 log.error("Error in event stream", error=e)
                 yield f"data: {json.dumps({'error': 'An error occurred in the stream.'})}\n\n"
             finally:
-                time.sleep(get_sync_interval())
+                if not await request.is_disconnected():
+                    await asyncio.sleep(get_sync_interval())
 
     return StreamingResponse(event_stream(), media_type='text/event-stream')
 
@@ -247,7 +252,7 @@ def get_mappings_data():
 @app.get("/mappings")
 @limiter.limit(get_rate_limit)
 async def get_mappings(request: Request):
-    return JSONResponse(content=get_mappings_data())
+    return JSONResponse(content=await asyncio.to_thread(get_mappings_data))
 
 class UpdateIntervalRequest(BaseModel):
     interval: int = Field(ge=1, le=86400)
