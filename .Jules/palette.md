@@ -16,3 +16,7 @@
 ## 2026-07-02 - Inline validation for non-form inputs
 **Learning:** Native HTML5 validation attributes (like `min` and `max`) do not automatically prevent action when an input is used outside of a `<form>` submission context. In standalone inputs, JavaScript must explicitly check `.reportValidity()` before executing logic or making API calls, otherwise the browser allows invalid states to silently pass.
 **Action:** Whenever using standalone inputs linked to buttons (e.g., input groups), always use `.reportValidity()` in the button click handler to trigger native browser validation tooltips and block invalid actions.
+
+## 2026-07-03 - Skip-to-content links and semantic landmarks
+**Learning:** For users relying on screen readers or keyboard navigation, encountering a lot of navigation links before getting to the main content can be tedious. A "Skip to main content" link using a combination of a visually-hidden class that appears on focus and a `<main>` semantic landmark target provides a quick bypass.
+**Action:** Use `.visually-hidden-focusable` (or equivalent utility classes) for the skip link, and ensure the target area uses a semantic landmark like `<main id="main-content" tabindex="-1">` to programmatically define the main content area for screen readers.
