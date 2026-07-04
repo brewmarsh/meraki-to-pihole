@@ -1,7 +1,7 @@
+import asyncio
 import json
 import os
 import threading
-import time
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
 from pathlib import Path
@@ -154,28 +154,35 @@ async def check_pihole_error(request: Request):
 @app.get("/stream")
 @limiter.limit(get_rate_limit)
 async def stream(request: Request):
-    def event_stream():
+    async def event_stream():
+        def read_sync_log():
+            log_file = Path('/app/logs/sync.log')
+            if not log_file.exists():
+                log_file.touch()
+            return log_file.read_text()
+
+        def read_changelog():
+            changelog_file = Path('/app/changelog.log')
+            if not changelog_file.exists():
+                changelog_file.touch()
+            return changelog_file.read_text()
+
         while True:
             try:
-                log_file = Path('/app/logs/sync.log')
-                if not log_file.exists():
-                    log_file.touch()
-                log_content = log_file.read_text()
+                log_content = await asyncio.to_thread(read_sync_log)
                 yield f"data: {json.dumps({'log': log_content})}\n\n"
 
-                changelog_file = Path('/app/changelog.log')
-                if not changelog_file.exists():
-                    changelog_file.touch()
-                changelog_content = changelog_file.read_text()
+                changelog_content = await asyncio.to_thread(read_changelog)
                 yield f"data: {json.dumps({'changelog': changelog_content})}\n\n"
 
-                mappings = get_mappings_data()
+                mappings = await asyncio.to_thread(get_mappings_data)
                 yield f"data: {json.dumps({'mappings': mappings})}\n\n"
             except Exception as e:
                 log.error("Error in event stream", error=e)
                 yield f"data: {json.dumps({'error': 'An error occurred in the stream.'})}\n\n"
             finally:
-                time.sleep(get_sync_interval())
+                sync_interval = await asyncio.to_thread(get_sync_interval)
+                await asyncio.sleep(sync_interval)
 
     return StreamingResponse(event_stream(), media_type='text/event-stream')
 
@@ -291,7 +298,7 @@ async def health_check(request: Request):
 async def get_history(request: Request):
     """Returns the history of the number of mapped devices."""
     try:
-        with open("/app/history.log") as f:
+        with Path("/app/history.log").open() as f:
             history = f.readlines()
         return JSONResponse(content={"history": history})
     except FileNotFoundError:
@@ -302,7 +309,7 @@ async def get_history(request: Request):
 async def get_cache(request: Request):
     """Returns the cached results."""
     try:
-        with open("/app/cache.json") as f:
+        with Path("/app/cache.json").open() as f:
             cache = json.load(f)
         return JSONResponse(content={"cache": cache})
     except FileNotFoundError:
