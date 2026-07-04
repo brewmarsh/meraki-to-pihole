@@ -16,3 +16,7 @@
 ## 2026-07-02 - Inline validation for non-form inputs
 **Learning:** Native HTML5 validation attributes (like `min` and `max`) do not automatically prevent action when an input is used outside of a `<form>` submission context. In standalone inputs, JavaScript must explicitly check `.reportValidity()` before executing logic or making API calls, otherwise the browser allows invalid states to silently pass.
 **Action:** Whenever using standalone inputs linked to buttons (e.g., input groups), always use `.reportValidity()` in the button click handler to trigger native browser validation tooltips and block invalid actions.
+
+## 2026-07-04 - Programmatic ARIA Attribute Scoping
+**Learning:** When using JavaScript to programmatically apply accessibility attributes (like `tabindex` and `role="button"`) to UI components using broad CSS classes (like `.card-header`), you risk applying them to static elements that should not be interactive. This creates confusing phantom buttons for screen readers and clutters the keyboard tab order.
+**Action:** Always use specific attribute selectors (e.g., `[data-bs-toggle="collapse"]`) when programmatically attaching ARIA roles or keyboard event listeners to ensure they are only applied to genuinely interactive variants of a component.
