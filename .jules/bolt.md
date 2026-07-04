@@ -14,3 +14,7 @@
 ## 2025-08-16 - Synchronous API fetching in loop replaced by Multithreading
 **Learning:** Found an N+1 query problem where the list of relevant Meraki devices is looped over to fetch fixed IP assignments sequentially. Since each fetch involves a slow HTTP API call to the Meraki Dashboard, processing many devices took a significantly long time.
 **Action:** Replaced the sequential looping over devices with a `concurrent.futures.ThreadPoolExecutor` to execute the HTTP requests concurrently. For large sets of devices, fetching in parallel drastically reduces synchronization wait time and overall latency.
+
+## 2024-05-18 - Async Generators for StreamingResponse in FastAPI
+**Learning:** In FastAPI, returning a synchronous generator in a StreamingResponse blocks a worker thread from the underlying thread pool while it waits for the generator to yield. When implementing Server-Sent Events (SSE) that wait, this can easily lead to thread pool starvation where all workers are busy waiting, making the server unresponsive.
+**Action:** Always use an `async def` generator for `StreamingResponse`. Offload any blocking I/O (like reading files or network requests) inside the async generator to a separate thread using `await asyncio.to_thread()`, and use `await asyncio.sleep()` for any delays.
