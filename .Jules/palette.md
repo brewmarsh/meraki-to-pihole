@@ -20,3 +20,7 @@
 ## 2026-07-04 - Programmatic ARIA Attribute Scoping
 **Learning:** When using JavaScript to programmatically apply accessibility attributes (like `tabindex` and `role="button"`) to UI components using broad CSS classes (like `.card-header`), you risk applying them to static elements that should not be interactive. This creates confusing phantom buttons for screen readers and clutters the keyboard tab order.
 **Action:** Always use specific attribute selectors (e.g., `[data-bs-toggle="collapse"]`) when programmatically attaching ARIA roles or keyboard event listeners to ensure they are only applied to genuinely interactive variants of a component.
+
+## 2026-07-05 - Native form validation for standalone required inputs
+**Learning:** When using standalone inputs (outside a `<form>` tag) that are required, simply adding the `required` attribute is highly effective when paired with `.reportValidity()` in the associated button's click handler. This blocks invalid empty submissions and leverages the browser's native, accessible validation tooltips without needing custom error UI.
+**Action:** Always add the `required` attribute to mandatory standalone inputs and ensure their linked action buttons check `.reportValidity()` before executing logic or making API calls.
