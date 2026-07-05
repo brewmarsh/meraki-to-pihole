@@ -146,7 +146,10 @@ async def update_pihole(request: Request):
 async def check_pihole_error(request: Request):
     log_file = Path('/app/logs/sync.log')
     if log_file.exists():
-        log_content = log_file.read_text()
+        from collections import deque
+        with log_file.open("r") as f:
+            # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+            log_content = "".join(deque(f, maxlen=1000))
         if "Pi-hole API returned a 'forbidden' error" in log_content:
             return JSONResponse(content={"error": "forbidden"})
     return JSONResponse(content={})
@@ -159,13 +162,19 @@ async def stream(request: Request):
             log_file = Path('/app/logs/sync.log')
             if not log_file.exists():
                 log_file.touch()
-            return log_file.read_text()
+            from collections import deque
+            with log_file.open("r") as f:
+                # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+                return "".join(deque(f, maxlen=1000))
 
         def read_changelog():
             changelog_file = Path('/app/changelog.log')
             if not changelog_file.exists():
                 changelog_file.touch()
-            return changelog_file.read_text()
+            from collections import deque
+            with changelog_file.open("r") as f:
+                # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+                return "".join(deque(f, maxlen=1000))
 
         while True:
             try:
@@ -298,8 +307,10 @@ async def health_check(request: Request):
 async def get_history(request: Request):
     """Returns the history of the number of mapped devices."""
     try:
-        with Path("/app/history.log").open() as f:
-            history = f.readlines()
+        from collections import deque
+        with Path("/app/history.log").open("r") as f:
+            # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+            history = list(deque(f, maxlen=1000))
         return JSONResponse(content={"history": history})
     except FileNotFoundError:
         return JSONResponse(content={"history": []})
