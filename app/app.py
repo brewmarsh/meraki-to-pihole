@@ -245,6 +245,23 @@ def _map_devices(meraki_clients, pihole_records):
 def get_mappings_data():
     try:
         config = load_app_config_from_env()
+
+        # ⚡ Bolt Optimization: Attempt to read mappings from cache to prevent O(C*API) duplicate calls
+        # where C is the number of connected SSE clients.
+        try:
+            cache_path = Path(config.get("cache_file_path", "/app/cache.json"))
+            if cache_path.exists():
+                with cache_path.open() as f:
+                    cache = json.load(f)
+                if "meraki" in cache and "pihole" in cache:
+                    meraki_clients = cache["meraki"]
+                    pihole_records = cache["pihole"]
+                    mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
+                    return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+        except Exception as e:
+            log.warning(f"Failed to read cache.json, falling back to API fetch: {e}")
+
+        # Fallback to API if cache doesn't exist or is invalid
         pihole_url = os.getenv("PIHOLE_API_URL")
         pihole_api_key = os.getenv("PIHOLE_API_KEY")
 
