@@ -24,3 +24,7 @@
 ## 2026-07-05 - Native form validation for standalone required inputs
 **Learning:** When using standalone inputs (outside a `<form>` tag) that are required, simply adding the `required` attribute is highly effective when paired with `.reportValidity()` in the associated button's click handler. This blocks invalid empty submissions and leverages the browser's native, accessible validation tooltips without needing custom error UI.
 **Action:** Always add the `required` attribute to mandatory standalone inputs and ensure their linked action buttons check `.reportValidity()` before executing logic or making API calls.
+
+## 2026-07-06 - Visual Feedback for Drag and Drop Interactions
+**Learning:** When implementing drag-and-drop interfaces (like with SortableJS), users need immediate visual feedback to understand both what is currently being dragged and where it will land. Relying only on a `move` cursor is insufficient; using `grab` and `grabbing` cursors along with visually distinct ghost styling (like a dashed border and lower opacity via `.sortable-ghost`) provides a much clearer mental model for users interacting with sortable elements.
+**Action:** Always provide explicit cursor states (`grab`/`grabbing`) and distinct drop-target placeholders (ghost styling) when building drag-and-drop features, ensuring these styles are also correctly themed for dark mode contexts.
