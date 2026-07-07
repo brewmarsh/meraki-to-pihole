@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import threading
+import time
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
 from pathlib import Path
@@ -242,7 +243,17 @@ def _map_devices(meraki_clients, pihole_records):
 
     return mapped_devices, unmapped_meraki_devices
 
+_mappings_cache = None
+_mappings_cache_time = 0
+
 def get_mappings_data():
+    global _mappings_cache, _mappings_cache_time
+    # ⚡ Bolt Optimization: Use an in-memory TTL cache to prevent N+1 API calls
+    # Impact: Significantly reduces load on Meraki/Pi-hole APIs during SSE streams.
+    # Measurement: Compare API request logs during an active SSE connection.
+    if _mappings_cache is not None and time.time() < _mappings_cache_time + 60:
+        return _mappings_cache
+
     try:
         config = load_app_config_from_env()
         pihole_url = os.getenv("PIHOLE_API_URL")
@@ -255,7 +266,10 @@ def get_mappings_data():
         meraki_clients = _get_meraki_data(config)
         mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
 
-        return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+        result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+        _mappings_cache = result
+        _mappings_cache_time = time.time()
+        return result
     except Exception as e:
         log.error("Error in get_mappings_data", error=e)
         return {}

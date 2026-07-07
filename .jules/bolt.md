@@ -17,3 +17,7 @@
 ## 2025-10-24 - O(N*M) nested loop found in `sync_pihole_dns`
 **Learning:** Found an O(N*M) nested loop in `sync_pihole_dns` (`app/sync_logic.py`) that checks if a mapping line exists in a list of previous mappings read from `changelog.log`. Checking membership in a list takes O(N) time and runs for every client mapped, leading to O(N*M) time complexity.
 **Action:** The old function checks `if mapping_line not in previous_mappings:` where `previous_mappings` is a list. By converting `previous_mappings` to a set (`previous_mappings_set = set(previous_mappings)`), we can look up the mapped lines in O(1) time and eliminate the O(N) inner loop. Also ensure to add the newly written line to the set (`previous_mappings_set.add(mapping_line)`) to prevent duplicate mapping writes on the same run.
+
+## 2025-10-25 - Prevent N+1 API calls in SSE streams
+**Learning:** Making live external API calls (e.g. `get_mappings_data`) inside a Server-Sent Events (SSE) `while True` loop can cause an N+1 query problem per connected client, leading to excessive API requests, rate limiting, and thread blocking.
+**Action:** Always read data from a background-updated local cache (e.g. `cache.json` updated by a separate daemon) rather than making direct, live API requests inside the stream loop to prevent N+1 issues in SSE streams.
