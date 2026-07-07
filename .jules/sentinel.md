@@ -6,3 +6,7 @@
 **Vulnerability:** The application read entire, unboundedly growing log files (`sync.log`, `history.log`, `changelog.log`) fully into memory using `Path.read_text()` and `f.readlines()` on API endpoints (`/stream`, `/history`, `/check-pihole-error`). Over time, this allows an attacker (or normal load) to trigger memory exhaustion and a Denial of Service (DoS).
 **Learning:** Using `Path.read_text()` or `f.readlines()` is dangerous for log files or any file that grows continuously over the lifecycle of the application.
 **Prevention:** Instead of reading the whole file, use `collections.deque(f, maxlen=1000)` to read a bounded number of recent lines when exposing log data through APIs, ensuring fixed memory consumption regardless of file size.
+## 2025-02-27 - Fix IPWhitelistMiddleware Proxy Bypass
+**Vulnerability:** IP whitelist bypass behind reverse proxies due to relying solely on `request.client.host`.
+**Learning:** Depending on the client's host directly in environments using reverse proxies allows attackers to spoof the client IP and bypass IP whitelisting restrictions.
+**Prevention:** Use standard forwarding headers (`X-Forwarded-For` or `X-Real-IP`) to extract the client IP, or handle client IP logic robustly according to reverse proxy configuration.

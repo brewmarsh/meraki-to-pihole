@@ -89,9 +89,23 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         self._parse_subnets()
         if os.getenv("ALLOWED_SUBNETS"):
             client_ip_str = request.client.host if request.client else "127.0.0.1"
+
+            # 🛡️ Sentinel: Prevent IP spoofing by only trusting proxy headers if explicitly configured.
+            # When behind a trusted proxy, take the rightmost IP in X-Forwarded-For to avoid spoofing
+            # by attacker-supplied leftmost values.
+            if os.getenv("TRUST_REVERSE_PROXY", "false").lower() == "true":
+                forwarded_for = request.headers.get("X-Forwarded-For")
+                if forwarded_for:
+                    client_ip_str = forwarded_for.split(",")[-1].strip()
+                elif request.headers.get("X-Real-IP"):
+                    client_ip_str = request.headers.get("X-Real-IP").strip()
+
             if client_ip_str == "testclient":
                 client_ip_str = "127.0.0.1"
-            client_ip = ip_address(client_ip_str)
+            try:
+                client_ip = ip_address(client_ip_str)
+            except ValueError:
+                return JSONResponse(status_code=403, content={"detail": "Forbidden"})
             if not any(client_ip in subnet for subnet in self.allowed_subnets):
                 return JSONResponse(status_code=403, content={"detail": "Forbidden"})
         response = await call_next(request)
