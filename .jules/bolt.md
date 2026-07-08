@@ -21,3 +21,6 @@
 ## 2025-10-25 - Prevent N+1 API calls in SSE streams
 **Learning:** Making live external API calls (e.g. `get_mappings_data`) inside a Server-Sent Events (SSE) `while True` loop can cause an N+1 query problem per connected client, leading to excessive API requests, rate limiting, and thread blocking.
 **Action:** Always read data from a background-updated local cache (e.g. `cache.json` updated by a separate daemon) rather than making direct, live API requests inside the stream loop to prevent N+1 issues in SSE streams.
+## 2025-10-26 - Static inner helper functions definition overhead
+**Learning:** Found static inner helper functions `read_sync_log` and `read_changelog` defined inside `event_stream` generator inside `stream` endpoint (`app/app.py`). Defining inner functions that do not rely on local variable scoping inside an endpoint, or inside loops, causes unnecessary function re-definition overhead per request.
+**Action:** Move static inner helper functions outside the function scope if they don't depend on the outer function's local variables, moving them to module level or at least outside loops/generators.

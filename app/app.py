@@ -156,41 +156,30 @@ async def update_pihole(request: Request):
         log.error("Error starting Pi-hole update", error=e)
         return JSONResponse(content={"message": "Pi-hole update failed to start."}, status_code=500)
 
-@app.get("/check-pihole-error")
-@limiter.limit(get_rate_limit)
-async def check_pihole_error(request: Request):
+
+
+def read_sync_log():
     log_file = Path('/app/logs/sync.log')
-    if log_file.exists():
-        from collections import deque
-        with log_file.open("r") as f:
-            # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
-            log_content = "".join(deque(f, maxlen=1000))
-        if "Pi-hole API returned a 'forbidden' error" in log_content:
-            return JSONResponse(content={"error": "forbidden"})
-    return JSONResponse(content={})
+    if not log_file.exists():
+        log_file.touch()
+    from collections import deque
+    with log_file.open("r") as f:
+        # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+        return "".join(deque(f, maxlen=1000))
+
+def read_changelog():
+    changelog_file = Path('/app/changelog.log')
+    if not changelog_file.exists():
+        changelog_file.touch()
+    from collections import deque
+    with changelog_file.open("r") as f:
+        # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+        return "".join(deque(f, maxlen=1000))
 
 @app.get("/stream")
 @limiter.limit(get_rate_limit)
 async def stream(request: Request):
     async def event_stream():
-        def read_sync_log():
-            log_file = Path('/app/logs/sync.log')
-            if not log_file.exists():
-                log_file.touch()
-            from collections import deque
-            with log_file.open("r") as f:
-                # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
-                return "".join(deque(f, maxlen=1000))
-
-        def read_changelog():
-            changelog_file = Path('/app/changelog.log')
-            if not changelog_file.exists():
-                changelog_file.touch()
-            from collections import deque
-            with changelog_file.open("r") as f:
-                # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
-                return "".join(deque(f, maxlen=1000))
-
         while True:
             try:
                 log_content = await asyncio.to_thread(read_sync_log)
