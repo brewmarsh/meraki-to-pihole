@@ -10,12 +10,20 @@
 }
 
 .card-header {
-    cursor: move;
-    cursor: grab;
     position: relative;
 }
 
-.card-header:active {
+.card-header[data-bs-toggle="collapse"] {
+    cursor: move;
+    cursor: grab;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.card-header[data-bs-toggle="collapse"]:hover {
+    background-color: #e9ecef;
+}
+
+.card-header[data-bs-toggle="collapse"]:active {
     cursor: grabbing;
 }
 
@@ -54,6 +62,10 @@
 
 .dark-mode .card-header {
     background-color: #555555;
+}
+
+.dark-mode .card-header[data-bs-toggle="collapse"]:hover {
+    background-color: #666666;
 }
 
 .dark-mode .card-title {
