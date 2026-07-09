@@ -3,6 +3,7 @@ import json
 import os
 import threading
 import time
+from collections import deque
 from contextlib import asynccontextmanager
 from ipaddress import ip_address, ip_network
 from pathlib import Path
@@ -161,7 +162,6 @@ async def update_pihole(request: Request):
 async def check_pihole_error(request: Request):
     log_file = Path('/app/logs/sync.log')
     if log_file.exists():
-        from collections import deque
         with log_file.open("r") as f:
             # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
             log_content = "".join(deque(f, maxlen=1000))
@@ -169,34 +169,38 @@ async def check_pihole_error(request: Request):
             return JSONResponse(content={"error": "forbidden"})
     return JSONResponse(content={})
 
+# ⚡ Bolt Optimization: Extract static functions to module level
+# What: Moved read_sync_log and read_changelog out of the event_stream generator.
+# Why: To prevent unnecessary function re-definition overhead per SSE connection/loop.
+# Impact: Reduces memory overhead and CPU cycles for each connected SSE client.
+# Measurement: Compare memory/CPU usage before and after under a high connection load.
+
+def _read_sync_log():
+    log_file = Path('/app/logs/sync.log')
+    if not log_file.exists():
+        log_file.touch()
+    with log_file.open("r") as f:
+        # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+        return "".join(deque(f, maxlen=1000))
+
+def _read_changelog():
+    changelog_file = Path('/app/changelog.log')
+    if not changelog_file.exists():
+        changelog_file.touch()
+    with changelog_file.open("r") as f:
+        # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
+        return "".join(deque(f, maxlen=1000))
+
 @app.get("/stream")
 @limiter.limit(get_rate_limit)
 async def stream(request: Request):
     async def event_stream():
-        def read_sync_log():
-            log_file = Path('/app/logs/sync.log')
-            if not log_file.exists():
-                log_file.touch()
-            from collections import deque
-            with log_file.open("r") as f:
-                # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
-                return "".join(deque(f, maxlen=1000))
-
-        def read_changelog():
-            changelog_file = Path('/app/changelog.log')
-            if not changelog_file.exists():
-                changelog_file.touch()
-            from collections import deque
-            with changelog_file.open("r") as f:
-                # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
-                return "".join(deque(f, maxlen=1000))
-
         while True:
             try:
-                log_content = await asyncio.to_thread(read_sync_log)
+                log_content = await asyncio.to_thread(_read_sync_log)
                 yield f"data: {json.dumps({'log': log_content})}\n\n"
 
-                changelog_content = await asyncio.to_thread(read_changelog)
+                changelog_content = await asyncio.to_thread(_read_changelog)
                 yield f"data: {json.dumps({'changelog': changelog_content})}\n\n"
 
                 mappings = await asyncio.to_thread(get_mappings_data)
@@ -335,7 +339,6 @@ async def health_check(request: Request):
 async def get_history(request: Request):
     """Returns the history of the number of mapped devices."""
     try:
-        from collections import deque
         with Path("/app/history.log").open("r") as f:
             # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
             history = list(deque(f, maxlen=1000))
