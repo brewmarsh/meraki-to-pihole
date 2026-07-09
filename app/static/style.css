@@ -9,13 +9,13 @@
     border-radius: 5px;
 }
 
-.card-header {
+.card-header[data-bs-toggle="collapse"] {
     cursor: move;
     cursor: grab;
     position: relative;
 }
 
-.card-header:active {
+.card-header[data-bs-toggle="collapse"]:active {
     cursor: grabbing;
 }
 
@@ -30,12 +30,12 @@
     border: 2px dashed #0d6efd;
 }
 
-.card-header:focus-visible {
+.card-header[data-bs-toggle="collapse"]:focus-visible {
     outline: 2px solid #0d6efd;
     outline-offset: -2px;
 }
 
-.card-header .caret {
+.card-header[data-bs-toggle="collapse"] .caret {
     position: absolute;
     right: 1rem;
     top: 50%;
