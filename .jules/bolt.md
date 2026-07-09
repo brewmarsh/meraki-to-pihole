@@ -21,3 +21,7 @@
 ## 2025-10-25 - Prevent N+1 API calls in SSE streams
 **Learning:** Making live external API calls (e.g. `get_mappings_data`) inside a Server-Sent Events (SSE) `while True` loop can cause an N+1 query problem per connected client, leading to excessive API requests, rate limiting, and thread blocking.
 **Action:** Always read data from a background-updated local cache (e.g. `cache.json` updated by a separate daemon) rather than making direct, live API requests inside the stream loop to prevent N+1 issues in SSE streams.
+
+## 2024-07-09 - Avoid Inner Functions in Generators
+**Learning:** Defining inner static helper functions (`def read_sync_log(): ...`) directly inside a generator loop or long-running stream endpoint incurs unnecessary re-definition and memory allocation overhead on every connection or tick.
+**Action:** Extract inner functions that do not depend on the parent's local scope to the module level.
