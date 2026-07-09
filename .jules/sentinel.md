@@ -1,12 +1,4 @@
-## 2026-07-04 - Fix Thread Starvation DoS in Server-Sent Events
-**Vulnerability:** The `/stream` endpoint used a synchronous generator with `time.sleep()` in a FastAPI `StreamingResponse`. This blocks a worker thread for the duration of the connection (which is infinite in SSE). Multiple concurrent connections could easily exhaust the thread pool, leading to a Denial of Service (DoS) where the server can no longer handle any requests.
-**Learning:** In FastAPI, yielding from a synchronous generator blocking operations like `time.sleep` in `StreamingResponse` will block the worker threads that FastAPI relies on to handle requests. It is essential to use an asynchronous generator (`async def`) when maintaining long-lived connections like Server-Sent Events (SSE).
-**Prevention:** Always use asynchronous generators (`async def`) for `StreamingResponse` when yielding events over time. Use `await asyncio.sleep()` instead of `time.sleep()`, and offload any synchronous blocking I/O (like file reading or network requests) to a separate thread using `await asyncio.to_thread()`.
-## 2026-07-05 - Fix Memory Exhaustion DoS in Log API Endpoints
-**Vulnerability:** The application read entire, unboundedly growing log files (`sync.log`, `history.log`, `changelog.log`) fully into memory using `Path.read_text()` and `f.readlines()` on API endpoints (`/stream`, `/history`, `/check-pihole-error`). Over time, this allows an attacker (or normal load) to trigger memory exhaustion and a Denial of Service (DoS).
-**Learning:** Using `Path.read_text()` or `f.readlines()` is dangerous for log files or any file that grows continuously over the lifecycle of the application.
-**Prevention:** Instead of reading the whole file, use `collections.deque(f, maxlen=1000)` to read a bounded number of recent lines when exposing log data through APIs, ensuring fixed memory consumption regardless of file size.
-## 2025-02-27 - Fix IPWhitelistMiddleware Proxy Bypass
-**Vulnerability:** IP whitelist bypass behind reverse proxies due to relying solely on `request.client.host`.
-**Learning:** Depending on the client's host directly in environments using reverse proxies allows attackers to spoof the client IP and bypass IP whitelisting restrictions.
-**Prevention:** Use standard forwarding headers (`X-Forwarded-For` or `X-Real-IP`) to extract the client IP, or handle client IP logic robustly according to reverse proxy configuration.
+## 2026-07-09 - Hardcoded TestClient Backdoor leads to Auth Bypass
+**Vulnerability:** IPWhitelistMiddleware contained a hardcoded override: `if client_ip_str == "testclient": client_ip_str = "127.0.0.1"`.
+**Learning:** Because `client_ip_str` is extracted from user-controllable headers (like `X-Forwarded-For` or `X-Real-IP`) when behind a reverse proxy, an attacker could spoof the header with the value `"testclient"` and instantly bypass the IP whitelist authorization (since 127.0.0.1 is usually whitelisted). Developers often add these backdoors to pass tests because FastAPI's `TestClient` defaults to `"testclient"`.
+**Prevention:** Never leave hardcoded strings for testing in production security logic. Instead, properly configure `TestClient` in the test suite using `TestClient(app, client=('127.0.0.1', 12345))` to securely mock the client IP.
