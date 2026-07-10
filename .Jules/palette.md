@@ -28,3 +28,6 @@
 ## 2026-07-07 - Visual Feedback for Drag and Drop operations
 **Learning:** By default, libraries like Sortable.js handle the DOM reordering but provide little out-of-the-box visual feedback during the actual drag operation, which can leave users confused about where an element will drop.
 **Action:** Always provide CSS styling for the `sortable-ghost` (or equivalent) class provided by drag-and-drop libraries to visually indicate the drop zone (e.g., using lowered opacity and dashed borders), and update the cursor states (`grab` and `grabbing`) on the drag handles to improve interaction clarity. Ensure these styles are tested in both light and dark modes.
+## 2026-07-10 - Scoping interactive CSS properties on shared components
+**Learning:** When styling custom components that mix static and interactive variants (e.g., `.card-header`), applying interactive CSS properties like `cursor: grab` or `:focus-visible` globally creates misleading visual affordances on static elements.
+**Action:** Always scope interactive CSS properties to functional attributes (like `[data-bs-toggle="collapse"]`) to avoid confusing users with interactive indicators on non-interactive components.
