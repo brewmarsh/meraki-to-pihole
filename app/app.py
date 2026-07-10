@@ -156,19 +156,6 @@ async def update_pihole(request: Request):
         log.error("Error starting Pi-hole update", error=e)
         return JSONResponse(content={"message": "Pi-hole update failed to start."}, status_code=500)
 
-@app.get("/check-pihole-error")
-@limiter.limit(get_rate_limit)
-async def check_pihole_error(request: Request):
-    log_file = Path('/app/logs/sync.log')
-    if log_file.exists():
-        from collections import deque
-        with log_file.open("r") as f:
-            # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
-            log_content = "".join(deque(f, maxlen=1000))
-        if "Pi-hole API returned a 'forbidden' error" in log_content:
-            return JSONResponse(content={"error": "forbidden"})
-    return JSONResponse(content={})
-
 @app.get("/stream")
 @limiter.limit(get_rate_limit)
 async def stream(request: Request):

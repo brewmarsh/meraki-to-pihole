@@ -327,13 +327,11 @@
                 const data = JSON.parse(event.data);
                 if (data.log) {
                     document.getElementById('sync-log').textContent = data.log;
-                    fetch('/check-pihole-error')
-                        .then(response => response.json())
-                        .then(errorData => {
-                            if (errorData.error === 'forbidden') {
-                                showToast("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.");
-                            }
-                        });
+                    // ⚡ Bolt Optimization: Removed redundant /check-pihole-error fetch.
+                    // The log content is already in data.log, so we just check it directly.
+                    if (data.log.includes("Pi-hole API returned a 'forbidden' error")) {
+                        showToast("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.");
+                    }
                 }
                 if (data.changelog) {
                     document.getElementById('changelog').textContent = data.changelog;
