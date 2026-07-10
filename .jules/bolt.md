@@ -21,3 +21,6 @@
 ## 2025-10-25 - Prevent N+1 API calls in SSE streams
 **Learning:** Making live external API calls (e.g. `get_mappings_data`) inside a Server-Sent Events (SSE) `while True` loop can cause an N+1 query problem per connected client, leading to excessive API requests, rate limiting, and thread blocking.
 **Action:** Always read data from a background-updated local cache (e.g. `cache.json` updated by a separate daemon) rather than making direct, live API requests inside the stream loop to prevent N+1 issues in SSE streams.
+## 2025-10-25 - Redundant API Polling in SSE Streams
+**Learning:** Found a redundant HTTP GET request to `/check-pihole-error` being made every time an SSE message was received on the frontend. This created unnecessary network traffic and backend server load, effectively negating the benefits of using an SSE stream for pushing updates.
+**Action:** When a frontend uses an SSE stream to receive data, check if any supplemental API calls made upon message receipt can be eliminated by including the necessary state directly in the SSE payload or by parsing the existing payload locally.
