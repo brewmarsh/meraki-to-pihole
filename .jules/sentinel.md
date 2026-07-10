@@ -10,3 +10,7 @@
 **Vulnerability:** IP whitelist bypass behind reverse proxies due to relying solely on `request.client.host`.
 **Learning:** Depending on the client's host directly in environments using reverse proxies allows attackers to spoof the client IP and bypass IP whitelisting restrictions.
 **Prevention:** Use standard forwarding headers (`X-Forwarded-For` or `X-Real-IP`) to extract the client IP, or handle client IP logic robustly according to reverse proxy configuration.
+## 2026-07-10 - Fix IPWhitelistMiddleware Test Backdoor
+**Vulnerability:** A hardcoded `client_ip_str == "testclient"` check was left in production middleware, allowing any attacker to bypass IP whitelisting by passing headers like `X-Forwarded-For: testclient` which would then be authorized as `127.0.0.1`.
+**Learning:** Testing shortcuts left in production code create critical security vulnerabilities, particularly when combined with proxy header trusting where the client string can be fully spoofed.
+**Prevention:** Never leave backdoor strings for testing in production security logic. In FastAPI testing, use the `client` argument in `TestClient(app, client=('127.0.0.1', 12345))` to properly mock the request client IP instead.
