@@ -21,3 +21,7 @@
 ## 2025-10-25 - Prevent N+1 API calls in SSE streams
 **Learning:** Making live external API calls (e.g. `get_mappings_data`) inside a Server-Sent Events (SSE) `while True` loop can cause an N+1 query problem per connected client, leading to excessive API requests, rate limiting, and thread blocking.
 **Action:** Always read data from a background-updated local cache (e.g. `cache.json` updated by a separate daemon) rather than making direct, live API requests inside the stream loop to prevent N+1 issues in SSE streams.
+
+## 2025-10-26 - Static inner helper functions in SSE streams
+**Learning:** Defining static inner helper functions (like `read_sync_log` and `read_changelog`) inside a Server-Sent Events (SSE) generator function creates unnecessary function re-definition overhead for every single SSE connection, using excess memory and CPU.
+**Action:** When a helper function inside an endpoint scope does not depend on local closure variables (like the request object), define it at the module level to avoid re-defining it repeatedly per connected client.
