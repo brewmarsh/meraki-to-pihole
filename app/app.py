@@ -102,8 +102,6 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
                 elif request.headers.get("X-Real-IP"):
                     client_ip_str = request.headers.get("X-Real-IP").strip()
 
-            if client_ip_str == "testclient":
-                client_ip_str = "127.0.0.1"
             try:
                 client_ip = ip_address(client_ip_str)
             except ValueError:
