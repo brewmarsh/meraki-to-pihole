@@ -25,3 +25,6 @@
 ## 2025-10-26 - Static inner helper functions in SSE streams
 **Learning:** Defining static inner helper functions (like `read_sync_log` and `read_changelog`) inside a Server-Sent Events (SSE) generator function creates unnecessary function re-definition overhead for every single SSE connection, using excess memory and CPU.
 **Action:** When a helper function inside an endpoint scope does not depend on local closure variables (like the request object), define it at the module level to avoid re-defining it repeatedly per connected client.
+## 2024-07-12 - Redundant Backend Polling in SSE Handlers
+**Learning:** In frontend applications listening to Server-Sent Events (SSE), it is a performance anti-pattern to trigger separate HTTP polling requests (e.g., `fetch()`) to check for a specific state or error if the data required to determine that state is already included in the SSE payload itself.
+**Action:** Always verify if the necessary data is already available in the SSE message stream (e.g., checking `data.log.includes(...)`) to eliminate redundant HTTP requests, reduce server load, and lower memory footprint by removing unnecessary API endpoints.
