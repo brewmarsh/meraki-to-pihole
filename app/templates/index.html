@@ -161,7 +161,7 @@
                         </div>
                         <hr>
                         <div class="mb-3">
-                            <label for="sync-interval" class="form-label">Sync Interval (seconds)</label>
+                            <label for="sync-interval" class="form-label">Sync Interval (seconds) <span class="text-danger" aria-hidden="true">*</span><span class="visually-hidden"> (required)</span></label>
                             <div class="input-group">
                                 <input type="number" class="form-control" id="sync-interval" min="1" max="86400" value="{{ sync_interval }}" aria-describedby="sync-interval-help" required>
                                 <button class="btn btn-outline-secondary" id="update-interval" aria-label="Update sync interval">Update</button>

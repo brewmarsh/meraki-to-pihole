@@ -32,3 +32,7 @@
 ## 2024-05-14 - Scoping Interactive Visual Affordances
 **Learning:** Applying interactive CSS properties (like `cursor: grab`, `:active`, or `:focus-visible`) to broad structural classes (like `.card-header`) often leads to static elements receiving misleading visual affordances, confusing users about what is actually interactive.
 **Action:** Always scope interactive visual affordances in CSS to functional HTML attributes (e.g., `[data-bs-toggle="collapse"]` or `[role="button"]`) rather than structural classes, ensuring only genuinely interactive variants of a component look interactive.
+
+## 2024-07-12 - Accessible Visual Indicators for Required Form Fields
+**Learning:** When using standard `required` HTML attributes on form fields, users—and especially screen reader users—need clear indication *before* submission that the field is mandatory. A red asterisk is a common visual convention, but screen readers may mispronounce or ignore it if not tagged correctly.
+**Action:** Always wrap visual indicators like asterisks with `aria-hidden="true"` and supplement them with explicit `<span class="visually-hidden"> (required)</span>` text within the `<label>` to ensure both sighted and screen-reader users understand the requirement.
