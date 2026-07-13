@@ -251,14 +251,39 @@ _mappings_cache_time = 0
 
 def get_mappings_data():
     global _mappings_cache, _mappings_cache_time
-    # ⚡ Bolt Optimization: Use an in-memory TTL cache to prevent N+1 API calls
-    # Impact: Significantly reduces load on Meraki/Pi-hole APIs during SSE streams.
+    # ⚡ Bolt Optimization: Use an in-memory TTL cache populated from the background-synced local cache.json file to prevent N+1 live API calls.
+    # Impact: Significantly reduces load on Meraki/Pi-hole APIs during SSE streams and improves latency.
     # Measurement: Compare API request logs during an active SSE connection.
     if _mappings_cache is not None and time.time() < _mappings_cache_time + 60:
         return _mappings_cache
 
     try:
         config = load_app_config_from_env()
+        cache_file_path = config.get("cache_file_path")
+
+        if cache_file_path:
+            cache_path = Path(cache_file_path)
+            if cache_path.exists():
+                try:
+                    with cache_path.open("r") as f:
+                        cache_data = json.load(f)
+
+                    # Re-run _map_devices to construct the full list of mapped device objects expected by the frontend UI
+                    # (sync_logic.py's cache.json only stores an integer count for 'mapped')
+                    pihole_records = cache_data.get("pihole", {})
+                    meraki_clients = cache_data.get("meraki", [])
+
+                    mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
+
+                    result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+                    _mappings_cache = result
+                    _mappings_cache_time = time.time()
+                    return result
+                except json.JSONDecodeError:
+                    log.warning("cache.json is malformed, falling back to live API calls")
+                    pass # fallback to old logic
+
+        # Fallback to old live API logic if cache doesn't exist or is malformed
         pihole_url = os.getenv("PIHOLE_API_URL")
         pihole_api_key = os.getenv("PIHOLE_API_KEY")
 
