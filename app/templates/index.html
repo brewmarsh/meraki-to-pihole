@@ -452,15 +452,35 @@
             }
             document.getElementById('loading-screen').style.display = 'none';
 
-            if (!localStorage.getItem('welcomeScreenSeen')) {
-                document.getElementById('welcome-screen').style.display = 'flex';
-                document.getElementById('close-welcome-screen').focus();
-            }
+            const welcomeScreen = document.getElementById('welcome-screen');
+            if (welcomeScreen) {
+                if (!localStorage.getItem('welcomeScreenSeen')) {
+                    welcomeScreen.style.display = 'flex';
+                    document.getElementById('close-welcome-screen').focus();
+                }
 
-            document.getElementById('close-welcome-screen').addEventListener('click', () => {
-                document.getElementById('welcome-screen').style.display = 'none';
-                localStorage.setItem('welcomeScreenSeen', 'true');
-            });
+                const closeWelcomeScreen = () => {
+                    welcomeScreen.style.display = 'none';
+                    localStorage.setItem('welcomeScreenSeen', 'true');
+                };
+
+                const closeBtn = document.getElementById('close-welcome-screen');
+                if (closeBtn) {
+                    closeBtn.addEventListener('click', closeWelcomeScreen);
+                }
+
+                welcomeScreen.addEventListener('click', (e) => {
+                    if (e.target === welcomeScreen) {
+                        closeWelcomeScreen();
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && welcomeScreen.style.display === 'flex') {
+                        closeWelcomeScreen();
+                    }
+                });
+            }
 
             fetch('/cache')
                 .then(response => response.json())
