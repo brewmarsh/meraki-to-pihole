@@ -28,3 +28,7 @@
 ## 2024-07-12 - Redundant Backend Polling in SSE Handlers
 **Learning:** In frontend applications listening to Server-Sent Events (SSE), it is a performance anti-pattern to trigger separate HTTP polling requests (e.g., `fetch()`) to check for a specific state or error if the data required to determine that state is already included in the SSE payload itself.
 **Action:** Always verify if the necessary data is already available in the SSE message stream (e.g., checking `data.log.includes(...)`) to eliminate redundant HTTP requests, reduce server load, and lower memory footprint by removing unnecessary API endpoints.
+
+## 2026-07-14 - Remove unused API fetching helpers after cache refactor
+**Learning:** When refactoring an endpoint to read from a local cache file instead of live API queries, check if the previously used helper methods are now completely unused.
+**Action:** Always delete now-unused helper functions (like `_get_pihole_data` and `_get_meraki_data`) to reduce memory footprint and improve code maintainability, and clean up the associated imports.

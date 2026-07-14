@@ -111,25 +111,6 @@ def get_meraki_data(config):
     return get_all_relevant_meraki_clients(dashboard, config)
 
 
-def get_mappings_data():
-    """
-    Gets the data for the mappings page.
-    """
-    try:
-        config = load_app_config_from_env()
-        pihole_client = PiholeClient(config["pihole_api_url"], config["pihole_api_key"])
-        pihole_records = pihole_client.get_custom_dns_records()
-        if not pihole_records:
-            return {}
-
-        meraki_clients = get_meraki_data(config)
-        mapped_devices, unmapped_meraki_devices = map_devices(meraki_clients, pihole_records)
-
-        return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
-    except Exception as e:
-        log.error("Error in get_mappings_data", error=e)
-        return {}
-
 def map_devices(meraki_clients, pihole_records):
     """
     Maps Meraki clients to Pi-hole records.

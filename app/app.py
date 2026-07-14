@@ -9,7 +9,6 @@ from ipaddress import ip_address, ip_network
 from pathlib import Path
 
 import markdown
-import meraki
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
@@ -22,9 +21,7 @@ from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
-from .clients.meraki_client import get_all_relevant_meraki_clients
-from .clients.pihole_client import PiholeClient
-from .sync_logic import get_sync_interval, load_app_config_from_env
+from .sync_logic import get_sync_interval
 from .sync_logic import sync_pihole_dns as run_sync_main
 
 log = structlog.get_logger()
@@ -199,28 +196,6 @@ async def stream(request: Request):
 
     return StreamingResponse(event_stream(), media_type='text/event-stream')
 
-def _get_pihole_data(pihole_url, pihole_api_key):
-    client = PiholeClient(pihole_url, pihole_api_key)
-    if not client.sid:
-        log.error("Failed to authenticate to Pi-hole in _get_pihole_data.")
-        return None, None
-
-    pihole_records = client.get_custom_dns_records()
-    if pihole_records is None:
-        log.error("Failed to get Pi-hole records in _get_pihole_data.")
-        return None, None
-
-    return client.sid, pihole_records
-
-def _get_meraki_data(config):
-    dashboard = meraki.DashboardAPI(
-        api_key=config["meraki_api_key"],
-        output_log=False,
-        print_console=False,
-        suppress_logging=True,
-    )
-    return get_all_relevant_meraki_clients(dashboard, config)
-
 def _map_devices(meraki_clients, pihole_records):
     mapped_devices = []
     unmapped_meraki_devices = []
@@ -258,21 +233,21 @@ def get_mappings_data():
         return _mappings_cache
 
     try:
-        config = load_app_config_from_env()
-        pihole_url = os.getenv("PIHOLE_API_URL")
-        pihole_api_key = os.getenv("PIHOLE_API_KEY")
+        with Path("/app/cache.json").open() as f:
+            cache = json.load(f)
 
-        sid, pihole_records = _get_pihole_data(pihole_url, pihole_api_key)
-        if not sid:
-            return {}
+        pihole_records = cache.get("pihole", {})
+        meraki_clients = cache.get("meraki", [])
 
-        meraki_clients = _get_meraki_data(config)
         mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
 
         result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
         _mappings_cache = result
         _mappings_cache_time = time.time()
         return result
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        log.warning("Cache file not available or invalid mid-write", error=e)
+        return {}
     except Exception as e:
         log.error("Error in get_mappings_data", error=e)
         return {}
