@@ -259,6 +259,28 @@ def get_mappings_data():
 
     try:
         config = load_app_config_from_env()
+        cache_path = Path(config.get("cache_file_path", "/app/cache.json"))
+
+        # ⚡ Bolt Optimization: Read from background-updated cache.json instead of making live API calls
+        # Impact: Eliminates N+1 API calls per connected client during SSE streams, preventing rate limiting and thread blocking.
+        # Measurement: Verify external API requests (e.g., to Meraki/Pi-hole) are no longer made inside the stream loop.
+        if cache_path.exists():
+            with cache_path.open() as f:
+                cache_data = json.load(f)
+
+            pihole_records = cache_data.get("pihole", {})
+            meraki_clients = cache_data.get("meraki", [])
+
+            # The frontend UI expects a detailed list for 'mapped', but cache.json stores it as an integer count.
+            # We must manually reconstruct the mapped/unmapped list by re-running the local mapping logic.
+            mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
+
+            result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+            _mappings_cache = result
+            _mappings_cache_time = time.time()
+            return result
+
+        # Fallback to live API call on cold start if cache.json doesn't exist yet
         pihole_url = os.getenv("PIHOLE_API_URL")
         pihole_api_key = os.getenv("PIHOLE_API_KEY")
 
@@ -273,6 +295,9 @@ def get_mappings_data():
         _mappings_cache = result
         _mappings_cache_time = time.time()
         return result
+    except json.JSONDecodeError as e:
+        log.warning("JSONDecodeError reading cache file mid-write in get_mappings_data", error=e)
+        return _mappings_cache if _mappings_cache is not None else {}
     except Exception as e:
         log.error("Error in get_mappings_data", error=e)
         return {}
@@ -339,5 +364,8 @@ async def get_cache(request: Request):
         with Path("/app/cache.json").open() as f:
             cache = json.load(f)
         return JSONResponse(content={"cache": cache})
+    except json.JSONDecodeError as e:
+        log.warning("JSONDecodeError reading cache file mid-write in get_cache", error=e)
+        return JSONResponse(content={"cache": {}})
     except FileNotFoundError:
         return JSONResponse(content={"cache": {}})
