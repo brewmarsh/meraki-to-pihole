@@ -18,7 +18,6 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
@@ -32,7 +31,20 @@ log = structlog.get_logger()
 def get_rate_limit():
     return os.getenv("RATE_LIMIT", "100/minute")
 
-limiter = Limiter(key_func=get_remote_address)
+def get_remote_ip(request: Request) -> str:
+    """
+    🛡️ Sentinel: Securely extract client IP for rate limiting.
+    Prevents IP spoofing via X-Forwarded-For when TRUST_REVERSE_PROXY is not true.
+    """
+    if os.getenv("TRUST_REVERSE_PROXY", "false").lower() == "true":
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            return forwarded_for.split(",")[-1].strip()
+        elif request.headers.get("X-Real-IP"):
+            return request.headers.get("X-Real-IP").strip()
+    return request.client.host if request.client else "127.0.0.1"
+
+limiter = Limiter(key_func=get_remote_ip)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
