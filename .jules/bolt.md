@@ -28,3 +28,6 @@
 ## 2024-07-12 - Redundant Backend Polling in SSE Handlers
 **Learning:** In frontend applications listening to Server-Sent Events (SSE), it is a performance anti-pattern to trigger separate HTTP polling requests (e.g., `fetch()`) to check for a specific state or error if the data required to determine that state is already included in the SSE payload itself.
 **Action:** Always verify if the necessary data is already available in the SSE message stream (e.g., checking `data.log.includes(...)`) to eliminate redundant HTTP requests, reduce server load, and lower memory footprint by removing unnecessary API endpoints.
+## 2025-10-27 - Prevent live API calls in SSE streams by using cache.json
+**Learning:** Found that `get_mappings_data` in `/stream` was executing live API requests to Meraki and Pi-hole inside the Server-Sent Events stream when cache misses occurred or the TTL expired, potentially leading to rate limits or sluggish streams.
+**Action:** Changed the logic to always read from a background-updated local file cache (`cache.json`) rather than directly polling the network within the loop, ensuring 0 external API calls inside the SSE generator. Also added exception handlers for `json.JSONDecodeError` to gracefully tolerate reading the file when it is actively being written by the background process.
