@@ -14,3 +14,7 @@
 **Vulnerability:** A hardcoded `client_ip_str == "testclient"` check was left in production middleware, allowing any attacker to bypass IP whitelisting by passing headers like `X-Forwarded-For: testclient` which would then be authorized as `127.0.0.1`.
 **Learning:** Testing shortcuts left in production code create critical security vulnerabilities, particularly when combined with proxy header trusting where the client string can be fully spoofed.
 **Prevention:** Never leave backdoor strings for testing in production security logic. In FastAPI testing, use the `client` argument in `TestClient(app, client=('127.0.0.1', 12345))` to properly mock the request client IP instead.
+## 2026-07-15 - Fix SlowAPI Proxy Bypass
+**Vulnerability:** IP spoofing bypass behind reverse proxies due to relying on `slowapi.util.get_remote_address` which trusts proxy headers unconditionally.
+**Learning:** Default IP extraction functions in rate limiting libraries (like `get_remote_address` in slowapi) often trust `X-Forwarded-For` unconditionally or are misconfigured for environments where the application might not always be behind a proxy, allowing an attacker to bypass rate limits by spoofing the header.
+**Prevention:** Always provide a custom `key_func` to rate limiters that securely handles client IP extraction based on explicit configuration (like `TRUST_REVERSE_PROXY`), matching the logic used in authorization middleware.
