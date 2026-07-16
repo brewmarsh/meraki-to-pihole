@@ -28,3 +28,6 @@
 ## 2024-07-12 - Redundant Backend Polling in SSE Handlers
 **Learning:** In frontend applications listening to Server-Sent Events (SSE), it is a performance anti-pattern to trigger separate HTTP polling requests (e.g., `fetch()`) to check for a specific state or error if the data required to determine that state is already included in the SSE payload itself.
 **Action:** Always verify if the necessary data is already available in the SSE message stream (e.g., checking `data.log.includes(...)`) to eliminate redundant HTTP requests, reduce server load, and lower memory footprint by removing unnecessary API endpoints.
+## 2025-10-27 - Retain core code logic during performance optimizations
+**Learning:** Removing original data fetching code while trying to switch to a disk cache logic resulted in regressions where live data might never be fetched if tests or other areas of the application relied on it, causing tests to fail. Also, a cache without a fallback or population mechanism breaks core functionality.
+**Action:** Always maintain backward compatibility and preserve core logic functions unless explicitly instructed otherwise. When replacing live API calls with cache reads, ensure both a TTL memory cache and a disk cache fallback exist, without deleting the live fetching functions from the codebase.
