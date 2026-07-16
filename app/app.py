@@ -24,7 +24,7 @@ from starlette.responses import Response
 
 from .clients.meraki_client import get_all_relevant_meraki_clients
 from .clients.pihole_client import PiholeClient
-from .sync_logic import get_sync_interval, load_app_config_from_env
+from .sync_logic import get_sync_interval
 from .sync_logic import sync_pihole_dns as run_sync_main
 
 log = structlog.get_logger()
@@ -251,28 +251,40 @@ _mappings_cache_time = 0
 
 def get_mappings_data():
     global _mappings_cache, _mappings_cache_time
-    # ⚡ Bolt Optimization: Use an in-memory TTL cache to prevent N+1 API calls
-    # Impact: Significantly reduces load on Meraki/Pi-hole APIs during SSE streams.
-    # Measurement: Compare API request logs during an active SSE connection.
+    # ⚡ Bolt Optimization: Use an in-memory TTL cache with disk cache fallback to prevent N+1 API calls and heavy disk I/O
+    # Impact: Significantly reduces load on Meraki/Pi-hole APIs and file system during SSE streams.
+    # Measurement: Compare CPU and disk I/O logs during an active SSE connection.
     if _mappings_cache is not None and time.time() < _mappings_cache_time + 60:
         return _mappings_cache
 
     try:
-        config = load_app_config_from_env()
-        pihole_url = os.getenv("PIHOLE_API_URL")
-        pihole_api_key = os.getenv("PIHOLE_API_KEY")
+        cache_path = Path(os.getenv("CACHE_FILE_PATH", "/app/cache.json"))
+        if not cache_path.exists() and Path("cache.json").exists():
+            cache_path = Path("cache.json")
 
-        sid, pihole_records = _get_pihole_data(pihole_url, pihole_api_key)
-        if not sid:
-            return {}
+        with cache_path.open() as f:
+            cache = json.load(f)
 
-        meraki_clients = _get_meraki_data(config)
+        pihole_records = cache.get("pihole", {})
+        meraki_clients = cache.get("meraki", [])
+
         mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
 
-        result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+        result = {
+            "pihole": pihole_records,
+            "meraki": meraki_clients,
+            "mapped": mapped_devices,
+            "unmapped_meraki": unmapped_meraki_devices
+        }
         _mappings_cache = result
         _mappings_cache_time = time.time()
         return result
+    except json.JSONDecodeError as e:
+        log.error("JSON decode error in get_mappings_data", error=e)
+        return {}
+    except FileNotFoundError as e:
+        log.error("Cache file not found in get_mappings_data", error=e)
+        return {}
     except Exception as e:
         log.error("Error in get_mappings_data", error=e)
         return {}
