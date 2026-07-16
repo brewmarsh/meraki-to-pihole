@@ -452,15 +452,35 @@
             }
             document.getElementById('loading-screen').style.display = 'none';
 
-            if (!localStorage.getItem('welcomeScreenSeen')) {
-                document.getElementById('welcome-screen').style.display = 'flex';
-                document.getElementById('close-welcome-screen').focus();
-            }
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const closeWelcomeBtn = document.getElementById('close-welcome-screen');
 
-            document.getElementById('close-welcome-screen').addEventListener('click', () => {
-                document.getElementById('welcome-screen').style.display = 'none';
-                localStorage.setItem('welcomeScreenSeen', 'true');
-            });
+            if (welcomeScreen && closeWelcomeBtn) {
+                if (!localStorage.getItem('welcomeScreenSeen')) {
+                    welcomeScreen.style.display = 'flex';
+                    closeWelcomeBtn.focus();
+                }
+
+                const hideWelcomeScreen = () => {
+                    welcomeScreen.style.display = 'none';
+                    localStorage.setItem('welcomeScreenSeen', 'true');
+                };
+
+                closeWelcomeBtn.addEventListener('click', hideWelcomeScreen);
+
+                // Add standard modal dismissal patterns
+                welcomeScreen.addEventListener('click', (e) => {
+                    if (e.target === welcomeScreen) {
+                        hideWelcomeScreen();
+                    }
+                });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && welcomeScreen.style.display === 'flex') {
+                        hideWelcomeScreen();
+                    }
+                });
+            }
 
             fetch('/cache')
                 .then(response => response.json())
