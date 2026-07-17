@@ -28,3 +28,6 @@
 ## 2024-07-12 - Redundant Backend Polling in SSE Handlers
 **Learning:** In frontend applications listening to Server-Sent Events (SSE), it is a performance anti-pattern to trigger separate HTTP polling requests (e.g., `fetch()`) to check for a specific state or error if the data required to determine that state is already included in the SSE payload itself.
 **Action:** Always verify if the necessary data is already available in the SSE message stream (e.g., checking `data.log.includes(...)`) to eliminate redundant HTTP requests, reduce server load, and lower memory footprint by removing unnecessary API endpoints.
+## 2025-10-27 - Prevent live API requests by using cache.json
+**Learning:** Found that `get_mappings_data` inside `app/app.py` was making live synchronous API requests to Pi-hole and Meraki whenever the in-memory cache expired. The daemon already syncs and writes these states to `cache.json` periodically.
+**Action:** When handling data that is already managed and synced to a file by a background worker (like `sync_logic.py`), try reading from the local disk cache (e.g. `cache.json`) before falling back to live API queries, as this significantly reduces latency and API quota exhaustion.
