@@ -259,14 +259,25 @@ def get_mappings_data():
 
     try:
         config = load_app_config_from_env()
-        pihole_url = os.getenv("PIHOLE_API_URL")
-        pihole_api_key = os.getenv("PIHOLE_API_KEY")
 
-        sid, pihole_records = _get_pihole_data(pihole_url, pihole_api_key)
-        if not sid:
-            return {}
+        # ⚡ Bolt Optimization: Try reading from cache.json updated by daemon to avoid live API calls
+        # Impact: Significantly reduces API exhaustion and load on the server during SSE stream.
+        # Measurement: Check API request limits and application responsiveness.
+        # 🛡️ Note: Path and json are already imported globally at the top of the file.
+        try:
+            with Path(config.get("cache_file_path", "/app/cache.json")).open() as f:
+                cache_data = json.load(f)
+            pihole_records = cache_data.get("pihole", {})
+            meraki_clients = cache_data.get("meraki", [])
+        except (FileNotFoundError, json.JSONDecodeError):
+            # Fallback to live API calls if cache file is unreadable or doesn't exist
+            pihole_url = os.getenv("PIHOLE_API_URL")
+            pihole_api_key = os.getenv("PIHOLE_API_KEY")
+            sid, pihole_records = _get_pihole_data(pihole_url, pihole_api_key)
+            if not sid:
+                return {}
+            meraki_clients = _get_meraki_data(config)
 
-        meraki_clients = _get_meraki_data(config)
         mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
 
         result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
