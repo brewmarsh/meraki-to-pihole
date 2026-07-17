@@ -36,3 +36,7 @@
 ## 2024-07-12 - Accessible Visual Indicators for Required Form Fields
 **Learning:** When using standard `required` HTML attributes on form fields, users—and especially screen reader users—need clear indication *before* submission that the field is mandatory. A red asterisk is a common visual convention, but screen readers may mispronounce or ignore it if not tagged correctly.
 **Action:** Always wrap visual indicators like asterisks with `aria-hidden="true"` and supplement them with explicit `<span class="visually-hidden"> (required)</span>` text within the `<label>` to ensure both sighted and screen-reader users understand the requirement.
+
+## 2026-07-09 - Accessible Dismissal for Custom Overlays
+**Learning:** When building custom modal overlays without native `<dialog>` or framework components (like Bootstrap `.modal`), users expect standard dismissal patterns such as hitting the `Escape` key or clicking the background backdrop. Missing these patterns creates a frustrating UX, especially for keyboard-only users who might feel "trapped" in the modal.
+**Action:** Always implement explicit event listeners for the `Escape` key and background (backdrop) clicks to provide standard, accessible UX dismissal patterns for any custom overlay or modal.
