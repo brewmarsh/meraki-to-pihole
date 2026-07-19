@@ -257,6 +257,29 @@ def get_mappings_data():
     if _mappings_cache is not None and time.time() < _mappings_cache_time + 60:
         return _mappings_cache
 
+    # ⚡ Bolt Optimization: Layer the background-synced disk cache beneath the in-memory TTL cache.
+    # Impact: Prevents heavy disk I/O on every request and avoids live API calls that block the event loop.
+    try:
+        with Path("/app/cache.json").open() as f:
+            cache_data = json.load(f)
+            if not isinstance(cache_data, dict):
+                raise ValueError("Cache data is not a dictionary")
+            # Reconstruct the mapped list since cache.json only stores the count
+            pihole_records = cache_data.get("pihole", {})
+            meraki_clients = cache_data.get("meraki", [])
+            mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
+            result = {
+                "pihole": pihole_records,
+                "meraki": meraki_clients,
+                "mapped": mapped_devices,
+                "unmapped_meraki": unmapped_meraki_devices
+            }
+            _mappings_cache = result
+            _mappings_cache_time = time.time()
+            return result
+    except (FileNotFoundError, json.JSONDecodeError, ValueError):
+        log.warning("Cache file not found or corrupted, falling back to live API calls.")
+
     try:
         config = load_app_config_from_env()
         pihole_url = os.getenv("PIHOLE_API_URL")

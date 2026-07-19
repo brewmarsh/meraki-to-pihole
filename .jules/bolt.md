@@ -28,3 +28,7 @@
 ## 2024-07-12 - Redundant Backend Polling in SSE Handlers
 **Learning:** In frontend applications listening to Server-Sent Events (SSE), it is a performance anti-pattern to trigger separate HTTP polling requests (e.g., `fetch()`) to check for a specific state or error if the data required to determine that state is already included in the SSE payload itself.
 **Action:** Always verify if the necessary data is already available in the SSE message stream (e.g., checking `data.log.includes(...)`) to eliminate redundant HTTP requests, reduce server load, and lower memory footprint by removing unnecessary API endpoints.
+
+## 2025-10-27 - Prevent heavy disk I/O on every request
+**Learning:** When reading from a background-synced JSON file (like `cache.json`) to prevent N+1 live API calls, directly parsing the file on every API request or SSE tick incurs heavy disk I/O and JSON deserialization overhead, becoming a new bottleneck.
+**Action:** Layer the disk cache read beneath an in-memory TTL cache (e.g., `_mappings_cache`), and wrap the disk read in a `try...except (FileNotFoundError, json.JSONDecodeError)` block to provide a safe fallback in case the background daemon is currently writing to the file or hasn't created it yet.
