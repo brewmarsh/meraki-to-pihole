@@ -36,3 +36,7 @@
 ## 2024-07-12 - Accessible Visual Indicators for Required Form Fields
 **Learning:** When using standard `required` HTML attributes on form fields, users—and especially screen reader users—need clear indication *before* submission that the field is mandatory. A red asterisk is a common visual convention, but screen readers may mispronounce or ignore it if not tagged correctly.
 **Action:** Always wrap visual indicators like asterisks with `aria-hidden="true"` and supplement them with explicit `<span class="visually-hidden"> (required)</span>` text within the `<label>` to ensure both sighted and screen-reader users understand the requirement.
+
+## 2026-07-28 - Custom Overlays Accessibility and Resiliency
+**Learning:** When building custom modal overlays without native `<dialog>` or framework components (like Bootstrap `.modal`), keyboard and screen reader accessibility suffers unless explicitly added. Furthermore, attaching event listeners unconditionally to elements rendered via Jinja `{% if %}` blocks causes JavaScript `TypeError` exceptions if the element isn't in the DOM.
+**Action:** Always implement explicit event listeners for the `Escape` key and backdrop clicks, include standard ARIA attributes (`role="dialog"`, `aria-modal="true"`, and `aria-labelledby`), and verify the element exists in JavaScript before manipulating it.
