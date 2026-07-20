@@ -12,10 +12,10 @@
 </head>
 <body>
     {% if show_welcome_banner %}
-    <div id="welcome-screen">
+    <div id="welcome-screen" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title">Welcome to Meraki Pi-hole Sync!</h5>
+                <h5 class="card-title" id="welcome-title">Welcome to Meraki Pi-hole Sync!</h5>
                 <p class="card-text">
                     This application synchronizes client information from the Meraki API to a Pi-hole instance.
                     It identifies Meraki clients with Fixed IP Assignments (DHCP Reservations) and
@@ -452,15 +452,33 @@
             }
             document.getElementById('loading-screen').style.display = 'none';
 
-            if (!localStorage.getItem('welcomeScreenSeen')) {
-                document.getElementById('welcome-screen').style.display = 'flex';
-                document.getElementById('close-welcome-screen').focus();
-            }
+            const welcomeScreen = document.getElementById('welcome-screen');
+            if (welcomeScreen) {
+                const closeWelcomeScreen = document.getElementById('close-welcome-screen');
+                if (!localStorage.getItem('welcomeScreenSeen')) {
+                    welcomeScreen.style.display = 'flex';
+                    closeWelcomeScreen.focus();
+                }
 
-            document.getElementById('close-welcome-screen').addEventListener('click', () => {
-                document.getElementById('welcome-screen').style.display = 'none';
-                localStorage.setItem('welcomeScreenSeen', 'true');
-            });
+                const hideWelcomeScreen = () => {
+                    welcomeScreen.style.display = 'none';
+                    localStorage.setItem('welcomeScreenSeen', 'true');
+                };
+
+                closeWelcomeScreen.addEventListener('click', hideWelcomeScreen);
+
+                welcomeScreen.addEventListener('click', (event) => {
+                    if (event.target === welcomeScreen) {
+                        hideWelcomeScreen();
+                    }
+                });
+
+                document.addEventListener('keydown', (event) => {
+                    if (event.key === 'Escape' && welcomeScreen.style.display === 'flex') {
+                        hideWelcomeScreen();
+                    }
+                });
+            }
 
             fetch('/cache')
                 .then(response => response.json())
