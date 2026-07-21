@@ -18,7 +18,6 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import Response
 
@@ -32,7 +31,17 @@ log = structlog.get_logger()
 def get_rate_limit():
     return os.getenv("RATE_LIMIT", "100/minute")
 
-limiter = Limiter(key_func=get_remote_address)
+def get_client_ip(request: Request) -> str:
+    client_ip_str = request.client.host if request.client else "127.0.0.1"
+    if os.getenv("TRUST_REVERSE_PROXY", "false").lower() == "true":
+        forwarded_for = request.headers.get("X-Forwarded-For")
+        if forwarded_for:
+            client_ip_str = forwarded_for.split(",")[-1].strip()
+        elif request.headers.get("X-Real-IP"):
+            client_ip_str = request.headers.get("X-Real-IP").strip()
+    return client_ip_str
+
+limiter = Limiter(key_func=get_client_ip)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -92,17 +101,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         self._parse_subnets()
         if os.getenv("ALLOWED_SUBNETS"):
-            client_ip_str = request.client.host if request.client else "127.0.0.1"
-
-            # 🛡️ Sentinel: Prevent IP spoofing by only trusting proxy headers if explicitly configured.
-            # When behind a trusted proxy, take the rightmost IP in X-Forwarded-For to avoid spoofing
-            # by attacker-supplied leftmost values.
-            if os.getenv("TRUST_REVERSE_PROXY", "false").lower() == "true":
-                forwarded_for = request.headers.get("X-Forwarded-For")
-                if forwarded_for:
-                    client_ip_str = forwarded_for.split(",")[-1].strip()
-                elif request.headers.get("X-Real-IP"):
-                    client_ip_str = request.headers.get("X-Real-IP").strip()
+            client_ip_str = get_client_ip(request)
 
             try:
                 client_ip = ip_address(client_ip_str)
