@@ -73,7 +73,7 @@ class PiholeClient:
             log.error("An unexpected error occurred during Pi-hole authentication", error=e)
             self.sid, self.csrf_token = None, None
 
-    def _api_request(self, method, path, data=None):
+    def _api_request(self, method, path, data=None, _retry=True):
         if not self.sid or not self.csrf_token:
             self.authenticate()
             if not self.sid or not self.csrf_token:
@@ -96,10 +96,10 @@ class PiholeClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
-            if e.response.status_code == 403:
+            if e.response.status_code == 403 and _retry:
                 log.warning("Pi-hole session appears to be invalid/expired. Attempting to re-authenticate.")
                 self.sid, self.csrf_token = None, None
-                return self._api_request(method, path, data)
+                return self._api_request(method, path, data, _retry=False)
             log.error(
                 "Pi-hole API HTTP error",
                 error=e,
