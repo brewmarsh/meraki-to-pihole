@@ -40,3 +40,7 @@
 ## 2026-07-28 - Custom Modal Overlay Close Mechanisms and Accessibility
 **Learning:** When building custom modal overlays without native `<dialog>` or framework components (like Bootstrap `.modal`), always implement explicit event listeners for the `Escape` key and background (backdrop) clicks, and include standard ARIA attributes (`role="dialog"`, `aria-modal="true"`, and `aria-labelledby`) to ensure proper accessibility and screen reader support. Additionally, ensure event listeners correctly account for conditional rendering (like Jinja `{% if %}` blocks) to prevent `TypeError` exceptions on elements that might not exist in the DOM.
 **Action:** Always add standard ARIA attributes and robust close handlers (Escape, click outside) for custom modal implementations, ensuring these scripts check for element existence if the HTML is conditionally rendered.
+
+## 2026-08-01 - Keyboard accessibility for scrollable log regions
+**Learning:** By default, scrollable regions (`overflow: scroll` or `auto`) like `<pre>` blocks for logs cannot be scrolled using the keyboard unless they can receive focus. This creates an accessibility barrier for keyboard-only users who need to read long log output.
+**Action:** Always add `tabindex="0"` to visually scrollable custom components or regions to allow keyboard focus, and pair it with a visible `:focus-visible` outline for sighted keyboard users.
