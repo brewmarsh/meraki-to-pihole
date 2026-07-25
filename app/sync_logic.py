@@ -2,6 +2,7 @@ import os
 import sys
 import time
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
 
 import meraki
@@ -26,6 +27,7 @@ ENV_CHANGELOG_FILE_PATH = "CHANGELOG_FILE_PATH"
 ENV_SYNC_INTERVAL_FILE_PATH = "SYNC_INTERVAL_FILE_PATH"
 
 
+@lru_cache(maxsize=1)
 def load_app_config_from_env():
     """
     Loads all application configuration from environment variables.
