@@ -32,3 +32,6 @@
 ## 2025-10-27 - Prevent heavy disk I/O on every request
 **Learning:** When reading from a background-synced JSON file (like `cache.json`) to prevent N+1 live API calls, directly parsing the file on every API request or SSE tick incurs heavy disk I/O and JSON deserialization overhead, becoming a new bottleneck.
 **Action:** Layer the disk cache read beneath an in-memory TTL cache (e.g., `_mappings_cache`), and wrap the disk read in a `try...except (FileNotFoundError, json.JSONDecodeError)` block to provide a safe fallback in case the background daemon is currently writing to the file or hasn't created it yet.
+## 2025-10-28 - Caching Configuration Parsing
+**Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
+**Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
