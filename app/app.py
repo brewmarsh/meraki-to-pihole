@@ -68,7 +68,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         return response
 
-app.add_middleware(SecurityHeadersMiddleware)
 
 
 @app.exception_handler(404)
@@ -114,6 +113,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(IPWhitelistMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
