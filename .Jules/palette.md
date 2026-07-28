@@ -44,3 +44,7 @@
 ## 2026-07-26 - Accessible Scrollable Regions
 **Learning:** Elements with scrollable overflow (like `<pre class="log-box">`) are not natively focusable by default, meaning keyboard-only users cannot scroll their content using arrow keys.
 **Action:** Always add `tabindex="0"` to visually scrollable regions and include a visible `:focus-visible` outline for sighted keyboard users to ensure they are fully accessible and usable.
+
+## 2026-07-28 - Skip to main content accessibility link
+**Learning:** Adding a visually hidden, focusable "Skip to main content" link as the first focusable element helps keyboard and screen reader users bypass repetitive header and navigation links. Furthermore, mapping the target container using a standard HTML5 `<main>` tag with appropriate ARIA attributes (such as `id` matching the link, `tabindex="-1"`, and `style="outline: none;"`) ensures focus correctly applies when activated, creating a smoother reading flow without unnecessary visual outlines.
+**Action:** Always implement a "Skip to main content" link for application structures with persistent navbars and utilize the `<main>` tag for structural semantics to ensure clear keyboard navigation paths.
