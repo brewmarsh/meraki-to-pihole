@@ -44,3 +44,6 @@
 ## 2026-07-26 - Accessible Scrollable Regions
 **Learning:** Elements with scrollable overflow (like `<pre class="log-box">`) are not natively focusable by default, meaning keyboard-only users cannot scroll their content using arrow keys.
 **Action:** Always add `tabindex="0"` to visually scrollable regions and include a visible `:focus-visible` outline for sighted keyboard users to ensure they are fully accessible and usable.
+## 2026-07-29 - Missing language attribute and viewport meta tags
+**Learning:** HTML templates (like index.html, 404.html, and 500.html) should always include a `lang="en"` attribute on the `<html>` tag to allow screen readers to use the correct pronunciation rules. Additionally, adding a `<meta name="viewport" content="width=device-width, initial-scale=1.0">` tag is a foundational requirement for making web pages responsive and legible on mobile devices. Adding `<meta charset="UTF-8">` ensures consistent text encoding across browsers.
+**Action:** Always verify the presence of the `lang` attribute and essential `<meta>` tags (charset and viewport) in all HTML templates, especially error pages which are often overlooked but still need to be accessible and responsive.
