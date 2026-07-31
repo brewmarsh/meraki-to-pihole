@@ -211,6 +211,7 @@ def sync_pihole_dns(update_type=None):
         existing_pihole_records = pihole_client.get_custom_dns_records()
 
         if existing_pihole_records is not None:
+            hostname_suffix = config['hostname_suffix']
             successful_syncs = 0
             failed_syncs = 0
             meraki_clients_by_ip = {client['ip']: client for client in meraki_clients}
@@ -241,7 +242,7 @@ def sync_pihole_dns(update_type=None):
                         continue
 
                     client_name_sanitized = client_name.replace(" ", "-").lower()
-                    domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
+                    domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
                     ip_to_sync = client["ip"]
 
                     # Bolt: Pass existing_pihole_records to avoid an API call (N+1 query problem) on every client
@@ -262,7 +263,7 @@ def sync_pihole_dns(update_type=None):
                         )
 
                 for domain, ip in existing_pihole_records.items():
-                    pihole_hostname = domain.replace(config['hostname_suffix'], "")
+                    pihole_hostname = domain.replace(hostname_suffix, "")
                     if ip not in meraki_clients_by_ip and pihole_hostname not in meraki_clients_by_name:
                         if pihole_client.remove_dns_record(domain, ip):
                             timestamp = datetime.now()
@@ -282,7 +283,7 @@ def sync_pihole_dns(update_type=None):
             for client in meraki_clients:
                 if client.get("name"):
                     client_name_sanitized = client["name"].replace(" ", "-").lower()
-                    domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
+                    domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
                     if domain_to_sync in existing_pihole_records:
                         mapped_devices += 1
                     else:
