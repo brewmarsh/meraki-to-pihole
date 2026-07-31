@@ -35,3 +35,6 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+## 2025-10-29 - Loop-invariant dictionary lookup
+**Learning:** Found redundant dictionary lookups for `config['hostname_suffix']` inside nested loops over Meraki clients and existing Pi-hole records in `sync_pihole_dns`. While dictionary lookups are generally O(1), repeating them over O(N) items adds up over large datasets.
+**Action:** Extracted the dictionary lookup outside the main loop into a local variable (`hostname_suffix = config['hostname_suffix']`). This prevents unnecessary hashing operations inside the loop and slightly improves execution speed.
