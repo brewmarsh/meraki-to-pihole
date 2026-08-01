@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
 
+import requests
+
 from app.clients.pihole_client import PiholeClient
 
 
@@ -85,6 +87,30 @@ class TestPiholeClient(unittest.TestCase):
         # Assert
         self.assertTrue(result)
         mock_api_request.assert_not_called()
+
+
+    @patch('app.clients.pihole_client.requests.Session')
+    def test_api_request_403_retry_limit(self, mock_session):
+        # Arrange
+        client = PiholeClient("http://pi.hole", "password")
+        client.sid = "123"
+        client.csrf_token = "abc"
+
+        # Mock the session.request to raise a 403 HTTPError
+        mock_response_403 = MagicMock()
+        mock_response_403.status_code = 403
+        mock_response_403.text = "Forbidden"
+        mock_response_403.request.headers = {}
+        http_error = requests.exceptions.HTTPError(response=mock_response_403)
+        mock_session.return_value.request.side_effect = http_error
+
+        # Act
+        result = client._api_request("GET", "/api/test")
+
+        # Assert
+        self.assertIsNone(result)
+        # Should attempt the first time, then one retry, for a total of 2 requests
+        self.assertEqual(mock_session.return_value.request.call_count, 2)
 
 if __name__ == '__main__':
     unittest.main()
