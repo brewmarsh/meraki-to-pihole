@@ -7,11 +7,12 @@
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
+    <a href="#main-content" class="visually-hidden-focusable">Skip to main content</a>
+    <main id="main-content" class="container" tabindex="-1" style="outline: none;">
         <a href="/"><h1>Meraki Pi-hole Sync</h1></a>
         <div class="log-container">
             {{ content|safe }}
         </div>
-    </div>
+    </main>
 </body>
 </html>
