@@ -205,6 +205,10 @@ def sync_pihole_dns(update_type=None):
     log.info("Starting Meraki Pi-hole Sync Script", version=app_version, commit=commit_sha)
 
     config = load_app_config_from_env()
+    # ⚡ Bolt Optimization: Extract loop-invariant dictionary lookup
+    # Impact: Reduces redundant dictionary hashing and lookups in the hot loops.
+    # Measurement: Improves iteration speed over large arrays of Meraki clients.
+    hostname_suffix = config["hostname_suffix"]
     meraki_clients = get_meraki_data(config)
     if (update_type is None or update_type == "pihole") and meraki_clients:
         pihole_client = PiholeClient(config["pihole_api_url"], config["pihole_api_key"])
@@ -241,7 +245,7 @@ def sync_pihole_dns(update_type=None):
                         continue
 
                     client_name_sanitized = client_name.replace(" ", "-").lower()
-                    domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
+                    domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
                     ip_to_sync = client["ip"]
 
                     # Bolt: Pass existing_pihole_records to avoid an API call (N+1 query problem) on every client
@@ -262,7 +266,7 @@ def sync_pihole_dns(update_type=None):
                         )
 
                 for domain, ip in existing_pihole_records.items():
-                    pihole_hostname = domain.replace(config['hostname_suffix'], "")
+                    pihole_hostname = domain.replace(hostname_suffix, "")
                     if ip not in meraki_clients_by_ip and pihole_hostname not in meraki_clients_by_name:
                         if pihole_client.remove_dns_record(domain, ip):
                             timestamp = datetime.now()
@@ -282,7 +286,7 @@ def sync_pihole_dns(update_type=None):
             for client in meraki_clients:
                 if client.get("name"):
                     client_name_sanitized = client["name"].replace(" ", "-").lower()
-                    domain_to_sync = f"{client_name_sanitized}{config['hostname_suffix']}"
+                    domain_to_sync = f"{client_name_sanitized}{hostname_suffix}"
                     if domain_to_sync in existing_pihole_records:
                         mapped_devices += 1
                     else:
