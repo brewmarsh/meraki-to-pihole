@@ -1,0 +1,12 @@
+🚨 Severity: CRITICAL
+
+💡 Vulnerability: The `PiholeClient._api_request` method catches an `HTTPError` 403 and attempts to re-authenticate, then recursively calls `_api_request()` again. If the authentication silently fails or the API continuously returns 403 (for example, if the API key is revoked or rate-limited in a way that manifests as 403), this triggers an infinite recursion loop. This loop ultimately crashes the application (or worker thread) by exceeding the maximum recursion depth, resulting in a Denial of Service (DoS) for the application logic dependent on this client.
+
+🎯 Impact: An attacker or system misconfiguration could trigger a sustained 403, completely crashing the backend application and disrupting the DNS synchronization functionality. This allows for an easy vector to cause application downtime.
+
+🔧 Fix: Modified the `_api_request` function signature to include a `_retry` boolean flag defaulting to `True`. When catching a 403 error, the recursion only occurs if `_retry` is `True`, and it explicitly passes `_retry=False` to the subsequent call. If the recursive call also receives a 403, it logs an error and returns `None`, safely breaking the infinite loop.
+
+✅ Verification:
+- Ran `poetry run pytest` and verified the entire test suite passes without regressions.
+- Verified using `ruff check` that the code syntax is correct.
+- Inspected the `git diff` manually to confirm only the specified lines in `app/clients/pihole_client.py` and `.jules/sentinel.md` were modified.
