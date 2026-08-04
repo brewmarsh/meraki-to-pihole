@@ -44,3 +44,7 @@
 ## 2026-07-26 - Accessible Scrollable Regions
 **Learning:** Elements with scrollable overflow (like `<pre class="log-box">`) are not natively focusable by default, meaning keyboard-only users cannot scroll their content using arrow keys.
 **Action:** Always add `tabindex="0"` to visually scrollable regions and include a visible `:focus-visible` outline for sighted keyboard users to ensure they are fully accessible and usable.
+
+## 2024-08-04 - Skip to main content links
+**Learning:** When implementing a 'Skip to main content' link for keyboard accessibility, it must be placed at the top of the body using Bootstrap's 'visually-hidden-focusable' class and ensure it targets a focusable '<main>' container with 'tabindex="-1"' and 'outline: none;'.
+**Action:** Always include a 'Skip to main content' link that targets a focusable main container when modifying layout templates, to enable keyboard users to bypass repetitive navigation elements.
