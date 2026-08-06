@@ -88,6 +88,10 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         elif device['model'].startswith('MX'):
             return _get_fixed_ip_assignments_from_appliance(dashboard, device)
         return []
+    # ⚡ Bolt Optimization: Filter devices by network ID before fanning out to prevent N+1 API calls
+    if config.get("meraki_network_ids"):
+        devices = [d for d in devices if d.get('networkId') in config['meraki_network_ids']]
+
 
     # Use a ThreadPoolExecutor to fetch device data in parallel
     with ThreadPoolExecutor(max_workers=10) as executor:
