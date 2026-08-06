@@ -1,0 +1,9 @@
+💡 What: Added a visually hidden "Skip to main content" link as the first focusable element on the page, and updated the main container to semantically use `<main>` with programmatic focus support (`tabindex="-1"` and `outline: none;`).
+
+🎯 Why: Keyboard-only users and screen reader users often have to repeatedly tab through the same navigation elements (like the navbar) on every page reload or visit. A "skip link" allows them to jump directly to the primary content, significantly improving efficiency and usability.
+
+📸 Before/After: See generated frontend verification videos/screenshots. The link is invisible to mouse users but appears at the top left when focused via the `Tab` key.
+
+♿ Accessibility: Directly satisfies WCAG Guideline 2.4.1 (Bypass Blocks).
+
+Recorded learning about skip link implementation details in `.Jules/palette.md`.
