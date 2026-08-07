@@ -44,3 +44,7 @@
 ## 2026-07-26 - Accessible Scrollable Regions
 **Learning:** Elements with scrollable overflow (like `<pre class="log-box">`) are not natively focusable by default, meaning keyboard-only users cannot scroll their content using arrow keys.
 **Action:** Always add `tabindex="0"` to visually scrollable regions and include a visible `:focus-visible` outline for sighted keyboard users to ensure they are fully accessible and usable.
+
+## 2024-08-07 - Skip to main content accessibility
+**Learning:** Adding a "Skip to main content" link is a quick and extremely effective way to improve keyboard navigation accessibility, especially in apps with extensive top navigation. When implementing, the target container (e.g., `<main>`) must have `tabindex="-1"` and `style="outline: none;"` so it can programmatically receive focus from the link without showing an ugly focus ring or entering the regular tab order.
+**Action:** Always include a `.visually-hidden-focusable` skip link targeting a `<main>` container configured with `tabindex="-1"` and `outline: none` at the top of application layout files.
