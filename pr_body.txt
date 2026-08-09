@@ -1,0 +1,7 @@
+💡 What: Added a 'Skip to main content' link that is hidden from sighted users but accessible to keyboard navigation. The link jumps focus to a `<main>` container which replaced the generic `<div class="container">`.
+
+🎯 Why: To improve accessibility for screen readers and keyboard-only users by allowing them to bypass repetitive navigation items (the banner and nav menu) directly to the main content of the application.
+
+📸 Before/After: See Playwright video screenshots (keyboard focus outlines correctly highlight the 'Skip to main content' link when tabbing in).
+
+♿ Accessibility: Added `tabindex="-1"` and `style="outline: none;"` to the `<main>` tag to correctly receive and manage the programmatic focus shift without leaving an ugly persistent outline box around the entire page content.
