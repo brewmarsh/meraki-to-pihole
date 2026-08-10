@@ -44,3 +44,7 @@
 ## 2026-07-26 - Accessible Scrollable Regions
 **Learning:** Elements with scrollable overflow (like `<pre class="log-box">`) are not natively focusable by default, meaning keyboard-only users cannot scroll their content using arrow keys.
 **Action:** Always add `tabindex="0"` to visually scrollable regions and include a visible `:focus-visible` outline for sighted keyboard users to ensure they are fully accessible and usable.
+
+## 2026-08-10 - Adding Skip to main content link
+**Learning:** Adding a "Skip to main content" link is a highly impactful accessibility (a11y) improvement for keyboard and screen-reader users, allowing them to bypass repeated navigation headers. However, applying Bootstrap classes like `visually-hidden-focusable` without verifying if the framework is loaded on every page (like a `docs.html` page) can lead to unstyled, visible links that degrade visual quality. Furthermore, the `<main>` target container must include `tabindex="-1"` and `outline: none;` to ensure it can receive programmatic focus without showing a persistent focus ring across the entire page body.
+**Action:** Always verify that CSS frameworks are loaded in all templates being modified before relying on their utility classes. Ensure skip links target semantic `<main>` elements configured to handle programmatic focus invisibly.
