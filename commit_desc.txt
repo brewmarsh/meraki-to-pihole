@@ -1,0 +1,4 @@
+💡 What: Added a pre-flight filter for Meraki devices based on `meraki_network_ids` before pushing them into the ThreadPoolExecutor.
+🎯 Why: Resolves an N+1 query problem where the application fetched data for all devices in a Meraki organization instead of only fetching for devices in networks that were configured to be synced.
+📊 Impact: Significantly reduces external HTTP requests and API latency when syncing large Meraki organizations but filtering by only a few specific network IDs.
+🔬 Measurement: Can be verified by comparing API request logs and latency when the `meraki_network_ids` filter is applied in large organizations.
