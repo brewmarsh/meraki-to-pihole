@@ -35,3 +35,6 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+## 2025-10-31 - Filter collection before mapping to ThreadPoolExecutor
+**Learning:** Found an N+1 API call issue where all Meraki devices in an organization were submitted to a `ThreadPoolExecutor` to fetch fixed IP assignments, even if the user had specified `MERAKI_NETWORK_IDS` in the config to only monitor specific networks.
+**Action:** When fanning out concurrent workers over a collection of items (like devices), always apply filtering criteria (e.g., `if device.get('networkId') in meraki_network_ids`) *before* executing the fan-out loop. This avoids spawning unnecessary background workers and prevents N+1 external API calls to irrelevant resources.
