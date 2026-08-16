@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2026-08-16 - Programmatic replacements for HTML modifications
+**Learning:** When writing Python scripts to modify HTML files, relying on exact line numbers is brittle, especially if the file structure is not fully verified or may change.
+**Action:** Always write edit scripts to perform programmatic string replacements using unique context markers (e.g., targeting the `</div>` that immediately precedes a specific element like `<div class="toast-container">`) rather than assuming hardcoded line numbers.
