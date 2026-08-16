@@ -57,6 +57,15 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, docs_url="/api/docs", redoc_url="/api/redoc")
 
 
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Enforce CSRF protection for state-changing operations
+        # by requiring a custom header that cannot be set by simple cross-origin requests.
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                return JSONResponse(status_code=403, content={"detail": "CSRF validation failed"})
+        return await call_next(request)
+
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         response = await call_next(request)
@@ -112,6 +121,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         return response
 
 
+app.add_middleware(CSRFProtectionMiddleware)
 app.add_middleware(IPWhitelistMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")

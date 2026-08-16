@@ -49,3 +49,19 @@ def test_ip_whitelist_invalid_ip():
         client = TestClient(app, client=("1.1.1.1", 12345))
         response = client.get("/health", headers={"X-Forwarded-For": "not-an-ip"})
         assert response.status_code == 403
+
+def test_csrf_middleware_missing_header():
+    with patch.dict(os.environ, {"ALLOWED_SUBNETS": "127.0.0.1/32", "TESTING": "true"}):
+        client = TestClient(app, client=("127.0.0.1", 12345))
+        # Missing the X-Requested-With header
+        response = client.post("/update-interval", json={"interval": 120})
+        assert response.status_code == 403
+        assert response.json() == {"detail": "CSRF validation failed"}
+
+def test_csrf_middleware_with_header():
+    with patch.dict(os.environ, {"ALLOWED_SUBNETS": "127.0.0.1/32", "TESTING": "true"}):
+        client = TestClient(app, client=("127.0.0.1", 12345))
+        # Includes the correct X-Requested-With header
+        response = client.post("/update-interval", headers={"X-Requested-With": "XMLHttpRequest"}, json={"interval": 120})
+        assert response.status_code == 200
+        assert response.json() == {"message": "Sync interval updated."}
