@@ -4,14 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Documentation</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <div class="container">
+    <a href="#main-content" class="visually-hidden-focusable p-3 m-3 bg-primary text-white rounded position-absolute top-0 start-0 z-3">Skip to main content</a>
+    <main id="main-content" class="container" tabindex="-1" style="outline: none;">
         <a href="/"><h1>Meraki Pi-hole Sync</h1></a>
         <div class="log-container">
             {{ content|safe }}
         </div>
-    </div>
+    </main>
 </body>
 </html>
