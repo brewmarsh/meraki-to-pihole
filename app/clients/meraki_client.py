@@ -90,8 +90,14 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         return []
 
     # Use a ThreadPoolExecutor to fetch device data in parallel
+    target_network_ids = set(config.get("meraki_network_ids", []))
+    if target_network_ids:
+        devices_to_process = [d for d in devices if d.get('networkId') in target_network_ids]
+    else:
+        devices_to_process = devices
+
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(fetch_for_device, device) for device in devices]
+        futures = [executor.submit(fetch_for_device, device) for device in devices_to_process]
         for future in as_completed(futures):
             relevant_clients.extend(future.result())
 
