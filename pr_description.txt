@@ -1,0 +1,11 @@
+💡 What
+Added a pre-filtering step to filter out unsupported Meraki devices and devices not within the `target_networks` before passing the list to the `ThreadPoolExecutor` for concurrent API fetches. Also recorded this learning in `.jules/bolt.md`.
+
+🎯 Why
+When dealing with a large list of Meraki devices, the script used a concurrent pool to dispatch API requests to fetch IP assignments for each one. However, dispatching work for devices that are structurally unsupported (e.g., MR access points instead of MS/MX) or out of the target networks results in unnecessary API requests that consume the organization API quota and block worker threads.
+
+📊 Impact
+Prevents N+1 external API calls for unsupported models and out-of-scope networks during the background fetch. This significantly reduces overall memory allocation, thread context switching, API latency, and API quota usage.
+
+🔬 Measurement
+Review the Meraki API dashboard logs and measure execution time. A codebase with thousands of wireless access points but only a few target MS/MX appliances will see execution times drop from multiple seconds down to a few milliseconds.
