@@ -79,7 +79,23 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
     return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
+
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Prevent Cross-Site Request Forgery (CSRF) by requiring a custom header
+        # on state-changing API endpoints. Browsers block cross-origin requests with custom
+        # headers natively, providing robust protection for JSON/AJAX APIs without token overhead.
+        if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            # Exempt specific endpoints if needed (none currently needed)
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                return JSONResponse(
+                    status_code=403,
+                    content={"detail": "Forbidden: CSRF verification failed. Missing X-Requested-With header."}
+                )
+        return await call_next(request)
+
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
+
     def __init__(self, app):
         super().__init__(app)
         # ⚡ Bolt Optimization: Parse ALLOWED_SUBNETS once at startup to avoid overhead on every request
@@ -113,6 +129,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(IPWhitelistMiddleware)
+app.add_middleware(CSRFProtectionMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")

@@ -1,5 +1,5 @@
-🚨 Severity: CRITICAL
-💡 Vulnerability: The Pi-hole client caught `HTTPError` 403 responses and triggered automatic re-authentication without bounding the retry depth. If the API consistently returned 403 (e.g. invalid credentials), it resulted in an infinite recursion loop causing a `RecursionError`.
-🎯 Impact: Denial of Service (DoS) where an external authentication failure could crash the local service.
-🔧 Fix: Introduced a bounded depth mechanism (`_retry=True` flag) in `_api_request` to ensure a maximum of 1 re-authentication attempt is made per original API call.
-✅ Verification: Tested locally with a mocked 403 response to ensure `RecursionError` is prevented, returning `None` gracefully instead.
+🚨 Severity: HIGH
+💡 Vulnerability: The FastAPI application lacked Cross-Site Request Forgery (CSRF) protection on state-changing API endpoints (like `/update-meraki`, `/update-pihole`, `/update-interval`, and `/clear-log`).
+🎯 Impact: A malicious website could trick an authenticated user's browser into making state-changing requests to the application, potentially clearing logs, altering sync intervals, or triggering unneeded syncs without the user's consent.
+🔧 Fix: Implemented `CSRFProtectionMiddleware` to enforce the presence of an `X-Requested-With: XMLHttpRequest` header on all `POST`, `PUT`, `DELETE`, and `PATCH` requests. This leverages standard browser cross-origin protections. Updated the frontend `fetch` calls and the backend test suite to include this header. Added it right before `SecurityHeadersMiddleware` to ensure security headers are still served on a 403 Forbidden response.
+✅ Verification: Ran the full backend test suite (`poetry run pytest`), verifying the middleware blocks requests missing the header and that all expected requests pass successfully.
