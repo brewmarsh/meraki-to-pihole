@@ -79,7 +79,18 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
     return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
+
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Enforce CSRF protection by requiring a custom header for AJAX/API requests
+        if request.method == "POST" and request.headers.get("X-Requested-With") != "XMLHttpRequest":
+            return JSONResponse(status_code=403, content={"detail": "CSRF verification failed"})
+        response = await call_next(request)
+        return response
+
+
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
+
     def __init__(self, app):
         super().__init__(app)
         # ⚡ Bolt Optimization: Parse ALLOWED_SUBNETS once at startup to avoid overhead on every request
@@ -112,6 +123,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         return response
 
 
+app.add_middleware(CSRFProtectionMiddleware)
 app.add_middleware(IPWhitelistMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
