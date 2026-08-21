@@ -1,5 +1,14 @@
-🚨 Severity: CRITICAL
-💡 Vulnerability: The Pi-hole client caught `HTTPError` 403 responses and triggered automatic re-authentication without bounding the retry depth. If the API consistently returned 403 (e.g. invalid credentials), it resulted in an infinite recursion loop causing a `RecursionError`.
-🎯 Impact: Denial of Service (DoS) where an external authentication failure could crash the local service.
-🔧 Fix: Introduced a bounded depth mechanism (`_retry=True` flag) in `_api_request` to ensure a maximum of 1 re-authentication attempt is made per original API call.
-✅ Verification: Tested locally with a mocked 403 response to ensure `RecursionError` is prevented, returning `None` gracefully instead.
+💡 What
+Added a "Skip to main content" link at the top of the `app/templates/index.html` page. The link targets a new `<main id="main-content">` wrapper around the core content.
+
+🎯 Why
+Provides keyboard and screen reader users a way to bypass the navigation elements and jump directly to the primary page content, improving overall usability and meeting accessibility standards.
+
+📸 Before/After
+Before: No skip link existed. Keyboard users had to tab through all navigation items to reach the content.
+After: A visually hidden "Skip to main content" link appears as the first focusable element. Pressing Enter moves focus to the main content container without displaying an unsightly focus ring on the entire container.
+
+♿ Accessibility
+- Implements a skip-to-content link, a fundamental requirement for WCAG compliance.
+- Uses Bootstrap's `visually-hidden-focusable` class to ensure it only appears when focused by keyboard navigation, keeping the UI clean for sighted mouse users.
+- Sets `tabindex="-1"` and `style="outline: none;"` on the `<main>` element to allow programmatic focus without creating a confusing visual outline around the entire page content.
