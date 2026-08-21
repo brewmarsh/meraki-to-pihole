@@ -1,5 +1,4 @@
-🚨 Severity: CRITICAL
-💡 Vulnerability: The Pi-hole client caught `HTTPError` 403 responses and triggered automatic re-authentication without bounding the retry depth. If the API consistently returned 403 (e.g. invalid credentials), it resulted in an infinite recursion loop causing a `RecursionError`.
-🎯 Impact: Denial of Service (DoS) where an external authentication failure could crash the local service.
-🔧 Fix: Introduced a bounded depth mechanism (`_retry=True` flag) in `_api_request` to ensure a maximum of 1 re-authentication attempt is made per original API call.
-✅ Verification: Tested locally with a mocked 403 response to ensure `RecursionError` is prevented, returning `None` gracefully instead.
+💡 What: Filter the list of Meraki devices by `MERAKI_NETWORK_IDS` before fanning out to the `ThreadPoolExecutor` in `get_all_relevant_meraki_clients`.
+🎯 Why: Prevents an N+1 API call issue where the application unnecessarily fetched DHCP reservations for devices in networks the user explicitly ignored.
+📊 Impact: For organizations with many devices but only a few target networks, this reduces unnecessary external HTTP requests and significantly speeds up the sync cycle.
+🔬 Measurement: Verify by setting `MERAKI_NETWORK_IDS` to a specific subset of networks, executing a sync, and observing reduced API calls in the logs and faster sync completion times.
