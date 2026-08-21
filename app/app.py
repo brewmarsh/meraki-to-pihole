@@ -79,7 +79,21 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
     return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
+class CSRFMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Enforce anti-CSRF protections on state-changing endpoints
+        # Require 'X-Requested-With: XMLHttpRequest' custom header on POST requests.
+        # Browsers block cross-origin requests from adding custom headers,
+        # effectively preventing standard Cross-Site Request Forgery (CSRF).
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                log.warning("CSRF check failed: Missing or invalid X-Requested-With header", method=request.method, url=str(request.url))
+                return JSONResponse(status_code=403, content={"detail": "CSRF verification failed"})
+        response = await call_next(request)
+        return response
+
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
+
     def __init__(self, app):
         super().__init__(app)
         # ⚡ Bolt Optimization: Parse ALLOWED_SUBNETS once at startup to avoid overhead on every request
@@ -113,6 +127,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(IPWhitelistMiddleware)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")

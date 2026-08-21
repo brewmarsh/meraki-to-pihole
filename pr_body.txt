@@ -1,0 +1,5 @@
+🚨 Severity: HIGH
+💡 Vulnerability: The application's state-changing API endpoints (`/update-meraki`, `/update-pihole`, `/update-interval`, `/clear-log`) lacked CSRF protection. Even with IP whitelisting in place, a malicious site could trick an authenticated user's browser into sending forged POST requests, which would bypass the IP check since they originate from the user's whitelisted machine.
+🎯 Impact: An attacker could trick a user into triggering a sync, updating the interval, or clearing logs without their knowledge or consent, causing a Denial of Service or unauthorized state changes.
+🔧 Fix: Added a new `CSRFMiddleware` that requires the `X-Requested-With: XMLHttpRequest` header on all POST requests. Browsers block cross-origin requests from adding custom headers without explicit CORS preflight approval, preventing standard CSRF attacks. Also updated the frontend `fetch` calls and tests to include this header.
+✅ Verification: Ensure the test suite passes (`poetry run pytest`). Ensure the frontend still works correctly by running the application and trying to update the Meraki/Pi-hole data or interval.
