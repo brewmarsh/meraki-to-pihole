@@ -1,0 +1,7 @@
+💡 What: Filtered the `devices` list before fanning out to the `ThreadPoolExecutor` in `get_all_relevant_meraki_clients`.
+
+🎯 Why: To solve an N+1 API call problem where the script previously made unnecessary external HTTP requests to Meraki to fetch fixed IP assignments for devices outside of the configured `meraki_network_ids`.
+
+📊 Impact: Significantly reduces the number of Meraki API calls and execution time for large organizations when only a subset of network IDs is configured.
+
+🔬 Measurement: A test script with mocked Dashboard outputs confirms that filtering `devices` before fanning out properly reduces the downstream Meraki API requests (`getDeviceSwitchRoutingInterfaces` and `getNetworkApplianceVlans`).
