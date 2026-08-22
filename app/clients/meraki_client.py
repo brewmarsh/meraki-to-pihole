@@ -75,9 +75,14 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
               if there's an API error.
     """
     org_id = config["meraki_org_id"]
+    network_ids = config.get("meraki_network_ids", [])
     relevant_clients = []
     try:
         devices = dashboard.organizations.getOrganizationDevices(org_id)
+        # ⚡ Bolt Optimization: Filter devices by network ID before fanning out to the ThreadPoolExecutor.
+        # Impact: Prevents N+1 API calls for devices in networks we aren't syncing.
+        if network_ids:
+            devices = [d for d in devices if d.get('networkId') in network_ids]
     except meraki.APIError as e:
         log.error("Meraki API error while fetching organization devices", error=e, org_id=org_id)
         return []
