@@ -1,0 +1,5 @@
+🚨 Severity: HIGH
+💡 Vulnerability: The application previously lacked CSRF protections for its state-changing API endpoints (`/update-meraki`, `/update-pihole`, `/update-interval`, `/clear-log`). This allowed attackers to craft malicious web pages that could unknowingly force authenticated or whitelisted users to execute these operations via Cross-Site Request Forgery (CSRF).
+🎯 Impact: Attackers could overwrite settings, trigger unneeded syncs, or clear application logs without user consent if the user visited a malicious site while having a session or authorized IP for the application.
+🔧 Fix: Implemented `CSRFProtectionMiddleware` to ensure all state-changing `POST` requests include the `X-Requested-With: XMLHttpRequest` header, blocking cross-origin CSRF attacks. Also updated frontend fetch calls and test suites to include the expected header.
+✅ Verification: Ran `pytest` verifying that tests successfully make state-changing requests, and any omitted headers accurately result in `403 Forbidden` responses.
