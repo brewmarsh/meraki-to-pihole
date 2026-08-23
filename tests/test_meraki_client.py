@@ -65,6 +65,32 @@ class TestMerakiClient(unittest.TestCase):
         self.assertEqual(clients[0]["ip"], "1.2.3.4")
 
     @patch('meraki.DashboardAPI')
+    def test_get_all_relevant_meraki_clients_filters_by_network_id(self, mock_dashboard):
+        # Arrange
+        self.config["meraki_network_ids"] = ["net_123"]
+        mock_dashboard.organizations.getOrganizationDevices.return_value = [
+            {"model": "MS", "serial": "123", "networkId": "net_123"},
+            {"model": "MS", "serial": "456", "networkId": "net_456"}
+        ]
+        mock_dashboard.switch.getDeviceSwitchRoutingInterfaces.return_value = [{"interfaceId": "int_1"}]
+        mock_dashboard.switch.getDeviceSwitchRoutingInterfaceDhcp.return_value = {
+            "fixedIpAssignments": {
+                "mac_1": {"name": "Test Client 1", "ip": "1.2.3.4"}
+            }
+        }
+
+        # Act
+        clients = get_all_relevant_meraki_clients(mock_dashboard, self.config)
+
+        # Assert
+        # Only the device in net_123 should be processed
+        self.assertEqual(len(clients), 1)
+        self.assertEqual(clients[0]["name"], "Test Client 1")
+        self.assertEqual(clients[0]["ip"], "1.2.3.4")
+        # Ensure the API was only called for the device in the allowed network
+        mock_dashboard.switch.getDeviceSwitchRoutingInterfaces.assert_called_once_with("123")
+
+    @patch('meraki.DashboardAPI')
     def test_get_all_relevant_meraki_clients_with_clients_with_fixed_ip_appliance(self, mock_dashboard):
         # Arrange
         mock_dashboard.organizations.getOrganizationDevices.return_value = [
