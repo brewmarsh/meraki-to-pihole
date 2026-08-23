@@ -1,0 +1,11 @@
+💡 What
+Modified `get_all_relevant_meraki_clients` to filter the Meraki devices based on `meraki_network_ids` before passing them to the `ThreadPoolExecutor`. Also added a robust unit test for it.
+
+🎯 Why
+When passing all organization devices to the thread pool for fixed IP assignment fetching, it generated massive N+1 unnecessary HTTP requests for devices in networks that we aren't configured to sync. Fetching from the Meraki API is slow and rate-limited.
+
+📊 Impact
+Eliminates HTTP requests entirely for irrelevant/excluded network devices, dramatically reducing synchronization wait time and overall latency for large organizations.
+
+🔬 Measurement
+Ensure tests pass via `poetry run pytest`. Tested using the `test_get_all_relevant_meraki_clients_filters_by_network_id` test case to verify `assert_called_once_with` executes properly.
