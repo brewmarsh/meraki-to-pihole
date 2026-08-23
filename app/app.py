@@ -79,6 +79,16 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
     return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
+
+class CSRFMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                # 🛡️ Sentinel: Enforce CSRF protection by requiring a custom header on state-changing requests.
+                # Browsers block simple cross-origin requests from including custom headers, preventing CSRF.
+                return JSONResponse(status_code=403, content={"detail": "CSRF check failed"})
+        return await call_next(request)
+
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
@@ -112,6 +122,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         return response
 
 
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(IPWhitelistMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
