@@ -1,0 +1,7 @@
+💡 What: Added logic to filter the list of Meraki devices by `networkId` against the configured `meraki_network_ids` before handing them off to the `ThreadPoolExecutor` in `get_all_relevant_meraki_clients`.
+
+🎯 Why: To fix an N+1 API call problem where the sync script was completely unoptimized when handling partial network syncs. Previously, it would fan out threads and make external Meraki API requests (`getDeviceSwitchRoutingInterfaces`, etc.) for every single device in the organization, even if the user only wanted to sync a specific network.
+
+📊 Impact: Drastically reduces execution time, thread overhead, and external HTTP request volume for organizations containing many devices when only a subset of networks are targeted for syncing.
+
+🔬 Measurement: Compare API request volume and execution time of the sync script with a subset of network IDs configured versus all network IDs.
