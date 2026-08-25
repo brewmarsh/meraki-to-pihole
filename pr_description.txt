@@ -1,0 +1,5 @@
+🚨 Severity: HIGH
+💡 Vulnerability: State-changing API endpoints (`/update-meraki`, `/update-pihole`, `/update-interval`, `/clear-log`) were vulnerable to Cross-Site Request Forgery (CSRF). Malicious websites could forge requests on behalf of authenticated/whitelisted users to trigger unscheduled syncs or modify application configuration.
+🎯 Impact: Attackers could manipulate system configuration or trigger Denial of Service via resource exhaustion by continuously forcing external API syncs.
+🔧 Fix: Implemented `CSRFProtectionMiddleware` to enforce the `X-Requested-With: XMLHttpRequest` header on all non-idempotent HTTP methods (POST, PUT, DELETE, PATCH). Updated the frontend UI to include this header in all `fetch` calls, preventing simple cross-origin form submissions from executing state-changing actions.
+✅ Verification: Ensure the test suite passes (all `TestClient` API requests now simulate the required header). Validate that POST requests missing the `X-Requested-With: XMLHttpRequest` header return a 403 Forbidden response.

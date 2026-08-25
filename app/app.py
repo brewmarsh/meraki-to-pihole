@@ -112,6 +112,16 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         return response
 
 
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                # 🛡️ Sentinel: Enforce CSRF protection by requiring custom header on state-changing requests
+                return JSONResponse(status_code=403, content={"detail": "CSRF check failed"})
+        response = await call_next(request)
+        return response
+
+app.add_middleware(CSRFProtectionMiddleware)
 app.add_middleware(IPWhitelistMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
