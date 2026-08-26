@@ -89,9 +89,20 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
             return _get_fixed_ip_assignments_from_appliance(dashboard, device)
         return []
 
+    network_ids = set(config.get("meraki_network_ids", []))
+
+    # ⚡ Bolt Optimization: Filter devices by network ID and model before fanning out
+    # Impact: Prevents unnecessary API calls to out-of-scope networks and reduces thread overhead
+    # Measurement: Compare API request logs and execution time for organizations with many networks or non-MS/MX devices
+    devices_to_process = [
+        device for device in devices
+        if (not network_ids or device.get('networkId') in network_ids)
+        and device.get('model', '').startswith(('MS', 'MX'))
+    ]
+
     # Use a ThreadPoolExecutor to fetch device data in parallel
     with ThreadPoolExecutor(max_workers=10) as executor:
-        futures = [executor.submit(fetch_for_device, device) for device in devices]
+        futures = [executor.submit(fetch_for_device, device) for device in devices_to_process]
         for future in as_completed(futures):
             relevant_clients.extend(future.result())
 

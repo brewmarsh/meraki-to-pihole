@@ -1,0 +1,11 @@
+💡 **What:**
+Filters Meraki devices locally by `networkId` and `model` before submitting them to the `ThreadPoolExecutor`.
+
+🎯 **Why:**
+The application was pulling all devices in an organization and immediately spawning threads for every single one. In organizations with hundreds of devices across many networks, this caused massive thread contention and initiated unnecessary external HTTP API calls to fetch interfaces for out-of-scope devices.
+
+📊 **Impact:**
+Significantly reduces thread overhead and eliminates N+1 API calls for devices that do not match the target networks or models. Reduces the overall time spent in the `get_all_relevant_meraki_clients` function.
+
+🔬 **Measurement:**
+Compare the execution time of a manual sync (or inspect the Meraki API request logs) on an organization with >100 devices across multiple networks when `MERAKI_NETWORK_IDS` is configured to only sync one of them.
