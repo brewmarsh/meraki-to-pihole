@@ -82,6 +82,12 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         log.error("Meraki API error while fetching organization devices", error=e, org_id=org_id)
         return []
 
+    # ⚡ Bolt Optimization: Filter devices before fanning out to ThreadPoolExecutor
+    # Impact: Eliminates unnecessary external HTTP requests for devices not in the configured networks
+    # Measurement: Compare API request logs and latency when meraki_network_ids filter is applied
+    if config.get("meraki_network_ids"):
+        devices = [d for d in devices if d.get("networkId") in config["meraki_network_ids"]]
+
     def fetch_for_device(device):
         if device['model'].startswith('MS'):
             return _get_fixed_ip_assignments_from_switch(dashboard, device)
