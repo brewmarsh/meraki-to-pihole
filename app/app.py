@@ -79,6 +79,20 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
     return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
+
+class CSRFMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Enforce CSRF protection for API endpoints using the X-Requested-With custom header.
+        # Applications using IP whitelisting are highly vulnerable to CSRF, as malicious requests from a
+        # user's browser will inherently possess the whitelisted IP. Enforcing a custom header like
+        # 'X-Requested-With: XMLHttpRequest' prevents simple cross-origin requests from forms without token overhead.
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            requested_with = request.headers.get("X-Requested-With")
+            if not requested_with or requested_with != "XMLHttpRequest":
+                return JSONResponse(status_code=403, content={"detail": "Forbidden: CSRF check failed"})
+        response = await call_next(request)
+        return response
+
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
         super().__init__(app)
@@ -113,6 +127,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(IPWhitelistMiddleware)
+app.add_middleware(CSRFMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
