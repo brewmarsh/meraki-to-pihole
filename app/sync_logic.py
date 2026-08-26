@@ -1,4 +1,5 @@
 import functools
+import json
 import os
 import sys
 import time
@@ -293,7 +294,8 @@ def sync_pihole_dns(update_type=None):
                 f.write(f"{int(time.time())},{mapped_devices}\n")
 
             with Path(config["cache_file_path"]).open("w") as f:
-                import json
+                # ⚡ Bolt Optimization: Moved `import json` to module level
+                # Impact: Avoids dictionary lookup overhead in sys.modules during hot loop function execution
                 json.dump({
                     "pihole": existing_pihole_records,
                     "meraki": meraki_clients,

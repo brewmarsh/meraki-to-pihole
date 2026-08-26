@@ -35,3 +35,6 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+## 2025-10-30 - Inline Imports in Frequently Called Functions
+**Learning:** Found an inline `import json` inside the `sync_pihole_dns` function, which is called frequently in a loop by the background runner. While Python caches modules in `sys.modules`, executing an import statement inside a function still incurs a small dictionary lookup and namespace binding overhead on every call.
+**Action:** Move inline module imports to the top level of the file unless there is a specific reason (like avoiding circular dependencies or lazy loading a heavy module) to keep them inline. This prevents redundant overhead in hot functions.
