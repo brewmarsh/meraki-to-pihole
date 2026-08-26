@@ -35,3 +35,6 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+## 2025-10-31 - Extracting loop-invariant dictionary lookups
+**Learning:** Found that accessing configuration variables like `config['hostname_suffix']` inside hot loops iterating over large collections introduces redundant hashing operations and dictionary lookups, significantly slowing down iteration speed.
+**Action:** Always extract loop-invariant dictionary lookups into local variables outside the loop to prevent redundant operations and improve performance.
