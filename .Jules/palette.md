@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2026-08-27 - Skip to Main Content Link Accessibility
+**Learning:** Keyboard users and screen reader users can find it tedious to tab through global navigation links before reaching the main content. Adding a "Skip to main content" link at the top of the body (using Bootstrap's `.visually-hidden-focusable`) solves this. However, it must target a semantic `<main>` container that is explicitly made focusable via `tabindex="-1"` and `style="outline: none;"`, so programmatic focus succeeds without introducing an unwanted focus ring.
+**Action:** Always implement a skip link targeting a properly configured focusable main content area when building accessible pages with navigation menus.
