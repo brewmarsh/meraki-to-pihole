@@ -23,7 +23,7 @@ class TestClearLog(unittest.TestCase):
         self.assertGreater(self.log_file_path.stat().st_size, 0)
 
         # When
-        response = self.client.post("/clear-log", json={"log": "sync"})
+        response = self.client.post("/clear-log", json={"log": "sync"}, headers={'X-Requested-With': 'XMLHttpRequest'})
 
         # Then
         self.assertEqual(response.status_code, 200)
@@ -37,7 +37,7 @@ class TestClearLog(unittest.TestCase):
         initial_size = self.log_file_path.stat().st_size
 
         # When
-        response = self.client.post("/clear-log", json={"log": "invalid"})
+        response = self.client.post("/clear-log", json={"log": "invalid"}, headers={'X-Requested-With': 'XMLHttpRequest'})
 
         # Then
         self.assertEqual(response.status_code, 400)
