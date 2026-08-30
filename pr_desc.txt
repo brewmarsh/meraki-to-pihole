@@ -1,5 +1,4 @@
-🚨 Severity: CRITICAL
-💡 Vulnerability: The Pi-hole client caught `HTTPError` 403 responses and triggered automatic re-authentication without bounding the retry depth. If the API consistently returned 403 (e.g. invalid credentials), it resulted in an infinite recursion loop causing a `RecursionError`.
-🎯 Impact: Denial of Service (DoS) where an external authentication failure could crash the local service.
-🔧 Fix: Introduced a bounded depth mechanism (`_retry=True` flag) in `_api_request` to ensure a maximum of 1 re-authentication attempt is made per original API call.
-✅ Verification: Tested locally with a mocked 403 response to ensure `RecursionError` is prevented, returning `None` gracefully instead.
+💡 What: Added a "Skip to main content" link at the top of the index page and changed the main content wrapper to a semantic `<main>` tag.
+🎯 Why: To allow keyboard-only and screen-reader users to bypass the navigation header and jump directly to the primary application content.
+📸 Before/After: Before, keyboard users had to tab through the navigation menu on every visit. After, the first tab stop is the skip link, saving time and effort.
+♿ Accessibility: Improves WCAG 2.4.1 (Bypass Blocks) compliance. Implemented using Bootstrap's `.visually-hidden-focusable` so it is invisible until focused, and applied `outline: none;` to the target container to prevent a jarring focus ring when programmatic focus is shifted.
