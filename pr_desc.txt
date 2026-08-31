@@ -1,5 +1,5 @@
-🚨 Severity: CRITICAL
-💡 Vulnerability: The Pi-hole client caught `HTTPError` 403 responses and triggered automatic re-authentication without bounding the retry depth. If the API consistently returned 403 (e.g. invalid credentials), it resulted in an infinite recursion loop causing a `RecursionError`.
-🎯 Impact: Denial of Service (DoS) where an external authentication failure could crash the local service.
-🔧 Fix: Introduced a bounded depth mechanism (`_retry=True` flag) in `_api_request` to ensure a maximum of 1 re-authentication attempt is made per original API call.
-✅ Verification: Tested locally with a mocked 403 response to ensure `RecursionError` is prevented, returning `None` gracefully instead.
+🚨 Severity: HIGH
+💡 Vulnerability: The application exposed several state-changing POST endpoints (`/update-meraki`, `/update-pihole`, `/update-interval`, and `/clear-log`) without any Cross-Site Request Forgery (CSRF) protection. Even though the application uses `IPWhitelistMiddleware`, malicious websites could execute actions by exploiting the victim's whitelisted IP address.
+🎯 Impact: An attacker could trick an authenticated (whitelisted) user into visiting a malicious site that silently submits cross-origin POST requests, forcing the application to perform unauthorized actions like updating sync intervals, triggering manual syncs, or clearing logs.
+🔧 Fix: Implemented a robust `CSRFProtectionMiddleware` that intercepts all `POST`, `PUT`, `DELETE`, and `PATCH` requests and verifies the presence of the `X-Requested-With: XMLHttpRequest` header. This standard protection mechanism blocks simple cross-origin requests because modern browsers forbid custom headers in simple form submissions. Updated frontend `fetch` calls and API test suites to supply the required header.
+✅ Verification: Tested via unit tests ensuring a 403 Forbidden is returned for POST requests lacking the header, and normal 200 responses are returned when the header is present. Verified using `poetry run pytest`.
