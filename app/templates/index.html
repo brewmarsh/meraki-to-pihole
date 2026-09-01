@@ -13,6 +13,8 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="visually-hidden-focusable p-3 bg-primary text-white position-absolute top-0 start-0 z-3">Skip to main content</a>
+
     {% if show_welcome_banner %}
     <div id="welcome-screen" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
         <div class="card">
@@ -49,7 +51,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1" style="outline: none;">
         <div class="row mt-4">
             <div class="col-md-8">
                 <div class="card mt-4" id="charts-card">
@@ -185,7 +187,7 @@
         <div class="toast-body">
         </div>
       </div>
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
