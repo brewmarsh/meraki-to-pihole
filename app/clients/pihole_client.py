@@ -28,7 +28,7 @@ class PiholeClient:
             other=4,
             backoff_factor=1,
             status_forcelist=[429, 500, 502, 503, 504],
-            allowed_methods=["HEAD", "GET", "OPTIONS", "PUT", "POST", "DELETE"]
+            allowed_methods=["HEAD", "GET", "OPTIONS", "PUT", "POST", "DELETE"],
         )
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session = requests.Session()
@@ -62,7 +62,10 @@ class PiholeClient:
                     log.warning("2FA is enabled on this Pi-hole; this script does not support it.")
             else:
                 self.sid, self.csrf_token = None, None
-                log.error("Failed to authenticate to Pi-hole", message=session_data.get('message', 'No error message provided.'))
+                log.error(
+                    "Failed to authenticate to Pi-hole",
+                    message=session_data.get("message", "No error message provided."),
+                )
 
         except requests.exceptions.HTTPError as e:
             if e.response and e.response.status_code == 429:
@@ -86,13 +89,24 @@ class PiholeClient:
 
         try:
             # 🛡️ Sentinel: Sanitize sensitive headers (CSRF Token, Session ID) from logs
-            safe_req_headers = {k: ("***" if k.lower() in ["x-csrf-token", "cookie"] else v) for k, v in headers.items()}
+            safe_req_headers = {
+                k: ("***" if k.lower() in ["x-csrf-token", "cookie"] else v) for k, v in headers.items()
+            }
             log.debug("Pi-hole API Request", url=url, method=method, headers=safe_req_headers, data=data)
 
             response = self.session.request(method, url, headers=headers, cookies=cookies, json=data, timeout=10)
 
-            safe_resp_req_headers = {k: ("***" if k.lower() in ["x-csrf-token", "cookie"] else v) for k, v in response.request.headers.items()}
-            log.debug("Pi-hole API Response", url=response.url, headers=safe_resp_req_headers, status_code=response.status_code, text=response.text)
+            safe_resp_req_headers = {
+                k: ("***" if k.lower() in ["x-csrf-token", "cookie"] else v)
+                for k, v in response.request.headers.items()
+            }
+            log.debug(
+                "Pi-hole API Response",
+                url=response.url,
+                headers=safe_resp_req_headers,
+                status_code=response.status_code,
+                text=response.text,
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.HTTPError as e:
@@ -107,7 +121,7 @@ class PiholeClient:
             log.error(
                 "Pi-hole API HTTP error",
                 error=e,
-                response=e.response.text[:200] if e.response and e.response.text else 'No response text'
+                response=e.response.text[:200] if e.response and e.response.text else "No response text",
             )
         except requests.exceptions.RequestException as e:
             log.error("Pi-hole API request failed due to network or request issue", error=e)
@@ -118,7 +132,12 @@ class PiholeClient:
         response_data = self._api_request("GET", "/api/config/dns/hosts")
 
         records = {}
-        if response_data and "config" in response_data and "dns" in response_data["config"] and "hosts" in response_data["config"]["dns"]:
+        if (
+            response_data
+            and "config" in response_data
+            and "dns" in response_data["config"]
+            and "hosts" in response_data["config"]["dns"]
+        ):
             for item in response_data["config"]["dns"]["hosts"]:
                 parts = item.split()
                 if len(parts) == 2:
@@ -146,7 +165,9 @@ class PiholeClient:
             return False
 
         if existing_records.get(domain_cleaned) == new_ip_cleaned:
-            log.debug("DNS record already exists in Pi-hole. No action needed.", domain=domain_cleaned, ip=new_ip_cleaned)
+            log.debug(
+                "DNS record already exists in Pi-hole. No action needed.", domain=domain_cleaned, ip=new_ip_cleaned
+            )
             return True
 
         path = f"/api/config/dns/hosts/{quote(new_ip_cleaned + ' ' + domain_cleaned)}"
@@ -156,7 +177,9 @@ class PiholeClient:
             log.info("Successfully added/updated DNS record", domain=domain_cleaned, ip=new_ip_cleaned)
             return True
         elif response and response.get("error", {}).get("key") == "forbidden":
-            log.error("Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration.")
+            log.error(
+                "Pi-hole API returned a 'forbidden' error. Please ensure 'webserver.api.app_sudo' is set to true in your Pi-hole configuration."
+            )
             return False
         else:
             log.error("Failed to add/update DNS record", domain=domain_cleaned, ip=new_ip_cleaned, response=response)
