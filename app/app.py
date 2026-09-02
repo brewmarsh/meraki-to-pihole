@@ -114,6 +114,18 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(IPWhitelistMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+
+class CSRFMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
+            # 🛡️ Sentinel: Enforce CSRF protection on state-changing endpoints
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                return JSONResponse(status_code=403, content={"detail": "CSRF verification failed"})
+        response = await call_next(request)
+        return response
+
+app.add_middleware(CSRFMiddleware)
+
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
