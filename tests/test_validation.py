@@ -8,13 +8,13 @@ client = TestClient(app, client=("127.0.0.1", 12345))
 
 
 def test_update_interval_valid():
-    response = client.post("/update-interval", json={"interval": 120})
+    response = client.post("/update-interval", headers={"X-Requested-With": "XMLHttpRequest"}, json={"interval": 120})
     assert response.status_code == 200
     assert response.json() == {"message": "Sync interval updated."}
 
 
 def test_update_interval_invalid():
-    response = client.post("/update-interval", json={"interval": "abc"})
+    response = client.post("/update-interval", headers={"X-Requested-With": "XMLHttpRequest"}, json={"interval": "abc"})
     assert response.status_code == 422  # Unprocessable Entity
 
 
@@ -22,16 +22,16 @@ def test_clear_log_valid():
     log_file = Path('/app/logs/sync.log')
     log_file.parent.mkdir(exist_ok=True)
     log_file.touch()
-    response = client.post("/clear-log", json={"log": "sync"})
+    response = client.post("/clear-log", headers={"X-Requested-With": "XMLHttpRequest"}, json={"log": "sync"})
     assert response.status_code == 200
     assert response.json() == {"message": "Sync log cleared."}
 
 
 def test_clear_log_invalid():
-    response = client.post("/clear-log", json={"log": "invalid"})
+    response = client.post("/clear-log", headers={"X-Requested-With": "XMLHttpRequest"}, json={"log": "invalid"})
     assert response.status_code == 400
     assert response.json() == {"message": "Invalid log type."}
 
 def test_clear_log_missing_log():
-    response = client.post("/clear-log", json={})
+    response = client.post("/clear-log", headers={"X-Requested-With": "XMLHttpRequest"}, json={})
     assert response.status_code == 422 # Unprocessable Entity
