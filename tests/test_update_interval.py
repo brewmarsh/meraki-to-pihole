@@ -23,7 +23,7 @@ class TestUpdateInterval(unittest.TestCase):
         new_interval = 600
 
         # When
-        response = self.client.post("/update-interval", json={"interval": new_interval})
+        response = self.client.post("/update-interval", json={"interval": new_interval}, headers={"X-Requested-With": "XMLHttpRequest"})
 
         # Then
         self.assertEqual(response.status_code, 200)
@@ -36,7 +36,7 @@ class TestUpdateInterval(unittest.TestCase):
         new_interval = "not a number"
 
         # When
-        response = self.client.post("/update-interval", json={"interval": new_interval})
+        response = self.client.post("/update-interval", json={"interval": new_interval}, headers={"X-Requested-With": "XMLHttpRequest"})
 
         # Then
         self.assertEqual(response.status_code, 422)
@@ -47,7 +47,7 @@ class TestUpdateInterval(unittest.TestCase):
         new_interval = 0
 
         # When
-        response = self.client.post("/update-interval", json={"interval": new_interval})
+        response = self.client.post("/update-interval", json={"interval": new_interval}, headers={"X-Requested-With": "XMLHttpRequest"})
 
         # Then
         self.assertEqual(response.status_code, 422)
@@ -58,7 +58,7 @@ class TestUpdateInterval(unittest.TestCase):
         new_interval = -10
 
         # When
-        response = self.client.post("/update-interval", json={"interval": new_interval})
+        response = self.client.post("/update-interval", json={"interval": new_interval}, headers={"X-Requested-With": "XMLHttpRequest"})
 
         # Then
         self.assertEqual(response.status_code, 422)

@@ -79,7 +79,17 @@ async def internal_server_error_exception_handler(request: Request, exc: Excepti
     return templates.TemplateResponse("500.html", {"request": request}, status_code=500)
 
 
+class CSRFProtectionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Enforce CSRF protection on all state-changing API endpoints
+        if request.method in ("POST", "PUT", "DELETE", "PATCH"):
+            # Check for the custom header that browsers cannot send cross-origin
+            if request.headers.get("X-Requested-With") != "XMLHttpRequest":
+                return JSONResponse(status_code=403, content={"detail": "CSRF check failed."})
+        return await call_next(request)
+
 class IPWhitelistMiddleware(BaseHTTPMiddleware):
+
     def __init__(self, app):
         super().__init__(app)
         # ⚡ Bolt Optimization: Parse ALLOWED_SUBNETS once at startup to avoid overhead on every request
@@ -114,6 +124,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 app.add_middleware(IPWhitelistMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(CSRFProtectionMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 

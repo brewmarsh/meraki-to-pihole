@@ -10,7 +10,7 @@ def test_update_interval():
     new_interval = "600"
 
     # When
-    response = client.post("/update-interval", json={"interval": new_interval})
+    response = client.post("/update-interval", json={"interval": new_interval}, headers={"X-Requested-With": "XMLHttpRequest"})
 
     # Then
     assert response.status_code == 200
