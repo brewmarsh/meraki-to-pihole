@@ -1,5 +1,15 @@
-🚨 Severity: CRITICAL
-💡 Vulnerability: The Pi-hole client caught `HTTPError` 403 responses and triggered automatic re-authentication without bounding the retry depth. If the API consistently returned 403 (e.g. invalid credentials), it resulted in an infinite recursion loop causing a `RecursionError`.
-🎯 Impact: Denial of Service (DoS) where an external authentication failure could crash the local service.
-🔧 Fix: Introduced a bounded depth mechanism (`_retry=True` flag) in `_api_request` to ensure a maximum of 1 re-authentication attempt is made per original API call.
-✅ Verification: Tested locally with a mocked 403 response to ensure `RecursionError` is prevented, returning `None` gracefully instead.
+💡 What
+Added a "Skip to main content" link at the beginning of the `<body>` on all templates (`index.html`, `docs.html`, and `404.html`) and replaced the generic `<div class="container">` wrapping the main content with a semantic `<main class="container">` tag.
+
+🎯 Why
+Keyboard-only and screen reader users often have to tab through repetitive navigation elements (like the navbar) on every single page load before they can reach the actual content. A skip link is a critical UX convention that allows them to bypass this navigation and jump straight to what matters. Additionally, using `<main>` improves document semantics for assistive technologies.
+
+📸 Before/After
+**Before:** No way to bypass the navigation via keyboard.
+**After:** A visually hidden "Skip to main content" link appears when focused via keyboard (using the `Tab` key) immediately after page load, allowing users to jump directly to the main container.
+
+♿ Accessibility
+- Implemented standard WCAG "Skip Navigation" pattern.
+- Used Bootstrap's `.visually-hidden-focusable` utility class to ensure the link remains hidden for mouse users but becomes visible when it receives keyboard focus.
+- Upgraded the primary content wrapper to a semantic `<main>` tag.
+- Added `tabindex="-1"` and `outline: none;` to the `<main>` tag to ensure the programmatic focus shift from the skip link is handled cleanly by browsers without displaying an unsightly focus ring around the entire page content.
