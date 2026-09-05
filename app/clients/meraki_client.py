@@ -82,6 +82,13 @@ def get_all_relevant_meraki_clients(dashboard: meraki.DashboardAPI, config: dict
         log.error("Meraki API error while fetching organization devices", error=e, org_id=org_id)
         return []
 
+    # ⚡ Bolt Optimization: Pre-filter devices by target networks before concurrent fan-out.
+    # Impact: Prevents N+1 API calls and unnecessary external HTTP requests when fetching from a large org but targeting a few networks.
+    # Measurement: Eliminates O(K) unnecessary API requests to Meraki, where K is the number of out-of-scope devices.
+    target_networks = config.get("meraki_network_ids", [])
+    if target_networks:
+        devices = [d for d in devices if d.get("networkId") in target_networks]
+
     def fetch_for_device(device):
         if device['model'].startswith('MS'):
             return _get_fixed_ip_assignments_from_switch(dashboard, device)
