@@ -19,7 +19,7 @@ def test_update_interval_invalid():
 
 
 def test_clear_log_valid():
-    log_file = Path('/app/logs/sync.log')
+    log_file = Path("/app/logs/sync.log")
     log_file.parent.mkdir(exist_ok=True)
     log_file.touch()
     response = client.post("/clear-log", json={"log": "sync"})
@@ -32,6 +32,7 @@ def test_clear_log_invalid():
     assert response.status_code == 400
     assert response.json() == {"message": "Invalid log type."}
 
+
 def test_clear_log_missing_log():
     response = client.post("/clear-log", json={})
-    assert response.status_code == 422 # Unprocessable Entity
+    assert response.status_code == 422  # Unprocessable Entity
