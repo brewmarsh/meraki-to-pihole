@@ -117,3 +117,23 @@
     outline: 2px solid #0d6efd;
     outline-offset: -2px;
 }
+
+.card-header[data-bs-toggle="collapse"]:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.dark-mode .card-header[data-bs-toggle="collapse"]:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.card-header[data-bs-toggle="collapse"] .caret {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: transform 0.3s ease;
+}
+
+.card-header[aria-expanded="true"] .caret {
+    transform: translateY(-50%) rotate(-180deg);
+}
