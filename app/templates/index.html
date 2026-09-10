@@ -55,7 +55,7 @@
                 <div class="card mt-4" id="charts-card">
                     <div class="card-header" data-bs-toggle="collapse" data-bs-target="#charts-body">
                         Charts
-                        <span class="caret float-end" aria-hidden="true">▲</span>
+                        <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="charts-body" class="collapse show">
                         <div class="card-body">
@@ -406,14 +406,10 @@
                 if (targetEl) {
                     targetEl.addEventListener('show.bs.collapse', () => {
                         header.setAttribute('aria-expanded', 'true');
-                        const caret = header.querySelector('.caret');
-                        if (caret) caret.textContent = '▲';
-                    });
+                        });
                     targetEl.addEventListener('hide.bs.collapse', () => {
                         header.setAttribute('aria-expanded', 'false');
-                        const caret = header.querySelector('.caret');
-                        if (caret) caret.textContent = '▼';
-                    });
+                        });
                 }
             }
 
