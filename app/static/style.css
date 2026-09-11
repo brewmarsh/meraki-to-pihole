@@ -117,3 +117,17 @@
     outline: 2px solid #0d6efd;
     outline-offset: -2px;
 }
+
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: #0d6efd;
+    color: white;
+    padding: 8px;
+    z-index: 10001;
+    text-decoration: none;
+}
+.skip-link:focus {
+    top: 0;
+}
