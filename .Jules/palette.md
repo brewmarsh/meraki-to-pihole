@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2024-05-20 - Skip to Main Content and Semantic Layouts
+**Learning:** Navigating through recurring header elements (like navigation bars and sidebars) on every page reload can be extremely tedious for keyboard-only and screen-reader users. Additionally, using generic `<div>` tags for the primary content area provides no semantic context for assistive technologies.
+**Action:** Always include a "Skip to main content" link at the very top of the DOM that is visually hidden until focused, and ensure the primary content area is wrapped in a semantic `<main>` tag with a matching `id` and `tabindex="-1"` to allow focus management.
