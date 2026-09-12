@@ -13,6 +13,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="visually-hidden-focusable position-absolute top-0 start-0 p-2 m-2 bg-primary text-white rounded" style="z-index: 1050;">Skip to main content</a>
     {% if show_welcome_banner %}
     <div id="welcome-screen" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
         <div class="card">
@@ -49,7 +50,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <main class="container" id="main-content" tabindex="-1">
         <div class="row mt-4">
             <div class="col-md-8">
                 <div class="card mt-4" id="charts-card">
@@ -174,7 +175,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
       <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
