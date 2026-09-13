@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2026-07-29 - HTML5 Landmarks and Skip Navigation
+**Learning:** Navigating past repeated headers and navigation bars is tedious for keyboard-only and screen-reader users without a structural shortcut. The lack of a "Skip to main content" link and the `<main>` landmark forces users to tab through every top-level control.
+**Action:** Always include a `.visually-hidden-focusable` "Skip to main content" link immediately after the `<body>` tag and wrap the primary application content in a `<main id="main-content" tabindex="-1">` landmark to ensure efficient keyboard navigation.
