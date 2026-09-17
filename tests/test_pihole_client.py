@@ -5,8 +5,7 @@ from app.clients.pihole_client import PiholeClient
 
 
 class TestPiholeClient(unittest.TestCase):
-
-    @patch('app.clients.pihole_client.requests.Session')
+    @patch("app.clients.pihole_client.requests.Session")
     def test_authenticate_success(self, mock_session):
         # Arrange
         mock_response = MagicMock()
@@ -20,7 +19,7 @@ class TestPiholeClient(unittest.TestCase):
         self.assertEqual(client.sid, "123")
         self.assertEqual(client.csrf_token, "abc")
 
-    @patch('app.clients.pihole_client.requests.Session')
+    @patch("app.clients.pihole_client.requests.Session")
     def test_get_custom_dns_records_success(self, mock_session):
         # Arrange
         client = PiholeClient("http://pi.hole", "password")
@@ -36,8 +35,8 @@ class TestPiholeClient(unittest.TestCase):
         # Assert
         self.assertEqual(records, {"test.com": "1.2.3.4", "example.com": "5.6.7.8"})
 
-    @patch('app.clients.pihole_client.PiholeClient.get_custom_dns_records')
-    @patch('app.clients.pihole_client.PiholeClient._api_request')
+    @patch("app.clients.pihole_client.PiholeClient.get_custom_dns_records")
+    @patch("app.clients.pihole_client.PiholeClient._api_request")
     def test_add_or_update_dns_record_add(self, mock_api_request, mock_get_records):
         # Arrange
         mock_get_records.return_value = {}
@@ -53,8 +52,8 @@ class TestPiholeClient(unittest.TestCase):
         self.assertTrue(result)
         mock_api_request.assert_called_once_with("PUT", "/api/config/dns/hosts/9.9.9.9%20new.com")
 
-    @patch('app.clients.pihole_client.PiholeClient.get_custom_dns_records')
-    @patch('app.clients.pihole_client.PiholeClient._api_request')
+    @patch("app.clients.pihole_client.PiholeClient.get_custom_dns_records")
+    @patch("app.clients.pihole_client.PiholeClient._api_request")
     def test_add_or_update_dns_record_update(self, mock_api_request, mock_get_records):
         # Arrange
         mock_get_records.return_value = {"existing.com": "1.1.1.1"}
@@ -70,8 +69,8 @@ class TestPiholeClient(unittest.TestCase):
         self.assertTrue(result)
         mock_api_request.assert_called_once_with("PUT", "/api/config/dns/hosts/2.2.2.2%20existing.com")
 
-    @patch('app.clients.pihole_client.PiholeClient.get_custom_dns_records')
-    @patch('app.clients.pihole_client.PiholeClient._api_request')
+    @patch("app.clients.pihole_client.PiholeClient.get_custom_dns_records")
+    @patch("app.clients.pihole_client.PiholeClient._api_request")
     def test_add_or_update_dns_record_no_change(self, mock_api_request, mock_get_records):
         # Arrange
         mock_get_records.return_value = {"existing.com": "1.1.1.1"}
@@ -86,5 +85,6 @@ class TestPiholeClient(unittest.TestCase):
         self.assertTrue(result)
         mock_api_request.assert_not_called()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
