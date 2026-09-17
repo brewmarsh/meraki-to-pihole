@@ -28,8 +28,10 @@ from .sync_logic import sync_pihole_dns as run_sync_main
 
 log = structlog.get_logger()
 
+
 def get_rate_limit():
     return os.getenv("RATE_LIMIT", "100/minute")
+
 
 def get_client_ip(request: Request) -> str:
     client_ip_str = request.client.host if request.client else "127.0.0.1"
@@ -41,7 +43,9 @@ def get_client_ip(request: Request) -> str:
             client_ip_str = request.headers.get("X-Real-IP").strip()
     return client_ip_str
 
+
 limiter = Limiter(key_func=get_client_ip)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,6 +58,7 @@ async def lifespan(app: FastAPI):
     yield
     # No cleanup needed on shutdown
 
+
 app = FastAPI(lifespan=lifespan, docs_url="/api/docs", redoc_url="/api/redoc")
 
 
@@ -63,16 +68,18 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["Content-Security-Policy"] = "default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; style-src 'self' https://cdn.jsdelivr.net; script-src 'self' https://cdn.jsdelivr.net"
+        )
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         return response
 
 
-
 @app.exception_handler(404)
 async def not_found_exception_handler(request: Request, exc: Exception):
     return templates.TemplateResponse("404.html", {"request": request}, status_code=404)
+
 
 @app.exception_handler(500)
 async def internal_server_error_exception_handler(request: Request, exc: Exception):
@@ -90,7 +97,7 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
         # We parse the subnets if we haven't yet, or if the environment variable changes
         # which is useful for tests that patch the environment dynamically.
         allowed_subnets_str = os.getenv("ALLOWED_SUBNETS")
-        if not hasattr(self, '_last_env_subnets') or self._last_env_subnets != allowed_subnets_str:
+        if not hasattr(self, "_last_env_subnets") or self._last_env_subnets != allowed_subnets_str:
             self._last_env_subnets = allowed_subnets_str
             if allowed_subnets_str:
                 self.allowed_subnets = [ip_network(subnet.strip()) for subnet in allowed_subnets_str.split(",")]
@@ -113,6 +120,20 @@ class IPWhitelistMiddleware(BaseHTTPMiddleware):
 
 
 app.add_middleware(IPWhitelistMiddleware)
+
+
+class CsrfMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        # 🛡️ Sentinel: Enforce CSRF protection on state-changing endpoints using custom headers
+        if (
+            request.method in ("POST", "PUT", "DELETE", "PATCH")
+            and request.headers.get("X-Requested-With") != "XMLHttpRequest"
+        ):
+            return JSONResponse(status_code=403, content={"detail": "CSRF check failed."})
+        return await call_next(request)
+
+
+app.add_middleware(CsrfMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
@@ -121,12 +142,15 @@ templates = Jinja2Templates(directory="app/templates")
 @app.get("/", response_class=HTMLResponse)
 @limiter.limit(get_rate_limit)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "sync_interval": get_sync_interval(),
-        "app_logo_url": os.getenv("APP_LOGO_URL"),
-        "app_color_scheme": os.getenv("APP_COLOR_SCHEME"),
-    })
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "sync_interval": get_sync_interval(),
+            "app_logo_url": os.getenv("APP_LOGO_URL"),
+            "app_color_scheme": os.getenv("APP_COLOR_SCHEME"),
+        },
+    )
 
 
 @app.post("/update-meraki")
@@ -143,6 +167,7 @@ async def update_meraki(request: Request):
         log.error("Error starting Meraki update", error=e)
         return JSONResponse(content={"message": "Meraki update failed to start."}, status_code=500)
 
+
 @app.post("/update-pihole")
 @limiter.limit(get_rate_limit)
 async def update_pihole(request: Request):
@@ -156,24 +181,27 @@ async def update_pihole(request: Request):
         log.error("Error starting Pi-hole update", error=e)
         return JSONResponse(content={"message": "Pi-hole update failed to start."}, status_code=500)
 
+
 # ⚡ Bolt Optimization: Moved inner functions _read_sync_log and _read_changelog to the module level
 # Impact: Prevents unnecessary function re-definition overhead per SSE connection, saving memory and CPU per client loop.
 # Measurement: Inspect memory usage and request parsing times when hundreds of clients connect concurrently.
 def _read_sync_log():
-    log_file = Path('/app/logs/sync.log')
+    log_file = Path("/app/logs/sync.log")
     if not log_file.exists():
         log_file.touch()
     with log_file.open("r") as f:
         # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
         return "".join(deque(f, maxlen=1000))
 
+
 def _read_changelog():
-    changelog_file = Path('/app/changelog.log')
+    changelog_file = Path("/app/changelog.log")
     if not changelog_file.exists():
         changelog_file.touch()
     with changelog_file.open("r") as f:
         # 🛡️ Sentinel: Prevent Memory Exhaustion DoS by limiting read
         return "".join(deque(f, maxlen=1000))
+
 
 @app.get("/stream")
 @limiter.limit(get_rate_limit)
@@ -196,7 +224,8 @@ async def stream(request: Request):
                 sync_interval = await asyncio.to_thread(get_sync_interval)
                 await asyncio.sleep(sync_interval)
 
-    return StreamingResponse(event_stream(), media_type='text/event-stream')
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
 
 def _get_pihole_data(pihole_url, pihole_api_key):
     client = PiholeClient(pihole_url, pihole_api_key)
@@ -211,6 +240,7 @@ def _get_pihole_data(pihole_url, pihole_api_key):
 
     return client.sid, pihole_records
 
+
 def _get_meraki_data(config):
     dashboard = meraki.DashboardAPI(
         api_key=config["meraki_api_key"],
@@ -219,6 +249,7 @@ def _get_meraki_data(config):
         suppress_logging=True,
     )
     return get_all_relevant_meraki_clients(dashboard, config)
+
 
 def _map_devices(meraki_clients, pihole_records):
     mapped_devices = []
@@ -232,21 +263,19 @@ def _map_devices(meraki_clients, pihole_records):
         ip_to_domains[ip].append(domain)
 
     for client in meraki_clients:
-        client_ip = client['ip']
+        client_ip = client["ip"]
         if client_ip in ip_to_domains:
             for domain in ip_to_domains[client_ip]:
-                mapped_devices.append({
-                    "meraki_name": client['name'],
-                    "pihole_domain": domain,
-                    "ip": client_ip
-                })
+                mapped_devices.append({"meraki_name": client["name"], "pihole_domain": domain, "ip": client_ip})
         else:
             unmapped_meraki_devices.append(client)
 
     return mapped_devices, unmapped_meraki_devices
 
+
 _mappings_cache = None
 _mappings_cache_time = 0
+
 
 def get_mappings_data():
     global _mappings_cache, _mappings_cache_time
@@ -271,7 +300,7 @@ def get_mappings_data():
                 "pihole": pihole_records,
                 "meraki": meraki_clients,
                 "mapped": mapped_devices,
-                "unmapped_meraki": unmapped_meraki_devices
+                "unmapped_meraki": unmapped_meraki_devices,
             }
             _mappings_cache = result
             _mappings_cache_time = time.time()
@@ -291,7 +320,12 @@ def get_mappings_data():
         meraki_clients = _get_meraki_data(config)
         mapped_devices, unmapped_meraki_devices = _map_devices(meraki_clients, pihole_records)
 
-        result = {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+        result = {
+            "pihole": pihole_records,
+            "meraki": meraki_clients,
+            "mapped": mapped_devices,
+            "unmapped_meraki": unmapped_meraki_devices,
+        }
         _mappings_cache = result
         _mappings_cache_time = time.time()
         return result
@@ -299,13 +333,16 @@ def get_mappings_data():
         log.error("Error in get_mappings_data", error=e)
         return {}
 
+
 @app.get("/mappings")
 @limiter.limit(get_rate_limit)
 async def get_mappings(request: Request):
     return JSONResponse(content=get_mappings_data())
 
+
 class UpdateIntervalRequest(BaseModel):
     interval: int = Field(ge=1, le=86400)
+
 
 @app.post("/update-interval")
 @limiter.limit(get_rate_limit)
@@ -322,24 +359,27 @@ class ClearLogRequest(BaseModel):
 @app.post("/clear-log")
 @limiter.limit(get_rate_limit)
 async def clear_log(request: Request, data: ClearLogRequest):
-    if data.log == 'sync':
+    if data.log == "sync":
         try:
-            Path('/app/logs/sync.log').write_text('')
+            Path("/app/logs/sync.log").write_text("")
             return JSONResponse(content={"message": "Sync log cleared."})
         except FileNotFoundError:
             return JSONResponse(content={"message": "Log file not found."}, status_code=404)
     return JSONResponse(content={"message": "Invalid log type."}, status_code=400)
 
+
 @app.get("/docs", response_class=HTMLResponse)
 @limiter.limit(get_rate_limit)
 async def docs(request: Request):
-    content = Path('/app/README.md').read_text()
+    content = Path("/app/README.md").read_text()
     return templates.TemplateResponse("docs.html", {"request": request, "content": markdown.markdown(content)})
+
 
 @app.get("/health")
 @limiter.limit(get_rate_limit)
 async def health_check(request: Request):
     return JSONResponse(content={"status": "ok"})
+
 
 @app.get("/history")
 @limiter.limit(get_rate_limit)
@@ -352,6 +392,7 @@ async def get_history(request: Request):
         return JSONResponse(content={"history": history})
     except FileNotFoundError:
         return JSONResponse(content={"history": []})
+
 
 @app.get("/cache")
 @limiter.limit(get_rate_limit)
