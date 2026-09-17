@@ -48,3 +48,6 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+## 2026-08-01 - Accessible Names for Scrollable Regions
+**Learning:** Adding `tabindex="0"` to a scrollable region (like a `<pre>` log block) makes it keyboard accessible, but screen readers will announce it generically (e.g., "group") without context. It needs an accessible name to be truly useful.
+**Action:** Always provide an accessible name for artificially focusable interactive regions (like `tabindex="0"` scroll areas) using `aria-labelledby` pointing to the section header or an explicit `aria-label`.
