@@ -76,74 +76,74 @@
                     </div>
                 </div>
                 <div class="card mt-4" id="pihole-card">
-                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#pihole-body">
+                    <div class="card-header" id="pihole-header" data-bs-toggle="collapse" data-bs-target="#pihole-body">
                         Pi-hole DNS Records [<span id="pihole-count">0</span>]
                         <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="pihole-body" class="collapse">
                         <div class="card-body">
-                            <pre id="pihole-mappings" class="log-box" tabindex="0"></pre>
+                            <pre id="pihole-mappings" class="log-box" tabindex="0" aria-labelledby="pihole-header"></pre>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mt-4" id="meraki-card">
-                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#meraki-body">
+                    <div class="card-header" id="meraki-header" data-bs-toggle="collapse" data-bs-target="#meraki-body">
                         Meraki IP Records [<span id="meraki-count">0</span>]
                         <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="meraki-body" class="collapse">
                         <div class="card-body">
-                            <pre id="meraki-mappings" class="log-box" tabindex="0"></pre>
+                            <pre id="meraki-mappings" class="log-box" tabindex="0" aria-labelledby="meraki-header"></pre>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mt-4" id="mapped-card">
-                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#mapped-body">
+                    <div class="card-header" id="mapped-header" data-bs-toggle="collapse" data-bs-target="#mapped-body">
                         Mapped Devices [<span id="mapped-count">0</span>]
                         <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="mapped-body" class="collapse">
                         <div class="card-body">
-                            <pre id="mapped-devices" class="log-box" tabindex="0"></pre>
+                            <pre id="mapped-devices" class="log-box" tabindex="0" aria-labelledby="mapped-header"></pre>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mt-4" id="unmapped-meraki-card">
-                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#unmapped-meraki-body">
+                    <div class="card-header" id="unmapped-meraki-header" data-bs-toggle="collapse" data-bs-target="#unmapped-meraki-body">
                         Unmapped Meraki Devices [<span id="unmapped-meraki-count">0</span>]
                         <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="unmapped-meraki-body" class="collapse">
                         <div class="card-body">
-                            <pre id="unmapped-meraki-devices" class="log-box" tabindex="0"></pre>
+                            <pre id="unmapped-meraki-devices" class="log-box" tabindex="0" aria-labelledby="unmapped-meraki-header"></pre>
                         </div>
                     </div>
                 </div>
 
                 <div class="card mt-4" id="logs-card">
-                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#logs-body">
+                    <div class="card-header" id="logs-header" data-bs-toggle="collapse" data-bs-target="#logs-body">
                         Logs
                         <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="logs-body" class="collapse">
                         <div class="card-body">
-                            <pre id="sync-log" class="log-box" tabindex="0"></pre>
+                            <pre id="sync-log" class="log-box" tabindex="0" aria-labelledby="logs-header"></pre>
                             <button class="btn btn-sm btn-outline-secondary" data-log="sync" data-action="copy" aria-label="Copy sync logs to clipboard" title="Copy sync logs to clipboard">Copy</button>
                             <button class="btn btn-sm btn-outline-danger" data-log="sync" data-action="clear" aria-label="Clear sync logs" title="Clear sync logs">Clear</button>
                         </div>
                     </div>
                 </div>
                 <div class="card mt-4" id="changelog-card">
-                    <div class="card-header" data-bs-toggle="collapse" data-bs-target="#changelog-body">
+                    <div class="card-header" id="changelog-header" data-bs-toggle="collapse" data-bs-target="#changelog-body">
                         Changelog
                         <span class="caret float-end" aria-hidden="true">▼</span>
                     </div>
                     <div id="changelog-body" class="collapse">
                         <div class="card-body">
-                            <pre id="changelog" class="log-box" tabindex="0"></pre>
+                            <pre id="changelog" class="log-box" tabindex="0" aria-labelledby="changelog-header"></pre>
                         </div>
                     </div>
                 </div>
@@ -157,7 +157,7 @@
                     <div class="card-body">
                         <a href="/docs" class="btn btn-info w-100 mb-3">README</a>
                         <a href="/api/docs" class="btn btn-info w-100 mb-3">API Docs</a>
-                        <div class="btn-group w-100 mb-3" role="group">
+                        <div class="btn-group w-100 mb-3" role="group" aria-label="Manual update actions">
                             <button id="update-meraki" class="btn btn-primary">Update Meraki</button>
                             <button id="update-pihole" class="btn btn-primary">Update Pi-hole</button>
                         </div>
