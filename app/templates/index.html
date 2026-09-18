@@ -253,6 +253,13 @@
                 });
         });
 
+        document.getElementById('sync-interval').addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('update-interval').click();
+            }
+        });
+
         document.getElementById('update-interval').addEventListener('click', (event) => {
             const intervalInput = document.getElementById('sync-interval');
             if (!intervalInput.reportValidity()) return;
