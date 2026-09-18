@@ -9,15 +9,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.resolve()))
 
 
 class TestMerakiClient(unittest.TestCase):
-
     def setUp(self):
-        self.config = {
-            "meraki_org_id": "12345",
-            "meraki_network_ids": [],
-            "meraki_client_timespan_seconds": 86400
-        }
+        self.config = {"meraki_org_id": "12345", "meraki_network_ids": [], "meraki_client_timespan_seconds": 86400}
 
-    @patch('meraki.DashboardAPI')
+    @patch("meraki.DashboardAPI")
     def test_get_all_relevant_meraki_clients_no_clients(self, mock_dashboard):
         # Arrange
         mock_dashboard.organizations.getOrganizationDevices.return_value = []
@@ -28,7 +23,7 @@ class TestMerakiClient(unittest.TestCase):
         # Assert
         self.assertEqual(clients, [])
 
-    @patch('meraki.DashboardAPI')
+    @patch("meraki.DashboardAPI")
     def test_get_all_relevant_meraki_clients_with_clients_no_fixed_ip(self, mock_dashboard):
         # Arrange
         mock_dashboard.organizations.getOrganizationDevices.return_value = [
@@ -43,7 +38,7 @@ class TestMerakiClient(unittest.TestCase):
         # Assert
         self.assertEqual(clients, [])
 
-    @patch('meraki.DashboardAPI')
+    @patch("meraki.DashboardAPI")
     def test_get_all_relevant_meraki_clients_with_clients_with_fixed_ip_switch(self, mock_dashboard):
         # Arrange
         mock_dashboard.organizations.getOrganizationDevices.return_value = [
@@ -51,9 +46,7 @@ class TestMerakiClient(unittest.TestCase):
         ]
         mock_dashboard.switch.getDeviceSwitchRoutingInterfaces.return_value = [{"interfaceId": "int_1"}]
         mock_dashboard.switch.getDeviceSwitchRoutingInterfaceDhcp.return_value = {
-            "fixedIpAssignments": {
-                "mac_1": {"name": "Test Client", "ip": "1.2.3.4"}
-            }
+            "fixedIpAssignments": {"mac_1": {"name": "Test Client", "ip": "1.2.3.4"}}
         }
 
         # Act
@@ -64,7 +57,7 @@ class TestMerakiClient(unittest.TestCase):
         self.assertEqual(clients[0]["name"], "Test Client")
         self.assertEqual(clients[0]["ip"], "1.2.3.4")
 
-    @patch('meraki.DashboardAPI')
+    @patch("meraki.DashboardAPI")
     def test_get_all_relevant_meraki_clients_with_clients_with_fixed_ip_appliance(self, mock_dashboard):
         # Arrange
         mock_dashboard.organizations.getOrganizationDevices.return_value = [
@@ -81,3 +74,22 @@ class TestMerakiClient(unittest.TestCase):
         self.assertEqual(len(clients), 1)
         self.assertEqual(clients[0]["name"], "Test Client")
         self.assertEqual(clients[0]["ip"], "1.2.3.4")
+
+    @patch("meraki.DashboardAPI")
+    def test_get_all_relevant_meraki_clients_filters_by_network(self, mock_dashboard):
+        # Arrange
+        mock_dashboard.organizations.getOrganizationDevices.return_value = [
+            {"model": "MS", "serial": "123", "networkId": "net_1"},
+            {"model": "MX", "serial": "456", "networkId": "net_2"},
+        ]
+        mock_dashboard.switch.getDeviceSwitchRoutingInterfaces.return_value = []
+
+        config = {"meraki_org_id": "12345", "meraki_network_ids": ["net_1"], "meraki_client_timespan_seconds": 86400}
+
+        # Act
+        _ = get_all_relevant_meraki_clients(mock_dashboard, config)
+
+        # Assert
+        # The switch API should be called, but the appliance API should not be called because "net_2" is not in the network IDs
+        mock_dashboard.switch.getDeviceSwitchRoutingInterfaces.assert_called_once()
+        mock_dashboard.appliance.getNetworkApplianceVlans.assert_not_called()
