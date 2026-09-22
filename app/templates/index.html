@@ -280,6 +280,20 @@
             });
         });
 
+        document.getElementById('sync-interval').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('update-interval').click();
+            }
+        });
+
+        document.getElementById('sync-interval').addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('update-interval').click();
+            }
+        });
+
 
         document.querySelectorAll('[data-log]').forEach(button => {
             button.addEventListener('click', () => {
