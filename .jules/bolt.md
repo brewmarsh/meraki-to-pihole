@@ -35,3 +35,7 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+
+## 2024-05-23 - Prevent N+1 Thread Exhaustion
+**Learning:** Found a critical performance bottleneck in `meraki_client.py`: The `ThreadPoolExecutor` was fanning out threads to query the Meraki API for *all* devices in an organization, even unsupported models (like MR access points or MV cameras) and devices in networks excluded by the configuration. This caused a massive N+1 API call problem where hundreds of unnecessary API requests were being sent to Meraki synchronously within the thread pool, wasting resources and severely delaying the sync process for large organizations.
+**Action:** Always filter large data collections upfront before handing them off to concurrent worker pools. Ensure early returns and basic filtering (like model prefixes and network IDs) happen sequentially in the main thread to prevent scaling bottlenecks in fan-out concurrency.
