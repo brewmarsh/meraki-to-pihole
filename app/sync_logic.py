@@ -57,9 +57,7 @@ def load_app_config_from_env():
         config[var_name.lower()] = value
 
     if missing_vars_messages:
-        log.error(
-            "Missing mandatory environment variables", missing_vars=missing_vars_messages
-        )
+        log.error("Missing mandatory environment variables", missing_vars=missing_vars_messages)
         sys.exit(1)
 
     config["pihole_api_key"] = os.getenv(ENV_PIHOLE_API_KEY)
@@ -130,10 +128,16 @@ def get_mappings_data():
         meraki_clients = get_meraki_data(config)
         mapped_devices, unmapped_meraki_devices = map_devices(meraki_clients, pihole_records)
 
-        return {"pihole": pihole_records, "meraki": meraki_clients, "mapped": mapped_devices, "unmapped_meraki": unmapped_meraki_devices}
+        return {
+            "pihole": pihole_records,
+            "meraki": meraki_clients,
+            "mapped": mapped_devices,
+            "unmapped_meraki": unmapped_meraki_devices,
+        }
     except Exception as e:
         log.error("Error in get_mappings_data", error=e)
         return {}
+
 
 def map_devices(meraki_clients, pihole_records):
     """
@@ -150,18 +154,15 @@ def map_devices(meraki_clients, pihole_records):
         ip_to_domains[ip].append(domain)
 
     for client in meraki_clients:
-        client_ip = client['ip']
+        client_ip = client["ip"]
         if client_ip in ip_to_domains:
             for domain in ip_to_domains[client_ip]:
-                mapped_devices.append({
-                    "meraki_name": client['name'],
-                    "pihole_domain": domain,
-                    "ip": client_ip
-                })
+                mapped_devices.append({"meraki_name": client["name"], "pihole_domain": domain, "ip": client_ip})
         else:
             unmapped_meraki_devices.append(client)
 
     return mapped_devices, unmapped_meraki_devices
+
 
 def get_sync_interval():
     """
@@ -194,6 +195,7 @@ def get_sync_interval():
     log.debug("Using default sync interval", interval=default_interval)
     return default_interval
 
+
 def sync_pihole_dns(update_type=None):
     """
     Main function to run the Meraki to Pi-hole sync process.
@@ -213,8 +215,10 @@ def sync_pihole_dns(update_type=None):
         if existing_pihole_records is not None:
             successful_syncs = 0
             failed_syncs = 0
-            meraki_clients_by_ip = {client['ip']: client for client in meraki_clients}
-            meraki_clients_by_name = {client['name'].replace(" ", "-").lower(): client for client in meraki_clients if client.get('name')}
+            meraki_clients_by_ip = {client["ip"]: client for client in meraki_clients}
+            meraki_clients_by_name = {
+                client["name"].replace(" ", "-").lower(): client for client in meraki_clients if client.get("name")
+            }
 
             changelog_path = Path(config["changelog_file_path"])
             if not changelog_path.exists():
@@ -245,7 +249,9 @@ def sync_pihole_dns(update_type=None):
                     ip_to_sync = client["ip"]
 
                     # Bolt: Pass existing_pihole_records to avoid an API call (N+1 query problem) on every client
-                    if pihole_client.add_or_update_dns_record(domain_to_sync, ip_to_sync, existing_records=existing_pihole_records):
+                    if pihole_client.add_or_update_dns_record(
+                        domain_to_sync, ip_to_sync, existing_records=existing_pihole_records
+                    ):
                         timestamp = datetime.now()
                         mapping_line = f"{timestamp}: Mapped {domain_to_sync} to {ip_to_sync}\n"
                         if mapping_line not in previous_mappings_set:
@@ -262,7 +268,7 @@ def sync_pihole_dns(update_type=None):
                         )
 
                 for domain, ip in existing_pihole_records.items():
-                    pihole_hostname = domain.replace(config['hostname_suffix'], "")
+                    pihole_hostname = domain.replace(config["hostname_suffix"], "")
                     if ip not in meraki_clients_by_ip and pihole_hostname not in meraki_clients_by_name:
                         if pihole_client.remove_dns_record(domain, ip):
                             timestamp = datetime.now()
@@ -294,9 +300,13 @@ def sync_pihole_dns(update_type=None):
 
             with Path(config["cache_file_path"]).open("w") as f:
                 import json
-                json.dump({
-                    "pihole": existing_pihole_records,
-                    "meraki": meraki_clients,
-                    "mapped": mapped_devices,
-                    "unmapped_meraki": unmapped_meraki_devices,
-                }, f)
+
+                json.dump(
+                    {
+                        "pihole": existing_pihole_records,
+                        "meraki": meraki_clients,
+                        "mapped": mapped_devices,
+                        "unmapped_meraki": unmapped_meraki_devices,
+                    },
+                    f,
+                )
