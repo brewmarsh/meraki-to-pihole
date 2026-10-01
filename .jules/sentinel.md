@@ -26,3 +26,8 @@
 **Vulnerability:** The application was catching HTTP 403 Forbidden errors when calling the Pi-hole API and automatically re-authenticating and recursively calling the API method (`return self._api_request(...)`). If the API persistently returned 403 (e.g. incorrect credentials, permissions), it caused an infinite loop resulting in a `RecursionError` and potentially crashing the service, leading to a Denial of Service (DoS).
 **Learning:** Automatic retry mechanisms on error codes like 401 or 403 can easily create infinite recursion vulnerabilities if the retried operation can still trigger the same error and there is no cap on retry attempts.
 **Prevention:** Always implement a bounded depth mechanism (like a boolean `_retry=True` flag or an explicit retry counter) when handling automatic error retries for external APIs to prevent infinite loops.
+
+## 2026-10-01 - Fix CSRF Vulnerability on State-Changing Endpoints
+**Vulnerability:** The application relied solely on IP whitelisting for access control, leaving state-changing endpoints (POST requests) vulnerable to Cross-Site Request Forgery (CSRF).
+**Learning:** IP whitelisting is not a sufficient defense against CSRF, as malicious requests originating from the user's browser will inherit the whitelisted IP.
+**Prevention:** Always implement explicit CSRF protection (e.g., validating the `X-Requested-With: XMLHttpRequest` header or using CSRF tokens) on all endpoints that modify application state.
