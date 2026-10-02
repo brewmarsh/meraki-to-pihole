@@ -6,6 +6,7 @@ from .sync_logic import get_sync_interval, sync_pihole_dns
 
 log = structlog.get_logger()
 
+
 def run_sync():
     """
     Runs the main sync script in a loop with a configurable sleep interval.
@@ -23,6 +24,7 @@ def run_sync():
         sync_interval = get_sync_interval()
         log.info("Sleeping before next sync", sleep_interval=sync_interval)
         time.sleep(sync_interval)
+
 
 if __name__ == "__main__":
     run_sync()
