@@ -20,6 +20,7 @@ types-requests = "^2.32.4.20250611"
 types-markdown = "^3.8.0.20250708"
 slowapi = "^0.1.9"
 jinja2 = "^3.1.2"
+playwright = "^1.63.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.4.1"
