@@ -35,3 +35,7 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+
+## 2024-10-04 - Pre-filtering Data Before Concurrent Execution
+**Learning:** When using concurrent executors (like ThreadPoolExecutor) to process a collection by making external API calls (e.g., getting switch routing interfaces for devices), failing to pre-filter the input collection based on existing constraints (like `meraki_network_ids`) causes an N+1 API call explosion for irrelevant items.
+**Action:** Always apply filter logic locally *before* fanning out the data set into a worker pool to minimize expensive external HTTP requests.
