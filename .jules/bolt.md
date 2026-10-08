@@ -35,3 +35,6 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+## 2025-02-12 - Prevent N+1 queries during device sync
+**Learning:** The Meraki sync process retrieves all devices in an organization and then makes individual API calls to fetch fixed IP assignments for each device (`_get_fixed_ip_assignments_from_switch` and `_get_fixed_ip_assignments_from_appliance`). This causes an N+1 API call problem where N is the total number of devices across the entire organization, even if the user only wants to sync a specific network.
+**Action:** Filter the list of devices by `meraki_network_ids` *before* fanning out requests to fetch fixed IPs. This avoids making unnecessary requests for devices in networks that aren't being synced.
