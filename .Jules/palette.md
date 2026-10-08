@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2024-10-24 - Standalone Input Keyboard Accessibility
+**Learning:** Standalone form inputs (those not enclosed in a `<form>` tag) do not automatically trigger their associated action (like submission) when the 'Enter' key is pressed. This breaks expected keyboard navigation and usability, requiring users to manually navigate to the associated button.
+**Action:** Always add explicit `keydown` event listeners for the 'Enter' key to standalone inputs, allowing them to manually trigger their associated actions and ensuring consistent keyboard accessibility.
