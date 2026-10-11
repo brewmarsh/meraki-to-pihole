@@ -281,6 +281,14 @@
         });
 
 
+
+        document.getElementById('sync-interval').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('update-interval').click();
+            }
+        });
+
         document.querySelectorAll('[data-log]').forEach(button => {
             button.addEventListener('click', () => {
                 const logType = button.dataset.log;
