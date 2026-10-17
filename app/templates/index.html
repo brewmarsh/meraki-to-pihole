@@ -225,7 +225,7 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
 
-            fetch('/update-meraki', { method: 'POST' })
+            fetch('/update-meraki', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => response.json())
                 .then(data => {
                     showToast(data.message);
@@ -242,7 +242,7 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
 
-            fetch('/update-pihole', { method: 'POST' })
+            fetch('/update-pihole', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
                 .then(response => response.json())
                 .then(data => {
                     showToast(data.message);
@@ -266,7 +266,8 @@
             fetch('/update-interval', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({ interval: interval })
             })
@@ -295,8 +296,9 @@
                         fetch('/clear-log', {
                             method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json'
-                            },
+                                'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                             body: JSON.stringify({ log: logType })
                         })
                             .then(response => response.json())
