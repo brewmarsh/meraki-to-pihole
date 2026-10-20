@@ -35,3 +35,7 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+
+## 2025-10-29 - Prevent unnecessary external loop fetching overhead
+**Learning:** Found an optimization in `app/clients/meraki_client.py` where a `ThreadPoolExecutor` dispatches jobs to fetch fixed IP assignments from *every* network device. Not all devices (like APs or cameras) have routing capabilities. Unnecessary job submission creates task dispatch overhead and forces internal function evaluations that will simply return empty lists for mismatched devices. Furthermore, network IDs filtering was not applied early enough, leading to fetching IPs for networks outside the requested configuration.
+**Action:** Filter lists of devices *before* passing them to thread pools or execution queues. In cases like Meraki networks, ensure network ID filtering is applied efficiently upfront so redundant thread processes are not spawned.
