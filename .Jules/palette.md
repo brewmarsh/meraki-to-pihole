@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2024-10-29 - Preserving Dark Mode and Styling in Rendered Markdown Documentation
+**Learning:** When serving dynamically rendered markdown content on auxiliary pages (like `/docs`), failing to include the primary CSS framework (Bootstrap) and user preference scripts (Dark Mode) results in a jarring, unstyled flash for users transitioning from the main dashboard.
+**Action:** Always persist core styling frameworks and read `localStorage` preferences on all auxiliary views to ensure a seamless and accessible UX across the entire application.
