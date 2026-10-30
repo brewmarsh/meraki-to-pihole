@@ -13,6 +13,7 @@
     </style>
 </head>
 <body>
+    <a href="#main-content" class="visually-hidden-focusable p-3 bg-primary text-white position-absolute z-3">Skip to main content</a>
     {% if show_welcome_banner %}
     <div id="welcome-screen" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
         <div class="card">
@@ -49,7 +50,7 @@
         </div>
     </nav>
 
-    <div class="container">
+    <div class="container" id="main-content" tabindex="-1">
         <div class="row mt-4">
             <div class="col-md-8">
                 <div class="card mt-4" id="charts-card">
