@@ -318,6 +318,19 @@
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
                     showToast(`${logType} log copied to clipboard.`);
+
+                    if (button.classList.contains('btn-success')) return;
+
+                    const originalText = button.textContent;
+                    const originalClasses = button.className;
+
+                    button.textContent = 'Copied!';
+                    button.className = 'btn btn-sm btn-success';
+
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.className = originalClasses;
+                    }, 2000);
                 }
             });
         });
