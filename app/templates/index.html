@@ -310,6 +310,9 @@
                             });
                     }
                 } else if (action === 'copy') {
+                    if (button.disabled || button.classList.contains('btn-success')) return;
+                    const originalClasses = button.className;
+                    const originalText = button.innerHTML;
                     const logContent = document.getElementById(`${logType}-log`);
                     const range = document.createRange();
                     range.selectNode(logContent);
@@ -318,6 +321,12 @@
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
                     showToast(`${logType} log copied to clipboard.`);
+                    button.className = originalClasses.replace('btn-outline-secondary', 'btn-success');
+                    button.innerHTML = 'Copied!';
+                    setTimeout(() => {
+                        button.className = originalClasses;
+                        button.innerHTML = originalText;
+                    }, 2000);
                 }
             });
         });
