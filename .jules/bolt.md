@@ -35,3 +35,7 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+
+## 2026-11-05 - Prevent N+1 API call fanout by filtering devices upfront
+**Learning:** Even when using a `ThreadPoolExecutor` to fetch data concurrently, fanning out all raw organization devices without filtering creates unnecessary external API calls (N+1 query problem) and thread context switches for out-of-scope devices (e.g. non-switches/appliances or devices not in the target networks).
+**Action:** To prevent unnecessary API overhead and N+1 problems when using concurrent executors, always filter data collections upfront (e.g., filtering devices by `networkId` or `model`) before dispatching them to the worker pool.
