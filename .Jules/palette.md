@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2024-03-24 - Inline visual feedback on copy actions
+**Learning:** The copy button in the logs card provides a toast message upon clicking but no localized visual indication. This means that if a user's attention is focused on the button, they miss the toast popping up on the other side of the screen.
+**Action:** Next time, ensure buttons providing actionable feedback change their state temporarily (e.g., text, color, ARIA label) directly on the button to improve localized UX interaction feedback for users.
