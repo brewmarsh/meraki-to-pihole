@@ -318,6 +318,24 @@
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
                     showToast(`${logType} log copied to clipboard.`);
+
+                    if (!button.disabled && !button.classList.contains('btn-success')) {
+                        const originalHTML = button.innerHTML;
+                        const originalClasses = button.className;
+                        const originalAria = button.getAttribute('aria-label');
+                        button.innerHTML = 'Copied!';
+                        button.className = 'btn btn-sm btn-success';
+                        button.setAttribute('aria-label', 'Logs copied to clipboard');
+                        setTimeout(() => {
+                            button.innerHTML = originalHTML;
+                            button.className = originalClasses;
+                            if (originalAria) {
+                                button.setAttribute('aria-label', originalAria);
+                            } else {
+                                button.removeAttribute('aria-label');
+                            }
+                        }, 2000);
+                    }
                 }
             });
         });
