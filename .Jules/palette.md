@@ -48,3 +48,7 @@
 ## 2024-08-12 - HTML language and viewport attributes
 **Learning:** HTML templates without a `lang` attribute on the root `<html>` tag cause screen readers to default to the user's system language, which can result in incorrect pronunciation or failure to read content if the languages don't match. Additionally, lacking a responsive viewport meta tag (`<meta name="viewport" content="width=device-width, initial-scale=1.0">`) breaks the responsive design on mobile devices, making the site difficult or impossible to use.
 **Action:** Always include a 'lang' attribute on the root '<html>' tag for screen readers and a responsive viewport meta tag ('<meta name="viewport" content="width=device-width, initial-scale=1.0">') to ensure proper mobile rendering in any HTML template created.
+
+## 2026-07-28 - Temporary UI feedback for interactive buttons
+**Learning:** Providing temporary UI feedback (like turning a "Copy" button green and changing text to "Copied!") provides immediate, local confirmation of an action without forcing the user to rely on peripheral notifications (like toast popups) which they might miss. Properly restoring original `aria-label` and `title` attributes ensures accessibility is maintained.
+**Action:** Always provide inline, temporary visual feedback for immediate actions like clipboard interactions, ensuring the button gracefully reverts to its original state (including ARIA properties) after a short delay to allow for repeated actions.
