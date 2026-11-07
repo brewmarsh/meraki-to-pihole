@@ -310,6 +310,7 @@
                             });
                     }
                 } else if (action === 'copy') {
+                    if (button.disabled) return;
                     const logContent = document.getElementById(`${logType}-log`);
                     const range = document.createRange();
                     range.selectNode(logContent);
@@ -317,6 +318,28 @@
                     window.getSelection().addRange(range);
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
+
+                    const originalHTML = button.innerHTML;
+                    const originalClasses = button.className;
+                    const originalAria = button.getAttribute('aria-label');
+
+                    button.disabled = true;
+                    button.innerHTML = 'Copied!';
+                    button.classList.remove('btn-outline-secondary');
+                    button.classList.add('btn-success');
+                    button.setAttribute('aria-label', 'Copied to clipboard');
+
+                    setTimeout(() => {
+                        button.disabled = false;
+                        button.innerHTML = originalHTML;
+                        button.className = originalClasses;
+                        if (originalAria) {
+                            button.setAttribute('aria-label', originalAria);
+                        } else {
+                            button.removeAttribute('aria-label');
+                        }
+                    }, 2000);
+
                     showToast(`${logType} log copied to clipboard.`);
                 }
             });
