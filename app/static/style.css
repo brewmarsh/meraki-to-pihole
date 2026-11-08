@@ -117,3 +117,14 @@
     outline: 2px solid #0d6efd;
     outline-offset: -2px;
 }
+
+.log-box:empty::after {
+    content: "No data available...";
+    color: #6c757d;
+    font-style: italic;
+    display: block;
+}
+
+.dark-mode .log-box:empty::after {
+    color: #adb5bd;
+}
