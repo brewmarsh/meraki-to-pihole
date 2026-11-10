@@ -310,6 +310,7 @@
                             });
                     }
                 } else if (action === 'copy') {
+                    if (button.classList.contains('btn-success')) return;
                     const logContent = document.getElementById(`${logType}-log`);
                     const range = document.createRange();
                     range.selectNode(logContent);
@@ -318,6 +319,21 @@
                     document.execCommand('copy');
                     window.getSelection().removeAllRanges();
                     showToast(`${logType} log copied to clipboard.`);
+                    const originalText = button.innerHTML;
+                    const originalClass = button.className;
+                    const originalAria = button.getAttribute('aria-label');
+                    button.innerHTML = 'Copied!';
+                    button.className = 'btn btn-sm btn-success';
+                    button.setAttribute('aria-label', 'Copied to clipboard');
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.className = originalClass;
+                        if (originalAria === null) {
+                            button.removeAttribute('aria-label');
+                        } else {
+                            button.setAttribute('aria-label', originalAria);
+                        }
+                    }, 2000);
                 }
             });
         });
