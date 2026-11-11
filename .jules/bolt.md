@@ -35,3 +35,7 @@
 ## 2025-10-28 - Caching Configuration Parsing
 **Learning:** Functions that parse environment variables and construct configuration objects can introduce redundant overhead when called repeatedly in hot loops (like SSE streams). Bypassing them with direct `os.getenv()` calls is an anti-pattern as it breaks centralized configuration and mocked tests.
 **Action:** Use `@functools.lru_cache(maxsize=1)` on the central configuration loading function (e.g., `load_app_config_from_env`) to safely cache the parsed results and eliminate redundant processing overhead without fracturing configuration management.
+
+## 2026-11-11 - Caching `get_sync_interval` to prevent heavy disk I/O on SSE ticks
+**Learning:** Functions like `get_sync_interval` that are called repeatedly in a hot loop (like a Server-Sent Events tick for every connected client) can introduce massive performance degradation if they read from the disk on every call.
+**Action:** When a function repeatedly reads from disk or parses variables without needing real-time precision on every single call, wrap its return value in an in-memory TTL cache (e.g. `_sync_interval_cache`) to avoid redundant parsing and file I/O. Remember to reset the cache dynamically if the underlying file is updated elsewhere (like via an API endpoint).
